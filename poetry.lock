@@ -229,7 +229,7 @@ testing = ["Django (<3.1)", "colorama", "docopt", "pytest (<7.0.0)"]
 name = "joblib"
 version = "1.1.0"
 description = "Lightweight pipelining with Python functions"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -587,7 +587,7 @@ six = ">=1.5"
 name = "scikit-learn"
 version = "1.1.1"
 description = "A set of python modules for machine learning and data mining"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.8"
 
@@ -670,7 +670,7 @@ mpmath = ">=0.19"
 name = "threadpoolctl"
 version = "3.1.0"
 description = "threadpoolctl"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -724,7 +724,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "44527321dcd21d78d761b3275d08da54f994dcceca816afc25aeb5e840819495"
+content-hash = "fca40b82c6be88f83dde161db40dd77b6c1723f3a8628bcc3b42d335f973a176"
 
 [metadata.files]
 appnope = []
