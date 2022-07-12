@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "robustress"
-version = "0.220712.0"
+version = "0.220712.1"
 description = ""
 authors = ["davips <dpsabc@gmail.com>"]
 
@@ -18,6 +18,9 @@ PyQt5 = "^5.15.7"
 pytest = "^5.2"
 pytest-cov = "^3.0.0"
 black = "^22.6.0"
+pdoc3 = "^0.10.0"
+autoreadme = "^0.2102.20"
+ipython = "^8.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

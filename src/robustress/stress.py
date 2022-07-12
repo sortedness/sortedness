@@ -80,4 +80,3 @@ def stress(ma, mb, normalized=False):
         d = rank_dist__by_index(argsort(ranks), normalized=normalized)
         result.append(d)
     return result
-
