@@ -3,7 +3,7 @@ from numpy.linalg import norm
 from numpy.random import randint, shuffle
 from sympy.utilities.iterables import multiset_permutations
 
-from src.robustress.main import rank_dist__by_index, stress
+from src.robustress.rank import rank_dist__by_index
 
 old = 0
 for l in range(1, 10):
