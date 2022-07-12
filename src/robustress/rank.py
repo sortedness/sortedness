@@ -151,11 +151,11 @@ def rdist(a, b, normalized=False, f=rdist_by_index_iw):
     >>> rdist([0, 1, 2, 3], [0, 1, 2, 3])
     0
     >>> rdist([0, 1, 2, 3], [1, 0, 2, 3])
-    1.0
+    2
     >>> rdist([0, 1, 2, 3], [0, 1, 3, 2])
-    0.5
+    2
     >>> rdist([1, 0, 2, 3], [0, 1, 3, 2])
-    1.5
+    4
 
     Parameters
     ----------
