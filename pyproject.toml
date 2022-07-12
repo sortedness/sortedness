@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "robustress"
+version = "0.220712.0"
+description = ""
+authors = ["davips <dpsabc@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.9.*"
+numpy = "^1.23.1"
+scipy = "^1.8.1"
+scikit-learn = "^1.1.1"
+sympy = "^1.10.1"
+lange = "^0.2101.24"
+matplotlib = "^3.5.2"
+PyQt5 = "^5.15.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
