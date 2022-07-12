@@ -2,11 +2,11 @@ from numpy import eye
 from numpy.linalg import norm
 from numpy.random import randint, shuffle
 
-from src.robustress.rank import rank_dist__by_index, stress
+from src.robustress.rank import rdist_by_index_lw, stress
 
 old = 0
 for l in range(3000000000000000):
-    d = rank_dist__by_index(list(range(l - 1, -1, -1)), normalized=False)
+    d = rdist_by_index_lw(list(range(l - 1, -1, -1)), normalized=False)
     # dnorm = rank_based_dist__by_index(list(range(l - 1, -1, -1)))
     print(l, "\t", d, "\t", d - old)
     old = d

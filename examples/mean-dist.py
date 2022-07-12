@@ -3,7 +3,7 @@ from numpy.linalg import norm
 from numpy.random import randint, shuffle
 from sympy.utilities.iterables import multiset_permutations
 
-from src.robustress.rank import rank_dist__by_index
+from src.robustress.rank import rdist_by_index_lw
 
 old = 0
 for l in range(1, 10):
@@ -11,7 +11,7 @@ for l in range(1, 10):
     d = 0
     c = 0
     for p in multiset_permutations(lst):
-        d += rank_dist__by_index(p, normalized=False)
+        d += rdist_by_index_lw(p, normalized=False)
         c += 1
     d /= c
     print(l, "\t", d, "\t", d - old)

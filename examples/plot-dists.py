@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from lange import ap
 from sympy.utilities.iterables import multiset_permutations
 
-from src.robustress.rank import rank_dist__by_index
+from src.robustress.rank import rdist_by_index_lw
 
 ds = {}
 for l in ap[5, 6, ..., 8]:
@@ -10,7 +10,7 @@ for l in ap[5, 6, ..., 8]:
     lst = list(ap[0, 1, ..., l])
     ds[l] = []
     for p in multiset_permutations(lst):
-        ds[l].append(rank_dist__by_index(p, normalized=False))
+        ds[l].append(rdist_by_index_lw(p, normalized=False))
         # ds[l].append(rank_based_dist__by_index(p, normalized=True))
     ds[l].sort()
     # plt.plot(ds[l])

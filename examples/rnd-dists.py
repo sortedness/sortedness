@@ -1,6 +1,6 @@
 from random import shuffle
 
-from src.robustress.rank import rank_dist__by_index
+from src.robustress.rank import rdist_by_index_lw
 
 max = -1
 for l in range(1000):
@@ -9,8 +9,8 @@ for l in range(1000):
     for _ in range(1000):
         lst = list(range(l))
         shuffle(lst)
-        d = rank_dist__by_index(lst, normalized=False)
-        dnorm = rank_dist__by_index(lst)
+        d = rdist_by_index_lw(lst, normalized=False)
+        dnorm = rdist_by_index_lw(lst)
         if dnorm > max:
             max = dnorm
 
