@@ -180,5 +180,9 @@ def rdist(a, b, normalized=False, f=rdist_by_index_iw):
 
 
 def rank_by_distances(m, instance):
-    distances = norm(m - instance, axis=1, keepdims=True)
+    distances = euclidean__n_vs_1(m, instance)
     return rankdata(distances, method="ordinal") - 1
+
+
+def euclidean__n_vs_1(m, instance):
+    return norm(m - instance, axis=1, keepdims=True)
