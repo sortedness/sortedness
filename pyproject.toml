@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "robustress"
-version = "0.220714.7"
+version = "0.220714.8"
 description = ""
 authors = ["davips <dpsabc@gmail.com>"]
 

@@ -229,11 +229,13 @@ def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
     result = []
 
     if callable(f):
-        if normalized:
+        if normalized:  # pragma: no cover
             print("Warning: 'normalized=True' is ignored for correlation-based stress ('f=callable')")
-        if decay is not None:
+        if decay is not None:  # pragma: no cover
             print("Warning: 'decay' is ignored for correlation-based stress ('f=callable')")
-            print("Hint: to provide weights, pass a partially applied function like 'partial(weightedtau, weigher=lambda x: 1/(x**2 + 1)")
+            print(
+                "Hint: to provide weights, pass a partially applied function like 'partial(weightedtau, weigher=lambda x: 1/(x**2 + 1)"
+            )
         for a, b in zip(ma, mb):
             corr = f(euclidean__n_vs_1(ma, a), euclidean__n_vs_1(mb, b))[0]
             result.append((1 - corr) / 2)
@@ -244,7 +246,7 @@ def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
         f = rdist_by_index_iw
     elif f == "lw":
         f = rdist_by_index_lw
-    else:
+    else:  # pragma: no cover
         raise Exception(f"Unknown f {f}")
     for a, b in zip(ma, mb):
         ranks_ma = rank_by_distances(ma, a)
