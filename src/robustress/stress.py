@@ -9,7 +9,7 @@ from robustress.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index
 
 
 # noinspection PyTypeChecker
-def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
+def stress(ma, mb, normalized=False, f=spearmanr, decay=None, return_pvalues=False):
     """
     Calculate the rank-based stress value for each point
 
@@ -193,10 +193,20 @@ def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
     >>> s = stress(original, projected, f=wf)
     >>> min(s), max(s), s
     (0.0012599306648203856, 0.06097693236703372, [0.04767025179771278, 0.04857347590889044, 0.03203600763905745, 0.0012599306648203856, 0.06097693236703372, 0.009929741681779292, 0.025662139911649784, 0.002908982773061508, 0.05450317824457718, 0.03538651596692205, 0.05768659251010677, 0.0554645561816447])
+    >>> corrs, pvalues = stress(original, projected, return_pvalues=True)
+    >>> corrs
+    [0.10839160839160839, 0.13286713286713286, 0.027972027972027858, 0.0034965034965034336, 0.06643356643356635, 0.020979020979020935, 0.0489510489510489, 0.010489510489510412, 0.0174825174825175, 0.010489510489510412, 0.10139860139860135, 0.05594405594405588]
+    >>> pvalues
+    [0.0025862148333625915, 0.006543490146837885, 3.9272610809659444e-06, 1.3016730560634403e-10, 0.00025981184986148103, 9.5435818268384e-07, 5.9978574465377e-05, 3.0898013985487064e-08, 3.88098529962746e-07, 3.0898013985487064e-08, 0.0019003677255282703, 0.00011413359814618011]
     >>> projected = permutation(original)
     >>> s = stress(original, projected)
     >>> min(s), max(s), s
     (0.36363636363636365, 0.548951048951049, [0.4230769230769231, 0.486013986013986, 0.4160839160839161, 0.48951048951048953, 0.548951048951049, 0.4370629370629371, 0.36363636363636365, 0.45454545454545453, 0.40909090909090906, 0.3986013986013986, 0.44405594405594406, 0.506993006993007])
+    >>> corrs, pvalues = stress(original, projected, return_pvalues=True)
+    >>> corrs
+    [0.4230769230769231, 0.486013986013986, 0.4160839160839161, 0.48951048951048953, 0.548951048951049, 0.4370629370629371, 0.36363636363636365, 0.45454545454545453, 0.40909090909090906, 0.3986013986013986, 0.44405594405594406, 0.506993006993007]
+    >>> pvalues
+    [0.6330906812462618, 0.9312343512018808, 0.602099427786538, 0.9484022252365223, 0.762121655996299, 0.6966831093957659, 0.3910967709418962, 0.7787253962454419, 0.5717012385276553, 0.5273023541661082, 0.729194990751066, 0.9655902689187795]
 
     Parameters
     ----------
@@ -216,17 +226,20 @@ def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
             Meaning of resulting values for correlation-based functions:
                 0.0:    perfect projection          (no stress)
                 0.5:    random projection           (enough stress to erase all information)
-                2.0:    worst possible projection   (theoretical; represent the opposite of the dataset)
+                1.0:    worst possible projection   (theoretical; represent the "opposite" of the dataset)
     decay
         Decay factor to put more or less weight on near neigbors
         `decay=0` means uniform weights
         `decay=1` is meaningless as it will always result in zero stress
+    return_pvalues
+        For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
+        This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
 
     Returns
     -------
         row-vector matrix with a stress value by row
     """
-    result = []
+    result, pvalues = [], []
 
     if callable(f):
         if normalized:  # pragma: no cover
@@ -237,8 +250,11 @@ def stress(ma, mb, normalized=False, f=spearmanr, decay=None):
                 "Hint: to provide weights, pass a partially applied function like 'partial(weightedtau, weigher=lambda x: 1/(x**2 + 1)"
             )
         for a, b in zip(ma, mb):
-            corr = f(euclidean__n_vs_1(ma, a), euclidean__n_vs_1(mb, b))[0]
+            corr, pvalue = f(euclidean__n_vs_1(ma, a), euclidean__n_vs_1(mb, b))
             result.append((1 - corr) / 2)
+            pvalues.append(pvalue)
+        if return_pvalues:
+            return result, pvalues
         return result
 
     kwargs = {} if decay is None else {"decay": decay}
