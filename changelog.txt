@@ -1,1 +1,3 @@
-Implement correlation-based stress
+Add README-edit
+Add flag for pvalues
+Add sklearn to gh test

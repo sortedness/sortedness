@@ -1,6 +1,6 @@
 from random import shuffle
 
-from src.robustress.rank import rdist_by_index_lw
+from robustress.rank import rdist_by_index_lw
 
 max = -1
 for l in range(1000):
