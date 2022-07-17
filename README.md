@@ -40,11 +40,12 @@ poetry install
 ### Examples
 Some usage examples.
 
-**om numpy import eye**
+**Just a placeholder for futures examples:**
 <details>
 <p>
 
 ```python3
+from numpy import eye
 from numpy.linalg import norm
 from numpy.random import randint, shuffle
 from sympy.utilities.iterables import multiset_permutations

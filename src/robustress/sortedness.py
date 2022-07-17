@@ -12,7 +12,7 @@ from robustress.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index
 def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
     """
     Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
-    Functions available as scipy correlation coefficients: 
+    Functions available as scipy correlation coefficients:
         ρ-sortedness (Spearman),
         𝜏-sortedness (Kendall's 𝜏),
         w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)

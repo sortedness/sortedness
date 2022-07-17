@@ -29,7 +29,7 @@ def rdist_by_index_lw(indices, normalized=False, **kwargs):
     >>> rdist_by_index_lw([0, 1, 2, 3, 4, 5])
     0
     >>> rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     >>> round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
     4.967
     >>> round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
@@ -87,7 +87,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     >>> rdist_by_index_iw([0, 1, 2, 3, 4, 5])
     0
     >>> rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     >>> rdist_by_index_iw([5, 4, 3, 2, 1, 0])
     18
     >>> rdist_by_index_iw([0, 1, 2, 3, 5, 4])
@@ -101,7 +101,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     >>> rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
     0.0
     >>> rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-    1.0
+    -1.0
     >>> rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
     14.15975
     >>> rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)

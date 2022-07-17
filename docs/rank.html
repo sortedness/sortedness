@@ -57,7 +57,7 @@ def rdist_by_index_lw(indices, normalized=False, **kwargs):
     &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
     0
     &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
     4.967
     &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
@@ -86,6 +86,7 @@ def rdist_by_index_lw(indices, normalized=False, **kwargs):
         total += cost
     if total and normalized:
         total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
+        total = 1 - 2 * total
     # TODO: calculate denominator analytically
     return round(total, 10)
 
@@ -114,7 +115,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
     0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
     18
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
@@ -128,7 +129,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
     0.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
     14.15975
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
@@ -162,7 +163,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     if total and normalized:
         # TODO: calculate denominator analytically
         total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
-        total = round(total, 10)
+        total = 1 - 2 * round(total, 10)
     return total
 
 
@@ -353,7 +354,7 @@ is given as a transformation of the other (called <code>new</code>).</p>
 &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
 0
 &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-1.0
+-1.0
 &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
 18
 &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
@@ -367,7 +368,7 @@ is given as a transformation of the other (called <code>new</code>).</p>
 &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
 0.0
 &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-1.0
+-1.0
 &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
 14.15975
 &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
@@ -418,7 +419,7 @@ This makes the measure dependent on dataset size</dd>
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
     0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
     18
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
@@ -432,7 +433,7 @@ This makes the measure dependent on dataset size</dd>
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
     0.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
     14.15975
     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
@@ -466,7 +467,7 @@ This makes the measure dependent on dataset size</dd>
     if total and normalized:
         # TODO: calculate denominator analytically
         total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
-        total = round(total, 10)
+        total = 1 - 2 * round(total, 10)
     return total</code></pre>
 </details>
 </dd>
@@ -494,7 +495,7 @@ is given as a transformation of the other (called <code>new</code>).</p>
 &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
 0
 &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-1.0
+-1.0
 &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
 4.967
 &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
@@ -540,7 +541,7 @@ This makes the measure dependent on dataset size</dd>
     &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
     0
     &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-    1.0
+    -1.0
     &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
     4.967
     &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
@@ -569,6 +570,7 @@ This makes the measure dependent on dataset size</dd>
         total += cost
     if total and normalized:
         total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
+        total = 1 - 2 * total
     # TODO: calculate denominator analytically
     return round(total, 10)</code></pre>
 </details>

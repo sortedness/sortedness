@@ -1,3 +1,4 @@
+# Just a placeholder for futures examples:
 from numpy import eye
 from numpy.linalg import norm
 from numpy.random import randint, shuffle
