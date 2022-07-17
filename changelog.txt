@@ -1,3 +1,1 @@
-Add README-edit
-Add flag for pvalues
-Add sklearn to gh test
+Adopt correct interval for return values and better term 'sortedness'

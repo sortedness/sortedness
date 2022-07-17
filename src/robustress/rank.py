@@ -58,6 +58,7 @@ def rdist_by_index_lw(indices, normalized=False, **kwargs):
         total += cost
     if total and normalized:
         total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
+        total = 1 - 2 * total
     # TODO: calculate denominator analytically
     return round(total, 10)
 
@@ -134,7 +135,7 @@ def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
     if total and normalized:
         # TODO: calculate denominator analytically
         total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
-        total = round(total, 10)
+        total = 1 - 2 * round(total, 10)
     return total
 
 
