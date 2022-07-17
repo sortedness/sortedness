@@ -21,6 +21,8 @@ pdoc3 = "^0.10.0"
 autoreadme = "^0.2102.20"
 ipython = "^8.4.0"
 scikit-learn = "^1.1.1"
+openml = "^0.12.2"
+pandas = "^1.4.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

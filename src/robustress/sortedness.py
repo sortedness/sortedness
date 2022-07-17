@@ -118,7 +118,7 @@ def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
     return result
 
 
-def sortedness_(X_a, X_b, f="lw", normalized=False, decay=None):  # pragma: no cover
+def sortedness_(X_a, X_b, f="lw", normalized=False, decay=None):
     """Implement a version of sortedness able to use other (non-)standard correlation functions.
 
     >>> import numpy as np

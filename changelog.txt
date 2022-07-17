@@ -1,1 +1,1 @@
-Adopt correct interval for return values and better term 'sortedness'
+Add kruskal
