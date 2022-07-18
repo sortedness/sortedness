@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from lange import ap
 from sympy.utilities.iterables import multiset_permutations
 
-from robustress.rank import rdist_by_index_lw
+from sortedness.rank import rdist_by_index_lw
 
 ds = {}
 for l in ap[5, 6, ..., 8]:

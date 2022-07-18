@@ -30,9 +30,9 @@ echo "----------------- docs/black... -----------------------"
 read -p "press enter"
 rm docs -rf
 poetry run black -l120 src/ tests/
-poetry run pdoc --html --force robustress -o docs
-mv docs/robustress/* docs/
-rm docs/robustress -rf
+poetry run pdoc --html --force sortedness -o docs
+mv docs/sortedness/* docs/
+rm docs/sortedness -rf
 git add docs
 echo "----------------- docs/black done -----------------------"
 echo; echo

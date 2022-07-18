@@ -2,7 +2,7 @@ from numpy import eye
 from numpy.linalg import norm
 from numpy.random import randint, shuffle
 
-from robustress.rank import rdist_by_index_lw, stress
+from sortedness.rank import rdist_by_index_lw, stress
 
 old = 0
 for l in range(3000000000000000):
