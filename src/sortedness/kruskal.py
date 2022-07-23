@@ -2,18 +2,21 @@ from functools import partial
 from itertools import repeat
 from math import nan, sqrt
 
+import numpy as np
 from numpy import eye, argsort
 from numpy.random import shuffle, permutation
 from scipy.stats import spearmanr, weightedtau, kendalltau
 from sklearn.decomposition import PCA
 
-from robustress.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index_iw, euclidean__n_vs_1
+from sortedness.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index_iw, euclidean__n_vs_1
 
 
+# TODO: Stress majorization
 # noinspection PyTypeChecker
-def kruskal(X_a, X_b, return_pvalues=False):
+def kruskal(X, X_, f=euclidean__n_vs_1, return_pvalues=False):
     """
     Kruskal's "Stress Formula 1"
+    default: Euclidean
 
     >>> import numpy as np
     >>> from functools import partial
@@ -35,13 +38,18 @@ def kruskal(X_a, X_b, return_pvalues=False):
     (0.081106807792, 0.347563916162, [0.295668173586, 0.319595012703, 0.235774667847, 0.081106807792, 0.298113447155, 0.180984791932, 0.182406641753, 0.155316001865, 0.200126083035, 0.157911876379, 0.347563916162, 0.256262170166])
     >>> pvalues
     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    >>> kruskal(original, projected)
+    [0.295668173586, 0.319595012703, 0.235774667847, 0.081106807792, 0.298113447155, 0.180984791932, 0.182406641753, 0.155316001865, 0.200126083035, 0.157911876379, 0.347563916162, 0.256262170166]
+    >>> kruskal(original, projected, f=partial(rank_by_distances))
+    [0.350042346394, 0.387553387882, 0.17782168979, 0.062869461346, 0.274041628643, 0.153998100702, 0.235235984448, 0.108893101296, 0.140580389279, 0.108893101296, 0.338562410685, 0.251477845385]
+
 
 
     Parameters
     ----------
-    X_a
+    X
         matrix with an instance by row in a given space (often the original one)
-    X_b
+    X_
         matrix with an instance by row in another given space (often the projected one)
     return_pvalues
         Add dummy p-values to result (NaNs)
@@ -51,12 +59,12 @@ def kruskal(X_a, X_b, return_pvalues=False):
 
     """
     result, pvalues = [], []
-    for a, b in zip(X_a, X_b):
-        d_a = euclidean__n_vs_1(X_a, a)
-        d_b = euclidean__n_vs_1(X_b, b)
+    for a, b in zip(X, X_):
+        d_a = f(X, a)
+        d_b = f(X_, b)
         kru = sqrt(sum((d_a - d_b) ** 2) / sum(d_a ** 2))
         result.append(round(kru, 12))
-
+    result = np.array(result)
     if return_pvalues:
-        return result, [nan for _ in result]
+        return result, np.array([nan for _ in result])
     return result

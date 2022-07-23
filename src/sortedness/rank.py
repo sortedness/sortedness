@@ -180,10 +180,65 @@ def rdist(a, b, normalized=False, f=rdist_by_index_iw):
     return f(argsort(ranks), normalized=normalized)
 
 
-def rank_by_distances(m, instance):
-    distances = euclidean__n_vs_1(m, instance)
-    return rankdata(distances, method="ordinal") - 1
+def rank_by_distances(X, instance, method="average"):
+    distances = euclidean__n_vs_1(X, instance)
+    return rankdata(distances, method=method) - 1
 
 
-def euclidean__n_vs_1(m, instance):
-    return norm(m - instance, axis=1, keepdims=True)
+def euclidean__n_vs_1(X, instance):
+    return norm(X - instance, axis=1, keepdims=True)
+
+
+def differences__n_vs_1(X, instance):
+    """
+    >>> import numpy as np
+    >>> differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
+
+    Parameters
+    ----------
+    X
+    instance
+
+    Returns
+    -------
+    Absolute differences between attributes.
+    """
+    return abs(X - instance)
+
+
+def neighbors(X, k=None):
+    """
+    >>> import numpy as np
+    >>> neighbors(np.array([[1,2],[2,3],[5,4],[2,3],[2,1]]), 3)
+    [array([[0],
+           [1],
+           [3]]), array([[1],
+           [3],
+           [0]]), array([[2],
+           [1],
+           [3]]), array([[1],
+           [3],
+           [0]]), array([[4],
+           [0],
+           [1]])]
+
+    Parameters
+    ----------
+    X
+        Matrix: one point/instance per row
+    k
+        Limit on the number of neighbors
+
+    Returns
+    -------
+    M
+        Matrix: one list of neighbors (instance index) per row
+
+    """
+    result = []
+    for a in X:
+        ds = euclidean__n_vs_1(X, a)
+        idxs = argsort(ds, axis=0)
+        r = idxs if k is None else idxs[:k]
+        result.append(r)
+    return result

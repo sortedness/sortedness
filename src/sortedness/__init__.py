@@ -2,14 +2,15 @@ from functools import partial
 
 from numpy import eye, argsort
 from numpy.random import shuffle, permutation
-from scipy.stats import spearmanr, weightedtau, kendalltau
+from ranky import kemeny_young
+from scipy.stats import spearmanr, weightedtau, kendalltau, rankdata
 from sklearn.decomposition import PCA
 
-from robustress.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index_iw, euclidean__n_vs_1
+from sortedness.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index_iw, euclidean__n_vs_1, differences__n_vs_1
 
 
 # noinspection PyTypeChecker
-def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
+def sortedness(X, X_, f=spearmanr, return_pvalues=False):
     """
     Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
     Functions available as scipy correlation coefficients:
@@ -28,6 +29,15 @@ def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
     >>> min(s), max(s), s
     (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
     >>> projected = PCA(n_components=1).fit_transform(original)
+
+    >>> s = sortedness(original, projected)
+    >>> min(s), max(s), s
+    (0.7342657342657343, 0.9930069930069931, [0.7832167832167832, 0.7342657342657343, 0.9440559440559443, 0.9930069930069931, 0.8671328671328673, 0.9580419580419581, 0.9020979020979022, 0.9790209790209792, 0.965034965034965, 0.9790209790209792, 0.7972027972027973, 0.8881118881118882])
+    >>> from sortedness.kruskal import kruskal
+    >>> s = kruskal(original, projected, f=partial(rank_by_distances))
+    >>> 1-max(s), 1-min(s), [1 - x for x in s]
+    (0.612446612118, 0.937130538654, [0.649957653606, 0.612446612118, 0.82217831021, 0.937130538654, 0.7259583713569999, 0.846001899298, 0.764764015552, 0.8911068987040001, 0.859419610721, 0.8911068987040001, 0.661437589315, 0.748522154615])
+
     >>> s, pvalues = sortedness(original, projected, f=kendalltau, return_pvalues=True)
     >>> min(s), max(s), s
     (0.606060606060606, 0.9696969696969696, [0.6363636363636362, 0.606060606060606, 0.8484848484848484, 0.9696969696969696, 0.7575757575757575, 0.8787878787878787, 0.7878787878787877, 0.9393939393939392, 0.8787878787878787, 0.909090909090909, 0.6666666666666666, 0.7878787878787877])
@@ -86,9 +96,9 @@ def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
 
     Parameters
     ----------
-    X_a
+    X
         matrix with an instance by row in a given space (often the original one)
-    X_b
+    X_
         matrix with an instance by row in another given space (often the projected one)
     f
         Distance criteria:
@@ -109,16 +119,17 @@ def sortedness(X_a, X_b, f=spearmanr, return_pvalues=False):
         list of sortedness values (or tuples that also include pvalues)
     """
     result, pvalues = [], []
-    for a, b in zip(X_a, X_b):
-        corr, pvalue = f(euclidean__n_vs_1(X_a, a), euclidean__n_vs_1(X_b, b))
+    for a, b in zip(X, X_):
+        corr, pvalue = f(euclidean__n_vs_1(X, a), euclidean__n_vs_1(X_, b))
         result.append(corr)
         pvalues.append(pvalue)
     if return_pvalues:
         return result, pvalues
+        # return list(zip(result, pvalues))
     return result
 
 
-def sortedness_(X_a, X_b, f="lw", normalized=False, decay=None):
+def sortedness_(X, X_, f="lw", normalized=False, decay=None):
     """Implement a version of sortedness able to use other (non-)standard correlation functions.
 
     >>> import numpy as np
@@ -292,9 +303,9 @@ def sortedness_(X_a, X_b, f="lw", normalized=False, decay=None):
 
     Parameters
     ----------
-    X_a
+    X
         matrix with an instance by row in a given space (often the original one)
-    X_b
+    X_
         matrix with an instance by row in another given space (often the projected one)
     normalized
         Whether to normalize result to [0; 1] interval
@@ -320,10 +331,104 @@ def sortedness_(X_a, X_b, f="lw", normalized=False, decay=None):
         f = rdist_by_index_lw
     else:  # pragma: no cover
         raise Exception(f"Unknown f {f}")
-    for a, b in zip(X_a, X_b):
-        ranks_ma = rank_by_distances(X_a, a)
-        mb_ = X_b[argsort(ranks_ma)]  # Sort mb by using ma ranks.
+    for a, b in zip(X, X_):
+        ranks_ma = rank_by_distances(X, a)
+        mb_ = X_[argsort(ranks_ma)]  # Sort mb by using ma ranks.
         ranks = rank_by_distances(mb_, b)
         d = f(argsort(ranks), normalized=normalized, **kwargs)
         result.append(d)
+    return result
+
+
+def asortedness(X, X_, f=spearmanr, return_pvalues=False):
+    """
+    Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+     value for each point
+    Functions available as scipy correlation coefficients:
+        ρ-sortedness (Spearman),
+        𝜏-sortedness (Kendall's 𝜏),
+        w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)
+
+    >>> import numpy as np
+    >>> from functools import partial
+    >>> from scipy.stats import spearmanr, weightedtau
+    >>> mean = (1, 2)
+    >>> cov = eye(2)
+    >>> rng = np.random.default_rng(seed=0)
+    >>> original = rng.multivariate_normal(mean, cov, size=12)
+    >>> s = asortedness(original, original)
+    >>> min(s), max(s), s
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    >>> projected = PCA(n_components=1).fit_transform(original)
+    >>> s = asortedness(original, projected)
+    >>> min(s), max(s), s
+    (0.7342657342657343, 0.9930069930069931, [0.7832167832167832, 0.7342657342657343, 0.9440559440559443, 0.9930069930069931, 0.8671328671328673, 0.9580419580419581, 0.9020979020979022, 0.9790209790209792, 0.965034965034965, 0.9790209790209792, 0.7972027972027973, 0.8881118881118882])
+    >>> s, pvalues = asortedness(original, projected, f=kendalltau, return_pvalues=True)
+    >>> min(s), max(s), s
+    (0.606060606060606, 0.9696969696969696, [0.6363636363636362, 0.606060606060606, 0.8484848484848484, 0.9696969696969696, 0.7575757575757575, 0.8787878787878787, 0.7878787878787877, 0.9393939393939392, 0.8787878787878787, 0.909090909090909, 0.6666666666666666, 0.7878787878787877])
+    >>> pvalues
+    [0.003181646992410881, 0.005380307706696595, 1.6342325370103148e-05, 5.010421677088344e-08, 0.00024002425044091711, 5.319397680508792e-06, 0.00010742344075677409, 3.2150205761316875e-07, 5.319397680508792e-06, 1.4655483405483405e-06, 0.0018032758136924804, 0.00010742344075677409]
+    >>> s = asortedness(original, projected, f=weightedtau)
+    >>> min(s), max(s), s
+    (0.7605489568614852, 0.9876309273316981, [0.7866039053888533, 0.7605489568614852, 0.8842608200323177, 0.9876309273316981, 0.8133479034189326, 0.9364890814188078, 0.8766929005707909, 0.9737157205798583, 0.8840515688029666, 0.9231117982818149, 0.7883719725944298, 0.8196254402994617])
+    >>> projected = PCA(n_components=2).fit_transform(original)
+    >>> s = asortedness(original, projected)
+    >>> min(s), max(s), s
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    >>> _, pvalues = asortedness(original, projected, return_pvalues=True)
+    >>> pvalues
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    >>> np.random.seed(0)
+    >>> projected = permutation(original)
+    >>> s = asortedness(original, projected)
+    >>> min(s), max(s), s
+    (-0.39860139860139865, 0.49650349650349657, [0.39860139860139865, -0.16783216783216784, 0.46153846153846156, 0.10489510489510491, 0.18881118881118883, 0.49650349650349657, 0.1258741258741259, 0.43356643356643365, -0.39860139860139865, 0.16783216783216784, 0.034965034965034975, 0.1258741258741259])
+
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+        callable    =   scipy correlation functions:
+            weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the "opposite" of the original ordering)
+    return_pvalues
+        For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
+        This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+        The null hypothesis is that the projection is random, i.e., asortedness = 0.5.
+
+    Returns
+    -------
+        list of asortedness values (or tuples that also include pvalues)
+    """
+    result, pvalues = [], []
+    for a, b in zip(X, X_):
+        diffs_a = differences__n_vs_1(X, a)
+        diffs_b = differences__n_vs_1(X_, b)
+        ranks_a = rankdata(diffs_a, axis=0)
+        ranks_b = rankdata(diffs_b, axis=0)
+        print("_________________________")
+        print(diffs_a, diffs_b, sep="\n")
+        print("------------")
+        print(ranks_a, ranks_b, sep="\n")
+        print("+++++++++++++++")
+        closest_ranking_a = kemeny_young(ranks_a, verbose=False)  # KY default: kendall's tau
+        closest_ranking_b = kemeny_young(ranks_b, verbose=False)  # KY default: kendall's tau
+        print(closest_ranking_a)
+        print(closest_ranking_b)
+        corr, pvalue = f(closest_ranking_a, closest_ranking_b)
+        print(corr)
+        print()
+        result.append(corr)
+        pvalues.append(pvalue)
+    if return_pvalues:
+        return result, pvalues
+        # return list(zip(result, pvalues))
     return result
