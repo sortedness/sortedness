@@ -27,13 +27,13 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install from PyPI
-pip install robustress
+pip install sortedness
 ```
 
 ### from source
 ```bash
 git clone https://github.com/davips/robustress
-cd robustress
+cd sortedness
 poetry install
 ```
 
@@ -50,7 +50,7 @@ from numpy.linalg import norm
 from numpy.random import randint, shuffle
 from sympy.utilities.iterables import multiset_permutations
 
-from robustress.rank import rdist_by_index_lw
+from sortedness.rank import rdist_by_index_lw
 
 old = 0
 for l in range(1, 10):

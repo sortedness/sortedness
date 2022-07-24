@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "robustress"
-version = "0.220716.1"
+name = "sortedness"
+version = "0.220723.0"
 description = ""
 authors = ["davips <dpsabc@gmail.com>"]
 
@@ -12,6 +12,7 @@ sympy = "^1.10.1"
 lange = "^0.2101.24"
 matplotlib = "^3.5.2"
 PyQt5 = "^5.15.7"
+ranky = "^0.2.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -23,6 +24,8 @@ ipython = "^8.4.0"
 scikit-learn = "^1.1.1"
 openml = "^0.12.2"
 pandas = "^1.4.3"
+hoshmap = "^0.220221.1"
+dash = "^2.6.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
