@@ -28,14 +28,17 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
+from shelchemy.core import sopen
+
+from sortedness.config import remote_cache_uri, local_cache_uri
 
 from hoshmap import idict
 from lange import ap
 from sortedness.rank import neighbors
 
-did = "1o4l90g3pWqLgR.YnzsmsbBtGPNgETJ2BOToFnp8"
-with shelve.open("/tmp/idict-cache-shelve.db") as db:
-    d = idict(did, db)
+did = "KHQLW5GBeVGVUk4UZUEGJVLrBN3TLlQjnqPNrnWV"
+with sopen(local_cache_uri) as local, sopen(remote_cache_uri) as remote:
+    d = idict(did, [local, remote])
     d.evaluate()
 n = 30
 customdata = neighbors(d.X, n)[:n]

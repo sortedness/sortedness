@@ -1,0 +1,1944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>sortedness.local API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>sortedness.local</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#  Copyright (c) 2022. Davi Pereira dos Santos
+#  This file is part of the sortedness project.
+#  Please respect the license - more about this in the section (*) below.
+#
+#  sortedness is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  sortedness is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with sortedness.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+#
+#  (*) Removing authorship by any means, e.g. by distribution of derived
+#  works or verbatim, obfuscated, compiled or rewritten versions of any
+#  part of this work is illegal and it is unethical regarding the effort and
+#  time spent here.
+#
+
+from functools import partial
+from itertools import count
+
+import numpy as np
+from numpy import eye, argsort
+from numpy.linalg import norm
+from numpy.random import shuffle, permutation
+from scipy.stats import spearmanr, weightedtau, kendalltau, rankdata
+from sklearn.decomposition import PCA
+
+from sortedness.rank import (
+    rank_by_distances,
+    rdist_by_index_lw,
+    rdist_by_index_iw,
+    euclidean__n_vs_1,
+    differences__n_vs_1,
+)
+
+
+def ushaped_decay_f(n):
+    def f(i):
+        x = (n - i) / n
+        return 4 * x**2 - 4 * x + 1
+
+    return f
+
+
+# noinspection PyTypeChecker
+def sortedness(X, X_, f=spearmanr, return_pvalues=False):
+    &#34;&#34;&#34;
+     Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
+     Functions available as scipy correlation coefficients:
+         ρ-sortedness (Spearman),
+         𝜏-sortedness (Kendall&#39;s 𝜏),
+         w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+     &gt;&gt;&gt; import numpy as np
+     &gt;&gt;&gt; from functools import partial
+     &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+     &gt;&gt;&gt; mean = (1, 2)
+     &gt;&gt;&gt; cov = eye(2)
+     &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+     &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+     &gt;&gt;&gt; projected2 = PCA(n_components=2).fit_transform(original)
+     &gt;&gt;&gt; projected1 = PCA(n_components=1).fit_transform(original)
+     &gt;&gt;&gt; np.random.seed(0)
+     &gt;&gt;&gt; projectedrnd = permutation(original)
+
+     &gt;&gt;&gt; s = sortedness(original, original)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected2)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+            0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
+            0.7972028 , 0.88811189]))
+     &gt;&gt;&gt; s = sortedness(original, projectedrnd)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
+             0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
+             0.03496503,  0.12587413]))
+
+     &gt;&gt;&gt; from sortedness.kruskal import kruskal
+     &gt;&gt;&gt; s = kruskal(original, original, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     &gt;&gt;&gt; s = kruskal(original, projected2, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     &gt;&gt;&gt; s = kruskal(original, projected1, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+            0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+            0.33856241, 0.25147785]))
+    &gt;&gt;&gt; s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+            0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
+            0.73854895, 0.70290195]))
+
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=kendalltau, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+            0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
+            0.66666667, 0.78787879]))
+    &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+             0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+             0.        ,  0.15151515]))
+
+     &gt;&gt;&gt; wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+            0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+            0.88462681, 0.88907089]))
+    &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+             0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+            -0.25956322,  0.20448257]))
+
+     &gt;&gt;&gt; wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+            0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+            0.84059776, 0.89290162]))
+     &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
+             0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
+            -0.05230386,  0.25653798]))
+
+
+     Parameters
+     ----------
+     X
+         matrix with an instance by row in a given space (often the original one)
+     X_
+         matrix with an instance by row in another given space (often the projected one)
+     f
+         Distance criteria:
+         str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+         callable    =   scipy correlation functions:
+             weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+             Meaning of resulting values for correlation-based functions:
+                 1.0:    perfect projection          (regarding order of examples)
+                 0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+                -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+     return_pvalues
+         For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+         This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+         The null hypothesis is that the projection is random, i.e., sortedness = 0.5.
+
+     Returns
+     -------
+         list of sortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    result, pvalues = [], []
+    for a, b in zip(X, X_):
+        corr, pvalue = f(euclidean__n_vs_1(X, a), euclidean__n_vs_1(X_, b))
+        result.append(round(corr, 12))
+        pvalues.append(round(pvalue, 12))
+    result = np.array(result)
+    if return_pvalues:
+        return result, pvalues
+        # return list(zip(result, pvalues))
+    return result
+
+
+# Still non-reliable proposal attempts: #####################################
+
+
+def sortedness_(X, X_, f=&#34;lw&#34;, normalized=False, decay=None):
+    &#34;&#34;&#34;Implement a version of sortedness able to use other (non-)standard correlation functions.
+
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;lw&#34;)
+    [0.6666666667, 0, 0.6666666667]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    [0.2, 0, 0.2]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;lw&#34;)
+    &gt;&gt;&gt; s
+    [3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.3780041439, 0.9172423676, [0.3780041439, 0.4714020433, 0.7752407793, 0.9172423676, 0.7230783929, 0.7182299659, 0.6492652722, 0.8510362617, 0.8067555545, 0.8319769282, 0.3980904841, 0.7632868991])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+
+    &gt;&gt;&gt; s = sortedness_(original, original)
+    &gt;&gt;&gt; s
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.5, 3.7579365079, [3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302])
+
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    normalized
+        Whether to normalize result to [0; 1] interval
+        If True, divide value by the longest possible distance.
+        This makes the measure dependent on the dataset size
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+    decay
+        Decay factor to put more or less weight on near neigbors
+        `decay=0` means uniform weights
+        `decay=1` is meaningless as it will always result in zero stress
+
+    Returns
+    -------
+        list of sortedness_ values
+    &#34;&#34;&#34;
+    result = []
+    kwargs = {} if decay is None else {&#34;decay&#34;: decay}
+    if f == &#34;iw&#34;:
+        f = rdist_by_index_iw
+    elif f == &#34;lw&#34;:
+        f = rdist_by_index_lw
+    else:  # pragma: no cover
+        raise Exception(f&#34;Unknown f {f}&#34;)
+    for a, b in zip(X, X_):
+        ranks_ma = rank_by_distances(X, a)
+        mb_ = X_[argsort(ranks_ma)]  # Sort mb by using ma ranks.
+        ranks = rank_by_distances(mb_, b)
+        d = f(argsort(ranks), normalized=normalized, **kwargs)
+        result.append(d)
+    return result
+
+
+def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=False):  # pragma: no cover
+    &#34;&#34;&#34;
+    Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+     value for each point
+    Functions available as scipy correlation coefficients:
+        ρ-sortedness (Spearman),
+        𝜏-sortedness (Kendall&#39;s 𝜏),
+        w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from functools import partial
+    &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; s = asortedness_(original, original)
+    &gt;&gt;&gt; min(s), max(s), s
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.605955395113, 0.972027972028, [0.757899402288, 0.605955395113, 0.944055944056, 0.965034965035, 0.916083916084, 0.928197570548, 0.909090909091, 0.972027972028, 0.951048951049, 0.958041958042, 0.748251748252, 0.944055944056])
+    &gt;&gt;&gt; s, pvalues = asortedness_(original, projected, f=kendalltau, return_pvalues=True)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.442760992001, 0.909090909091, [0.553911709407, 0.442760992001, 0.848484848485, 0.878787878788, 0.818181818182, 0.809183881932, 0.818181818182, 0.909090909091, 0.848484848485, 0.848484848485, 0.636363636364, 0.818181818182])
+    &gt;&gt;&gt; pvalues
+    [0.01312710939157066, 0.04622906055239071, 1.6342325370103148e-05, 5.319397680508792e-06, 4.4129288920955584e-05, 0.00026956263420192036, 4.4129288920955584e-05, 1.4655483405483405e-06, 1.6342325370103148e-05, 1.6342325370103148e-05, 0.003181646992410881, 4.4129288920955584e-05]
+    &gt;&gt;&gt; s = asortedness_(original, projected, f=weightedtau)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.510825422491, 0.952232594366, [0.55533349733, 0.510825422491, 0.839690308181, 0.769474895665, 0.897976286974, 0.834349193877, 0.90387231025, 0.952232594366, 0.894060752607, 0.757105822997, 0.793982653284, 0.821971590447])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s   # doctest: +SKIP
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    &gt;&gt;&gt; _, pvalues = asortedness_(original, projected, return_pvalues=True)
+    &gt;&gt;&gt; pvalues   # doctest: +SKIP
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.370629370629, 0.468531468531, [0.214036405276, 0.20665530816, 0.468531468531, 0.104895104895, 0.181818181818, 0.462347469103, 0.028021058734, 0.356643356643, -0.370629370629, 0.20979020979, 0.017543967646, 0.43432641037])
+
+    Parameters
+    ----------
+    use_kemeny_young
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+        callable    =   scipy correlation functions:
+            weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+    return_pvalues
+        For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+        This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+        The null hypothesis is that the projection is random, i.e., asortedness = 0.5.
+
+    Returns
+    -------
+        list of asortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    result, pvalues = [], []
+    for a, b in zip(X, X_):
+        diffs_a = differences__n_vs_1(X, a)
+        diffs_b = differences__n_vs_1(X_, b)
+        ranks_a = rankdata(diffs_a, axis=0)
+        ranks_b = rankdata(diffs_b, axis=0)
+        if use_kemeny_young:  # closest ranking
+            from ranky import kemeny_young
+
+            evaluations_a = kemeny_young(ranks_a, verbose=False)  # KY default: kendall&#39;s tau
+            evaluations_b = kemeny_young(ranks_b, verbose=False)
+        else:  # Manhattan distance
+            evaluations_a = norm(ranks_a, axis=1, keepdims=True)  # TODO: afetado por rotacao; propor outro
+            evaluations_b = norm(ranks_b, axis=1, keepdims=True)
+        corr, pvalue = f(evaluations_a, evaluations_b)
+        result.append(round(corr, 12))
+        pvalues.append(pvalue)
+    if return_pvalues:
+        return result, pvalues
+        # return list(zip(result, pvalues))
+    return result
+
+
+def asortedness__(X, X_, f=spearmanr, return_pvalues=False):  # pragma: no cover
+    &#34;&#34;&#34;
+    Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+     value for each point
+    Functions available as scipy correlation coefficients:
+        ρ-sortedness (Spearman),
+        𝜏-sortedness (Kendall&#39;s 𝜏),
+        w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+        callable    =   scipy correlation functions:
+            weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+    return_pvalues
+        For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+        This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+        The null hypothesis is that the projection is random, i.e., asortedness = 0.5.
+
+    Returns
+    -------
+        list of asortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    #  &gt;&gt;&gt; import numpy as np
+    #  &gt;&gt;&gt; from functools import partial
+    #  &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+    #  &gt;&gt;&gt; mean = (1, 2)
+    #  &gt;&gt;&gt; cov = eye(2)
+    #  &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    #  &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    #  &gt;&gt;&gt; projected2 = PCA(n_components=2).fit_transform(original)
+    #  &gt;&gt;&gt; projected1 = PCA(n_components=1).fit_transform(original)
+    #  &gt;&gt;&gt; np.random.seed(0)
+    #  &gt;&gt;&gt; projectedrnd = permutation(original)
+    #
+    #  &gt;&gt;&gt; s = asortedness__(original, original)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+    #         0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
+    #         0.7972028 , 0.88811189]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projectedrnd)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
+    #          0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
+    #          0.03496503,  0.12587413]))
+    #
+    #  &gt;&gt;&gt; from sortedness.kruskal import kruskal
+    #  &gt;&gt;&gt; s = kruskal(original, original, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    #  &gt;&gt;&gt; s = kruskal(original, projected2, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    #  &gt;&gt;&gt; s = kruskal(original, projected1, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+    #         0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+    #         0.33856241, 0.25147785]))
+    # &gt;&gt;&gt; s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+    #         0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
+    #         0.73854895, 0.70290195]))
+    #
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=kendalltau, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+    #         0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
+    #         0.66666667, 0.78787879]))
+    # &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+    #          0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+    #          0.        ,  0.15151515]))
+    #
+    #  &gt;&gt;&gt; wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=wf, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+    #         0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+    #         0.88462681, 0.88907089]))
+    # &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+    #          0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+    #         -0.25956322,  0.20448257]))
+    #
+    #  &gt;&gt;&gt; wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=wf, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+    #         0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+    #         0.84059776, 0.89290162]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
+    #          0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
+    #         -0.05230386,  0.25653798]))
+
+    X = rankdata(X, axis=0)
+    X_ = rankdata(X_, axis=0)
+    return sortedness(X, X_, f, return_pvalues)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="sortedness.local.asortedness_"><code class="name flex">
+<span>def <span class="ident">asortedness_</span></span>(<span>X, X_, f=&lt;function spearmanr&gt;, return_pvalues=False, use_kemeny_young=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+value for each point
+Functions available as scipy correlation coefficients:
+ρ-sortedness (Spearman),
+𝜏-sortedness (Kendall's 𝜏),
+w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; from functools import partial
+&gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+&gt;&gt;&gt; mean = (1, 2)
+&gt;&gt;&gt; cov = eye(2)
+&gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+&gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+&gt;&gt;&gt; s = asortedness_(original, original)
+&gt;&gt;&gt; min(s), max(s), s
+(1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = asortedness_(original, projected)
+&gt;&gt;&gt; min(s), max(s), s
+(0.605955395113, 0.972027972028, [0.757899402288, 0.605955395113, 0.944055944056, 0.965034965035, 0.916083916084, 0.928197570548, 0.909090909091, 0.972027972028, 0.951048951049, 0.958041958042, 0.748251748252, 0.944055944056])
+&gt;&gt;&gt; s, pvalues = asortedness_(original, projected, f=kendalltau, return_pvalues=True)
+&gt;&gt;&gt; min(s), max(s), s
+(0.442760992001, 0.909090909091, [0.553911709407, 0.442760992001, 0.848484848485, 0.878787878788, 0.818181818182, 0.809183881932, 0.818181818182, 0.909090909091, 0.848484848485, 0.848484848485, 0.636363636364, 0.818181818182])
+&gt;&gt;&gt; pvalues
+[0.01312710939157066, 0.04622906055239071, 1.6342325370103148e-05, 5.319397680508792e-06, 4.4129288920955584e-05, 0.00026956263420192036, 4.4129288920955584e-05, 1.4655483405483405e-06, 1.6342325370103148e-05, 1.6342325370103148e-05, 0.003181646992410881, 4.4129288920955584e-05]
+&gt;&gt;&gt; s = asortedness_(original, projected, f=weightedtau)
+&gt;&gt;&gt; min(s), max(s), s
+(0.510825422491, 0.952232594366, [0.55533349733, 0.510825422491, 0.839690308181, 0.769474895665, 0.897976286974, 0.834349193877, 0.90387231025, 0.952232594366, 0.894060752607, 0.757105822997, 0.793982653284, 0.821971590447])
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = asortedness_(original, projected)
+&gt;&gt;&gt; min(s), max(s), s   # doctest: +SKIP
+(1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+&gt;&gt;&gt; _, pvalues = asortedness_(original, projected, return_pvalues=True)
+&gt;&gt;&gt; pvalues   # doctest: +SKIP
+[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+&gt;&gt;&gt; np.random.seed(0)
+&gt;&gt;&gt; projected = permutation(original)
+&gt;&gt;&gt; s = asortedness_(original, projected)
+&gt;&gt;&gt; min(s), max(s), s
+(-0.370629370629, 0.468531468531, [0.214036405276, 0.20665530816, 0.468531468531, 0.104895104895, 0.181818181818, 0.462347469103, 0.028021058734, 0.356643356643, -0.370629370629, 0.20979020979, 0.017543967646, 0.43432641037])
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>use_kemeny_young</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>X</code></strong></dt>
+<dd>matrix with an instance by row in a given space (often the original one)</dd>
+<dt><strong><code>X_</code></strong></dt>
+<dd>matrix with an instance by row in another given space (often the projected one)</dd>
+<dt><strong><code>f</code></strong></dt>
+<dd>Distance criteria:
+str
+=
+any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+callable
+=
+scipy correlation functions:
+weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+Meaning of resulting values for correlation-based functions:
+1.0:
+perfect projection
+(regarding order of examples)
+0.0:
+random projection
+(enough distortion to have no information left when considering the overall ordering)
+-1.0:
+worst possible projection
+(mostly theoretical; it represents the "opposite" of the original ordering)</dd>
+<dt><strong><code>return_pvalues</code></strong></dt>
+<dd>For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
+This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+The null hypothesis is that the projection is random, i.e., asortedness = 0.5.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<pre><code>list of asortedness values (or tuples that also include pvalues)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=False):  # pragma: no cover
+    &#34;&#34;&#34;
+    Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+     value for each point
+    Functions available as scipy correlation coefficients:
+        ρ-sortedness (Spearman),
+        𝜏-sortedness (Kendall&#39;s 𝜏),
+        w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from functools import partial
+    &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; s = asortedness_(original, original)
+    &gt;&gt;&gt; min(s), max(s), s
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.605955395113, 0.972027972028, [0.757899402288, 0.605955395113, 0.944055944056, 0.965034965035, 0.916083916084, 0.928197570548, 0.909090909091, 0.972027972028, 0.951048951049, 0.958041958042, 0.748251748252, 0.944055944056])
+    &gt;&gt;&gt; s, pvalues = asortedness_(original, projected, f=kendalltau, return_pvalues=True)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.442760992001, 0.909090909091, [0.553911709407, 0.442760992001, 0.848484848485, 0.878787878788, 0.818181818182, 0.809183881932, 0.818181818182, 0.909090909091, 0.848484848485, 0.848484848485, 0.636363636364, 0.818181818182])
+    &gt;&gt;&gt; pvalues
+    [0.01312710939157066, 0.04622906055239071, 1.6342325370103148e-05, 5.319397680508792e-06, 4.4129288920955584e-05, 0.00026956263420192036, 4.4129288920955584e-05, 1.4655483405483405e-06, 1.6342325370103148e-05, 1.6342325370103148e-05, 0.003181646992410881, 4.4129288920955584e-05]
+    &gt;&gt;&gt; s = asortedness_(original, projected, f=weightedtau)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.510825422491, 0.952232594366, [0.55533349733, 0.510825422491, 0.839690308181, 0.769474895665, 0.897976286974, 0.834349193877, 0.90387231025, 0.952232594366, 0.894060752607, 0.757105822997, 0.793982653284, 0.821971590447])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s   # doctest: +SKIP
+    (1.0, 1.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    &gt;&gt;&gt; _, pvalues = asortedness_(original, projected, return_pvalues=True)
+    &gt;&gt;&gt; pvalues   # doctest: +SKIP
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = asortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.370629370629, 0.468531468531, [0.214036405276, 0.20665530816, 0.468531468531, 0.104895104895, 0.181818181818, 0.462347469103, 0.028021058734, 0.356643356643, -0.370629370629, 0.20979020979, 0.017543967646, 0.43432641037])
+
+    Parameters
+    ----------
+    use_kemeny_young
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+        callable    =   scipy correlation functions:
+            weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+    return_pvalues
+        For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+        This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+        The null hypothesis is that the projection is random, i.e., asortedness = 0.5.
+
+    Returns
+    -------
+        list of asortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    result, pvalues = [], []
+    for a, b in zip(X, X_):
+        diffs_a = differences__n_vs_1(X, a)
+        diffs_b = differences__n_vs_1(X_, b)
+        ranks_a = rankdata(diffs_a, axis=0)
+        ranks_b = rankdata(diffs_b, axis=0)
+        if use_kemeny_young:  # closest ranking
+            from ranky import kemeny_young
+
+            evaluations_a = kemeny_young(ranks_a, verbose=False)  # KY default: kendall&#39;s tau
+            evaluations_b = kemeny_young(ranks_b, verbose=False)
+        else:  # Manhattan distance
+            evaluations_a = norm(ranks_a, axis=1, keepdims=True)  # TODO: afetado por rotacao; propor outro
+            evaluations_b = norm(ranks_b, axis=1, keepdims=True)
+        corr, pvalue = f(evaluations_a, evaluations_b)
+        result.append(round(corr, 12))
+        pvalues.append(pvalue)
+    if return_pvalues:
+        return result, pvalues
+        # return list(zip(result, pvalues))
+    return result</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.asortedness__"><code class="name flex">
+<span>def <span class="ident">asortedness__</span></span>(<span>X, X_, f=&lt;function spearmanr&gt;, return_pvalues=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+value for each point
+Functions available as scipy correlation coefficients:
+ρ-sortedness (Spearman),
+𝜏-sortedness (Kendall's 𝜏),
+w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>X</code></strong></dt>
+<dd>matrix with an instance by row in a given space (often the original one)</dd>
+<dt><strong><code>X_</code></strong></dt>
+<dd>matrix with an instance by row in another given space (often the projected one)</dd>
+<dt><strong><code>f</code></strong></dt>
+<dd>Distance criteria:
+str
+=
+any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+callable
+=
+scipy correlation functions:
+weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+Meaning of resulting values for correlation-based functions:
+1.0:
+perfect projection
+(regarding order of examples)
+0.0:
+random projection
+(enough distortion to have no information left when considering the overall ordering)
+-1.0:
+worst possible projection
+(mostly theoretical; it represents the "opposite" of the original ordering)</dd>
+<dt><strong><code>return_pvalues</code></strong></dt>
+<dd>For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
+This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+The null hypothesis is that the projection is random, i.e., asortedness = 0.5.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<pre><code>list of asortedness values (or tuples that also include pvalues)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def asortedness__(X, X_, f=spearmanr, return_pvalues=False):  # pragma: no cover
+    &#34;&#34;&#34;
+    Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
+     value for each point
+    Functions available as scipy correlation coefficients:
+        ρ-sortedness (Spearman),
+        𝜏-sortedness (Kendall&#39;s 𝜏),
+        w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+        callable    =   scipy correlation functions:
+            weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+    return_pvalues
+        For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+        This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+        The null hypothesis is that the projection is random, i.e., asortedness = 0.5.
+
+    Returns
+    -------
+        list of asortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    #  &gt;&gt;&gt; import numpy as np
+    #  &gt;&gt;&gt; from functools import partial
+    #  &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+    #  &gt;&gt;&gt; mean = (1, 2)
+    #  &gt;&gt;&gt; cov = eye(2)
+    #  &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    #  &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    #  &gt;&gt;&gt; projected2 = PCA(n_components=2).fit_transform(original)
+    #  &gt;&gt;&gt; projected1 = PCA(n_components=1).fit_transform(original)
+    #  &gt;&gt;&gt; np.random.seed(0)
+    #  &gt;&gt;&gt; projectedrnd = permutation(original)
+    #
+    #  &gt;&gt;&gt; s = asortedness__(original, original)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+    #         0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
+    #         0.7972028 , 0.88811189]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projectedrnd)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
+    #          0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
+    #          0.03496503,  0.12587413]))
+    #
+    #  &gt;&gt;&gt; from sortedness.kruskal import kruskal
+    #  &gt;&gt;&gt; s = kruskal(original, original, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    #  &gt;&gt;&gt; s = kruskal(original, projected2, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    #  &gt;&gt;&gt; s = kruskal(original, projected1, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+    #         0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+    #         0.33856241, 0.25147785]))
+    # &gt;&gt;&gt; s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+    #         0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
+    #         0.73854895, 0.70290195]))
+    #
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=kendalltau, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+    #         0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
+    #         0.66666667, 0.78787879]))
+    # &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=kendalltau)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+    #          0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+    #          0.        ,  0.15151515]))
+    #
+    #  &gt;&gt;&gt; wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=wf, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+    #         0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+    #         0.88462681, 0.88907089]))
+    # &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+    #          0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+    #         -0.25956322,  0.20448257]))
+    #
+    #  &gt;&gt;&gt; wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+    #  &gt;&gt;&gt; s, pvalues = asortedness__(original, original, f=wf, return_pvalues=True)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; pvalues
+    #  [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    #  &gt;&gt;&gt; s = asortedness__(original, projected2, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projected1, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+    #         0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+    #         0.84059776, 0.89290162]))
+    #  &gt;&gt;&gt; s = asortedness__(original, projectedrnd, f=wf)
+    #  &gt;&gt;&gt; min(s), max(s), s
+    #  (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
+    #          0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
+    #         -0.05230386,  0.25653798]))
+
+    X = rankdata(X, axis=0)
+    X_ = rankdata(X_, axis=0)
+    return sortedness(X, X_, f, return_pvalues)</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.permutation"><code class="name flex">
+<span>def <span class="ident">permutation</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly permute a sequence, or return a permuted range.</p>
+<p>If <code>x</code> is a multi-dimensional array, it is only shuffled along its
+first index.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>New code should use the <code><a title="sortedness.local.permutation" href="#sortedness.local.permutation">RandomState.permutation()</a></code> method of a <code>default_rng()</code>
+instance instead; please see the :ref:<code>random-quick-start</code>.</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>int</code> or <code>array_like</code></dt>
+<dd>If <code>x</code> is an integer, randomly permute <code>np.arange(x)</code>.
+If <code>x</code> is an array, make a copy and shuffle the elements
+randomly.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>out</code></strong> :&ensp;<code>ndarray</code></dt>
+<dd>Permuted sequence or array range.</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<dl>
+<dt><code>random.Generator.permutation</code></dt>
+<dd>which should be used for new code.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.permutation(10)
+array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6]) # random
+</code></pre>
+<pre><code class="language-python-repl">&gt;&gt;&gt; np.random.permutation([1, 4, 9, 12, 15])
+array([15,  1,  9,  4, 12]) # random
+</code></pre>
+<pre><code class="language-python-repl">&gt;&gt;&gt; arr = np.arange(9).reshape((3, 3))
+&gt;&gt;&gt; np.random.permutation(arr)
+array([[6, 7, 8], # random
+       [0, 1, 2],
+       [3, 4, 5]])
+</code></pre></div>
+</dd>
+<dt id="sortedness.local.shuffle"><code class="name flex">
+<span>def <span class="ident">shuffle</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Modify a sequence in-place by shuffling its contents.</p>
+<p>This function only shuffles the array along the first axis of a
+multi-dimensional array. The order of sub-arrays is changed but
+their contents remains the same.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>New code should use the <code><a title="sortedness.local.shuffle" href="#sortedness.local.shuffle">RandomState.shuffle()</a></code> method of a <code>default_rng()</code>
+instance instead; please see the :ref:<code>random-quick-start</code>.</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>ndarray</code> or <code>MutableSequence</code></dt>
+<dd>The array, list or mutable sequence to be shuffled.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>None</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<dl>
+<dt><code>random.Generator.shuffle</code></dt>
+<dd>which should be used for new code.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; arr = np.arange(10)
+&gt;&gt;&gt; np.random.shuffle(arr)
+&gt;&gt;&gt; arr
+[1 7 5 2 9 4 3 6 0 8] # random
+</code></pre>
+<p>Multi-dimensional arrays are only shuffled along the first axis:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; arr = np.arange(9).reshape((3, 3))
+&gt;&gt;&gt; np.random.shuffle(arr)
+&gt;&gt;&gt; arr
+array([[3, 4, 5], # random
+       [6, 7, 8],
+       [0, 1, 2]])
+</code></pre></div>
+</dd>
+<dt id="sortedness.local.sortedness"><code class="name flex">
+<span>def <span class="ident">sortedness</span></span>(<span>X, X_, f=&lt;function spearmanr&gt;, return_pvalues=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
+Functions available as scipy correlation coefficients:
+ρ-sortedness (Spearman),
+𝜏-sortedness (Kendall's 𝜏),
+w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>import numpy as np
+from functools import partial
+from scipy.stats import spearmanr, weightedtau
+mean = (1, 2)
+cov = eye(2)
+rng = np.random.default_rng(seed=0)
+original = rng.multivariate_normal(mean, cov, size=12)
+projected2 = PCA(n_components=2).fit_transform(original)
+projected1 = PCA(n_components=1).fit_transform(original)
+np.random.seed(0)
+projectedrnd = permutation(original)</p>
+<p>s = sortedness(original, original)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+s = sortedness(original, projected2)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+s = sortedness(original, projected1)
+min(s), max(s), s
+(0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
+0.7972028 , 0.88811189]))
+s = sortedness(original, projectedrnd)
+min(s), max(s), s
+(-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,
+0.46153846,
+0.1048951 ,
+0.18881119,
+0.4965035 ,
+0.12587413,
+0.43356643, -0.3986014 ,
+0.16783217,
+0.03496503,
+0.12587413]))</p>
+<p>from sortedness.kruskal import kruskal
+s = kruskal(original, original, f=partial(rank_by_distances))
+min(s), max(s), s
+(0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+s = kruskal(original, projected2, f=partial(rank_by_distances))
+min(s), max(s), s
+(0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+s = kruskal(original, projected1, f=partial(rank_by_distances))
+min(s), max(s), s
+(0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+0.33856241, 0.25147785]))</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
+ &gt;&gt;&gt; min(s), max(s), s
+ (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+        0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
+        0.73854895, 0.70290195]))
+</code></pre>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>s, pvalues = sortedness(original, original, f=kendalltau, return_pvalues=True)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+pvalues
+[4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+s = sortedness(original, projected2, f=kendalltau)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+s = sortedness(original, projected1, f=kendalltau)
+min(s), max(s), s
+(0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
+0.66666667, 0.78787879]))</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; s = sortedness(original, projectedrnd, f=kendalltau)
+ &gt;&gt;&gt; min(s), max(s), s
+ (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+         0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+         0.        ,  0.15151515]))
+</code></pre>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+pvalues
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+s = sortedness(original, projected2, f=wf)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+s = sortedness(original, projected1, f=wf)
+min(s), max(s), s
+(0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+0.88462681, 0.88907089]))</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; s = sortedness(original, projectedrnd, f=wf)
+ &gt;&gt;&gt; min(s), max(s), s
+ (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+         0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+        -0.25956322,  0.20448257]))
+</code></pre>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+pvalues
+[nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+s = sortedness(original, projected2, f=wf)
+min(s), max(s), s
+(1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+s = sortedness(original, projected1, f=wf)
+min(s), max(s), s
+(0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+0.84059776, 0.89290162]))
+s = sortedness(original, projectedrnd, f=wf)
+min(s), max(s), s
+(-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,
+0.48069738,
+0.15566625,
+0.24408468,
+0.57285181,
+0.16562889,
+0.49937733, -0.25280199,
+0.14445828,
+-0.05230386,
+0.25653798]))</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>Parameters</p>
+<hr>
+<p>X
+matrix with an instance by row in a given space (often the original one)
+X_
+matrix with an instance by row in another given space (often the projected one)
+f
+Distance criteria:
+str
+=
+any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+callable
+=
+scipy correlation functions:
+weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+Meaning of resulting values for correlation-based functions:
+1.0:
+perfect projection
+(regarding order of examples)
+0.0:
+random projection
+(enough distortion to have no information left when considering the overall ordering)
+-1.0:
+worst possible projection
+(mostly theoretical; it represents the "opposite" of the original ordering)
+return_pvalues
+For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
+This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+The null hypothesis is that the projection is random, i.e., sortedness = 0.5.</p>
+<p>Returns</p>
+<hr>
+<pre><code> list of sortedness values (or tuples that also include pvalues)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sortedness(X, X_, f=spearmanr, return_pvalues=False):
+    &#34;&#34;&#34;
+     Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
+     Functions available as scipy correlation coefficients:
+         ρ-sortedness (Spearman),
+         𝜏-sortedness (Kendall&#39;s 𝜏),
+         w𝜏-sortedness (Sebastiano Vigna weighted Kendall&#39;s 𝜏)
+
+     &gt;&gt;&gt; import numpy as np
+     &gt;&gt;&gt; from functools import partial
+     &gt;&gt;&gt; from scipy.stats import spearmanr, weightedtau
+     &gt;&gt;&gt; mean = (1, 2)
+     &gt;&gt;&gt; cov = eye(2)
+     &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+     &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+     &gt;&gt;&gt; projected2 = PCA(n_components=2).fit_transform(original)
+     &gt;&gt;&gt; projected1 = PCA(n_components=1).fit_transform(original)
+     &gt;&gt;&gt; np.random.seed(0)
+     &gt;&gt;&gt; projectedrnd = permutation(original)
+
+     &gt;&gt;&gt; s = sortedness(original, original)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected2)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+            0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
+            0.7972028 , 0.88811189]))
+     &gt;&gt;&gt; s = sortedness(original, projectedrnd)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
+             0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
+             0.03496503,  0.12587413]))
+
+     &gt;&gt;&gt; from sortedness.kruskal import kruskal
+     &gt;&gt;&gt; s = kruskal(original, original, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     &gt;&gt;&gt; s = kruskal(original, projected2, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     &gt;&gt;&gt; s = kruskal(original, projected1, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+            0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+            0.33856241, 0.25147785]))
+    &gt;&gt;&gt; s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+            0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
+            0.73854895, 0.70290195]))
+
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=kendalltau, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+            0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
+            0.66666667, 0.78787879]))
+    &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=kendalltau)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+             0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+             0.        ,  0.15151515]))
+
+     &gt;&gt;&gt; wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+            0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+            0.88462681, 0.88907089]))
+    &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+             0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+            -0.25956322,  0.20448257]))
+
+     &gt;&gt;&gt; wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+     &gt;&gt;&gt; s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; pvalues
+     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+     &gt;&gt;&gt; s = sortedness(original, projected2, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     &gt;&gt;&gt; s = sortedness(original, projected1, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+            0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+            0.84059776, 0.89290162]))
+     &gt;&gt;&gt; s = sortedness(original, projectedrnd, f=wf)
+     &gt;&gt;&gt; min(s), max(s), s
+     (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
+             0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
+            -0.05230386,  0.25653798]))
+
+
+     Parameters
+     ----------
+     X
+         matrix with an instance by row in a given space (often the original one)
+     X_
+         matrix with an instance by row in another given space (often the projected one)
+     f
+         Distance criteria:
+         str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+         callable    =   scipy correlation functions:
+             weightedtau (weighted Kendall’s τ), kendalltau, spearmanr
+             Meaning of resulting values for correlation-based functions:
+                 1.0:    perfect projection          (regarding order of examples)
+                 0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+                -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
+     return_pvalues
+         For scipy correlation functions, return a tuple &#39;«corr, pvalue»&#39; instead of just &#39;corr&#39;
+         This makes more sense for Kendall&#39;s tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
+         The null hypothesis is that the projection is random, i.e., sortedness = 0.5.
+
+     Returns
+     -------
+         list of sortedness values (or tuples that also include pvalues)
+    &#34;&#34;&#34;
+    result, pvalues = [], []
+    for a, b in zip(X, X_):
+        corr, pvalue = f(euclidean__n_vs_1(X, a), euclidean__n_vs_1(X_, b))
+        result.append(round(corr, 12))
+        pvalues.append(round(pvalue, 12))
+    result = np.array(result)
+    if return_pvalues:
+        return result, pvalues
+        # return list(zip(result, pvalues))
+    return result</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.sortedness_"><code class="name flex">
+<span>def <span class="ident">sortedness_</span></span>(<span>X, X_, f='lw', normalized=False, decay=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Implement a version of sortedness able to use other (non-)standard correlation functions.</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+&gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+&gt;&gt;&gt; sortedness_(original, projected, f=&quot;iw&quot;)
+[2, 0, 2]
+&gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+[0.0, 0, 0.0]
+&gt;&gt;&gt; sortedness_(original, projected, f=&quot;lw&quot;)
+[0.6666666667, 0, 0.6666666667]
+&gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&quot;lw&quot;)
+[0.2, 0, 0.2]
+&gt;&gt;&gt; mean = (1, 2)
+&gt;&gt;&gt; cov = eye(2)
+&gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+&gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+&gt;&gt;&gt; original
+array([[ 1.12573022,  1.86789514],
+       [ 1.64042265,  2.10490012],
+       [ 0.46433063,  2.36159505],
+       [ 2.30400005,  2.94708096],
+       [ 0.29626476,  0.73457853],
+       [ 0.37672554,  2.04132598],
+       [-1.32503077,  1.78120834],
+       [-0.24591095,  1.26773265],
+       [ 0.45574102,  1.68369984],
+       [ 1.41163054,  3.04251337],
+       [ 0.87146534,  3.36646347],
+       [ 0.33480533,  2.35151007]])
+&gt;&gt;&gt; s = sortedness_(original, original, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;lw&quot;)
+&gt;&gt;&gt; s
+[3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302]
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;lw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0.3780041439, 0.9172423676, [0.3780041439, 0.4714020433, 0.7752407793, 0.9172423676, 0.7230783929, 0.7182299659, 0.6492652722, 0.8510362617, 0.8067555545, 0.8319769282, 0.3980904841, 0.7632868991])
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;lw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; np.random.seed(0)
+&gt;&gt;&gt; projected = permutation(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;lw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+&gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+&gt;&gt;&gt; sortedness_(original, projected, f=&quot;iw&quot;)
+[2, 0, 2]
+&gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+[0.0, 0, 0.0]
+&gt;&gt;&gt; mean = (1, 2)
+&gt;&gt;&gt; cov = eye(2)
+&gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+&gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+&gt;&gt;&gt; original
+array([[ 1.12573022,  1.86789514],
+       [ 1.64042265,  2.10490012],
+       [ 0.46433063,  2.36159505],
+       [ 2.30400005,  2.94708096],
+       [ 0.29626476,  0.73457853],
+       [ 0.37672554,  2.04132598],
+       [-1.32503077,  1.78120834],
+       [-0.24591095,  1.26773265],
+       [ 0.45574102,  1.68369984],
+       [ 1.41163054,  3.04251337],
+       [ 0.87146534,  3.36646347],
+       [ 0.33480533,  2.35151007]])
+&gt;&gt;&gt; s = sortedness_(original, original, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; s
+[20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; np.random.seed(0)
+&gt;&gt;&gt; projected = permutation(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+&gt;&gt;&gt; s = sortedness_(original, original, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; s
+[20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; np.random.seed(0)
+&gt;&gt;&gt; projected = permutation(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+&gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+&gt;&gt;&gt; sortedness_(original, projected, f=&quot;iw&quot;)
+[2, 0, 2]
+&gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+[0.0, 0, 0.0]
+&gt;&gt;&gt; mean = (1, 2)
+&gt;&gt;&gt; cov = eye(2)
+&gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+&gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+&gt;&gt;&gt; original
+array([[ 1.12573022,  1.86789514],
+       [ 1.64042265,  2.10490012],
+       [ 0.46433063,  2.36159505],
+       [ 2.30400005,  2.94708096],
+       [ 0.29626476,  0.73457853],
+       [ 0.37672554,  2.04132598],
+       [-1.32503077,  1.78120834],
+       [-0.24591095,  1.26773265],
+       [ 0.45574102,  1.68369984],
+       [ 1.41163054,  3.04251337],
+       [ 0.87146534,  3.36646347],
+       [ 0.33480533,  2.35151007]])
+&gt;&gt;&gt; s = sortedness_(original, original, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; s
+[20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, f=&quot;iw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; np.random.seed(0)
+&gt;&gt;&gt; projected = permutation(original)
+&gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&quot;lw&quot;)
+&gt;&gt;&gt; min(s), max(s), s
+(-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+</code></pre>
+<pre><code class="language-python-repl">&gt;&gt;&gt; s = sortedness_(original, original)
+&gt;&gt;&gt; s
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+&gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected)
+&gt;&gt;&gt; min(s), max(s), s
+(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+&gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+&gt;&gt;&gt; s = sortedness_(original, projected)
+&gt;&gt;&gt; min(s), max(s), s
+(0.5, 3.7579365079, [3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302])
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>X</code></strong></dt>
+<dd>matrix with an instance by row in a given space (often the original one)</dd>
+<dt><strong><code>X_</code></strong></dt>
+<dd>matrix with an instance by row in another given space (often the projected one)</dd>
+<dt><strong><code>normalized</code></strong></dt>
+<dd>Whether to normalize result to [0; 1] interval
+If True, divide value by the longest possible distance.
+This makes the measure dependent on the dataset size</dd>
+<dt><strong><code>f</code></strong></dt>
+<dd>Distance criteria:
+str
+=
+any by_index function name: rdist_by_index_lw, rdist_by_index_iw</dd>
+<dt><strong><code>decay</code></strong></dt>
+<dd>Decay factor to put more or less weight on near neigbors
+<code>decay=0</code> means uniform weights
+<code>decay=1</code> is meaningless as it will always result in zero stress</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<pre><code>list of sortedness_ values
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sortedness_(X, X_, f=&#34;lw&#34;, normalized=False, decay=None):
+    &#34;&#34;&#34;Implement a version of sortedness able to use other (non-)standard correlation functions.
+
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;lw&#34;)
+    [0.6666666667, 0, 0.6666666667]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    [0.2, 0, 0.2]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;lw&#34;)
+    &gt;&gt;&gt; s
+    [3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.3780041439, 0.9172423676, [0.3780041439, 0.4714020433, 0.7752407793, 0.9172423676, 0.7230783929, 0.7182299659, 0.6492652722, 0.8510362617, 0.8067555545, 0.8319769282, 0.3980904841, 0.7632868991])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.6666666666000001, 0.05555555560000003, [0.0, -0.5, 0.05555555560000003, -0.2777777777999999, -0.2222222222000001, 0.05555555560000003, -0.2777777777999999, 0.0, -0.6666666666000001, -0.16666666660000007, -0.16666666660000007, -0.2777777777999999])
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; original = np.array([[1,2,-1], [-1,3,0], [0,1,2]])
+    &gt;&gt;&gt; projected = np.array([[1,2], [-1,3], [0,1]])
+    &gt;&gt;&gt; sortedness_(original, projected, f=&#34;iw&#34;)
+    [2, 0, 2]
+    &gt;&gt;&gt; sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    [0.0, 0, 0.0]
+    &gt;&gt;&gt; mean = (1, 2)
+    &gt;&gt;&gt; cov = eye(2)
+    &gt;&gt;&gt; rng = np.random.default_rng(seed=0)
+    &gt;&gt;&gt; original = rng.multivariate_normal(mean, cov, size=12)
+    &gt;&gt;&gt; original
+    array([[ 1.12573022,  1.86789514],
+           [ 1.64042265,  2.10490012],
+           [ 0.46433063,  2.36159505],
+           [ 2.30400005,  2.94708096],
+           [ 0.29626476,  0.73457853],
+           [ 0.37672554,  2.04132598],
+           [-1.32503077,  1.78120834],
+           [-0.24591095,  1.26773265],
+           [ 0.45574102,  1.68369984],
+           [ 1.41163054,  3.04251337],
+           [ 0.87146534,  3.36646347],
+           [ 0.33480533,  2.35151007]])
+    &gt;&gt;&gt; s = sortedness_(original, original, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; s
+    [20, 18, 10, 2, 12, 8, 12, 4, 8, 6, 20, 12]
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.44444444439999997, 0.9444444444, [0.44444444439999997, 0.5, 0.7222222222, 0.9444444444, 0.6666666666000001, 0.7777777778, 0.6666666666000001, 0.8888888887999999, 0.7777777778, 0.8333333333999999, 0.44444444439999997, 0.6666666666000001])
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, f=&#34;iw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; np.random.seed(0)
+    &gt;&gt;&gt; projected = permutation(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected, normalized=True, f=&#34;lw&#34;)
+    &gt;&gt;&gt; min(s), max(s), s
+    (-0.4727156565, 0.2002483923, [0.0765060277, -0.3472655947, 0.1774034644, -0.1514058647, -0.104115789, 0.2002483923, -0.1620461317, 0.0372409346, -0.4727156565, -0.0489440341, -0.0347570114, -0.137218842])
+
+    &gt;&gt;&gt; s = sortedness_(original, original)
+    &gt;&gt;&gt; s
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    &gt;&gt;&gt; projected = PCA(n_components=2).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    &gt;&gt;&gt; projected = PCA(n_components=1).fit_transform(original)
+    &gt;&gt;&gt; s = sortedness_(original, projected)
+    &gt;&gt;&gt; min(s), max(s), s
+    (0.5, 3.7579365079, [3.7579365079, 3.1936507937, 1.3579365079, 0.5, 1.6730880231, 1.7023809524, 2.119047619, 0.9, 1.1675324675, 1.0151515152, 3.6365800866, 1.4301587302])
+
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    normalized
+        Whether to normalize result to [0; 1] interval
+        If True, divide value by the longest possible distance.
+        This makes the measure dependent on the dataset size
+    f
+        Distance criteria:
+        str         =   any by_index function name: rdist_by_index_lw, rdist_by_index_iw
+    decay
+        Decay factor to put more or less weight on near neigbors
+        `decay=0` means uniform weights
+        `decay=1` is meaningless as it will always result in zero stress
+
+    Returns
+    -------
+        list of sortedness_ values
+    &#34;&#34;&#34;
+    result = []
+    kwargs = {} if decay is None else {&#34;decay&#34;: decay}
+    if f == &#34;iw&#34;:
+        f = rdist_by_index_iw
+    elif f == &#34;lw&#34;:
+        f = rdist_by_index_lw
+    else:  # pragma: no cover
+        raise Exception(f&#34;Unknown f {f}&#34;)
+    for a, b in zip(X, X_):
+        ranks_ma = rank_by_distances(X, a)
+        mb_ = X_[argsort(ranks_ma)]  # Sort mb by using ma ranks.
+        ranks = rank_by_distances(mb_, b)
+        d = f(argsort(ranks), normalized=normalized, **kwargs)
+        result.append(d)
+    return result</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.ushaped_decay_f"><code class="name flex">
+<span>def <span class="ident">ushaped_decay_f</span></span>(<span>n)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ushaped_decay_f(n):
+    def f(i):
+        x = (n - i) / n
+        return 4 * x**2 - 4 * x + 1
+
+    return f</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="sortedness" href="index.html">sortedness</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="two-column">
+<li><code><a title="sortedness.local.asortedness_" href="#sortedness.local.asortedness_">asortedness_</a></code></li>
+<li><code><a title="sortedness.local.asortedness__" href="#sortedness.local.asortedness__">asortedness__</a></code></li>
+<li><code><a title="sortedness.local.permutation" href="#sortedness.local.permutation">permutation</a></code></li>
+<li><code><a title="sortedness.local.shuffle" href="#sortedness.local.shuffle">shuffle</a></code></li>
+<li><code><a title="sortedness.local.sortedness" href="#sortedness.local.sortedness">sortedness</a></code></li>
+<li><code><a title="sortedness.local.sortedness_" href="#sortedness.local.sortedness_">sortedness_</a></code></li>
+<li><code><a title="sortedness.local.ushaped_decay_f" href="#sortedness.local.ushaped_decay_f">ushaped_decay_f</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

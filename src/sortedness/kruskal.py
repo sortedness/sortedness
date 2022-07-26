@@ -22,16 +22,14 @@
 #
 
 from functools import partial
-from itertools import repeat
 from math import nan, sqrt
 
 import numpy as np
-from numpy import eye, argsort
-from numpy.random import shuffle, permutation
-from scipy.stats import spearmanr, weightedtau, kendalltau
+from numpy import eye
+from numpy.random import shuffle
 from sklearn.decomposition import PCA
 
-from sortedness.rank import rank_by_distances, rdist_by_index_lw, rdist_by_index_iw, euclidean__n_vs_1
+from sortedness.rank import rank_by_distances, euclidean__n_vs_1
 
 
 # TODO: Stress majorization
@@ -50,21 +48,27 @@ def kruskal(X, X_, f=euclidean__n_vs_1, return_pvalues=False):
     >>> original = rng.multivariate_normal(mean, cov, size=12)
     >>> s = kruskal(original, original)
     >>> min(s), max(s), s
-    (0.0, 0.0, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
     >>> projected = PCA(n_components=2).fit_transform(original)
     >>> s = kruskal(original, projected)
     >>> min(s), max(s), s
-    (0.0, 0.0, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
     >>> projected = PCA(n_components=1).fit_transform(original)
     >>> s, pvalues = kruskal(original, projected, return_pvalues=True)
     >>> min(s), max(s), s
-    (0.081106807792, 0.347563916162, [0.295668173586, 0.319595012703, 0.235774667847, 0.081106807792, 0.298113447155, 0.180984791932, 0.182406641753, 0.155316001865, 0.200126083035, 0.157911876379, 0.347563916162, 0.256262170166])
+    (0.081106807792, 0.347563916162, array([0.29566817, 0.31959501, 0.23577467, 0.08110681, 0.29811345,
+           0.18098479, 0.18240664, 0.155316  , 0.20012608, 0.15791188,
+           0.34756392, 0.25626217]))
     >>> pvalues
-    [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    array([nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan])
     >>> kruskal(original, projected)
-    [0.295668173586, 0.319595012703, 0.235774667847, 0.081106807792, 0.298113447155, 0.180984791932, 0.182406641753, 0.155316001865, 0.200126083035, 0.157911876379, 0.347563916162, 0.256262170166]
+    array([0.29566817, 0.31959501, 0.23577467, 0.08110681, 0.29811345,
+           0.18098479, 0.18240664, 0.155316  , 0.20012608, 0.15791188,
+           0.34756392, 0.25626217])
     >>> kruskal(original, projected, f=partial(rank_by_distances))
-    [0.350042346394, 0.387553387882, 0.17782168979, 0.062869461346, 0.274041628643, 0.153998100702, 0.235235984448, 0.108893101296, 0.140580389279, 0.108893101296, 0.338562410685, 0.251477845385]
+    array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+           0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
+           0.33856241, 0.25147785])
 
 
 
@@ -85,7 +89,7 @@ def kruskal(X, X_, f=euclidean__n_vs_1, return_pvalues=False):
     for a, b in zip(X, X_):
         d_a = f(X, a)
         d_b = f(X_, b)
-        kru = sqrt(sum((d_a - d_b) ** 2) / sum(d_a ** 2))
+        kru = sqrt(sum((d_a - d_b) ** 2) / sum(d_a**2))
         result.append(round(kru, 12))
     result = np.array(result)
     if return_pvalues:

@@ -36,8 +36,8 @@ class Plot:
     ylabel: str
     legend: bool
     plt: callable
-    fontsize: int = 16
-    marksize: int = 16
+    fontsize: int = 18
+    marksize: int = 7
 
     def __post_init__(self):
         self.fig = self.plt.figure()

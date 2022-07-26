@@ -1,21 +1,16 @@
 [tool.poetry]
 name = "sortedness"
-version = "0.220723.0"
+version = "0.220726.0"
 description = ""
 authors = ["davips <dpsabc@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
-numpy = "1.22.*"
-scipy = "^1.8.1"
-sympy = "^1.10.1"
+python = "^3.10,<4.0"
+scipy = {version = "^1.8.1", python = ">=3.8,<3.11"}
 lange = "^0.2101.24"
-matplotlib = "^3.5.2"
-PyQt5 = "^5.15.7"
-ranky = "^0.2.9"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
 black = "^22.6.0"
 pdoc3 = "^0.10.0"
@@ -26,6 +21,10 @@ openml = "^0.12.2"
 pandas = "^1.4.3"
 hoshmap = "^0.220221.1"
 dash = "^2.6.0"
+ranky = "^0.2.9"
+sympy = "^1.10.1"
+matplotlib = "^3.5.2"
+PyQt5 = "^5.15.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

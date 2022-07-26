@@ -216,6 +216,10 @@ def differences__n_vs_1(X, instance):
     """
     >>> import numpy as np
     >>> differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
+    array([[0, 0],
+           [0, 2],
+           [1, 1]])
+
 
     Parameters
     ----------

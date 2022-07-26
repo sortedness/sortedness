@@ -1,0 +1,2 @@
+[storages]
+remote = mysql://user:password@host/database

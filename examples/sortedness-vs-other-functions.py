@@ -20,8 +20,6 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-
-import shelve
 from functools import partial
 
 import matplotlib.pyplot as plt
@@ -29,19 +27,26 @@ from openml.datasets import get_dataset
 from scipy.stats import weightedtau, spearmanr, kendalltau
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sortedness.rank import rank_by_distances
 
-from sortedness.evaluation.plot import Plot, colors
 from hoshmap import idict
+from shelchemy.core import sopen
+from sortedness.config import local_cache_uri, remote_cache_uri
+from sortedness.evaluation.plot import Plot, colors
 from sortedness.kruskal import kruskal
-from sortedness.local import ushaped_decay_f, sortedness
+from sortedness.local import ushaped_decay_f, sortedness, sortedness_, asortedness_, asortedness__
+from sortedness.rank import rank_by_distances
 from sortedness.trustworthiness import trustworthiness, continuity
 
-popular_methods = ["-1*kruskal", "trustworthiness", "continuity", "-1*nonmetric_kruskal"]
+functions = {"-1*kruskal": lambda X, X_: -kruskal(X, X_),
+             "-1*nonmetric_kruskal": lambda X, X_: -kruskal(X, X_, f=rank_by_distances),
+             "trustworthiness": trustworthiness,
+             "continuity": continuity,
+             # "sortedness_lw": lambda X, X_: sortedness_(X, X_, f="lw", normalized=True),
+             # "asortedness_1": asortedness_,
+             # "asortedness_2": asortedness__
+             }
 projectors = {"PCA": PCA(n_components=2).fit_transform,
               "TSNE": lambda seed, X: TSNE(n_components=2, random_state=seed).fit_transform(X)}
-dataset = "abalone"
-d = idict(dataset=dataset, seed=0)
 
 
 def fetch(dataset):
@@ -53,45 +58,57 @@ def fetch(dataset):
     return X.to_numpy()
 
 
+def prepare_experiment(d, cache):
+    corr_funcs = {"ρ-sortedness": spearmanr,
+                  "tau-sortedness": kendalltau,
+                  "wtau-sortedness_x": weightedtau,
+                  "wtau-sortedness_x²": partial(weightedtau, weigher=lambda x: 1 / (1 + x ** 2)),
+                  "wtau-sortedness_Ushaped": lambda X, X_: weightedtau(X, X_, weigher=ushaped_decay_f(n=len(X)))
+                  }
+    f = lambda X, X_, coefname: sortedness(X, X_, f=corr_funcs[coefname])
+    for coef in corr_funcs:
+        d["coefname"] = coef
+        d[coef] = f
+    d >>= functions
+    return d, corr_funcs
+
+
+def plot(proj_name, d, corr_funcs):
+    for xlabel in functions:
+        p = Plot(d, proj_name, xlabel, "'sortedness'", legend=True, plt=plt)
+        for slabel, color in zip(corr_funcs.keys(), colors):
+            p << (slabel, color)
+        p.finish()
+
+    for xlabel in ["-1*kruskal", "-1*nonmetric_kruskal"]:
+        p = Plot(d, proj_name, xlabel, "cont, trust", legend=True, plt=plt)
+        for slabel, color in zip(list(functions.keys())[2:], colors[1:]):
+            p << (slabel, color)
+        p.finish()
+
+    p = Plot(d, proj_name, "trustworthiness", "continuity", legend=False, plt=plt)
+    p << ("continuity", "blue")
+    p.finish()
+
+    p = Plot(d, proj_name, "-1*kruskal", "-1*nonmetric_kruskal", legend=False, plt=plt)
+    p << ("-1*nonmetric_kruskal", "green")
+    p.finish()
+
+    plt.show()
+
+
+data = idict(seed=0)
 for projection, project in projectors.items():
-    with shelve.open("/tmp/sortedness-cache.db") as db:
-        d["X"] = fetch
-        d["X_"] = project
-        coefs = {"ρ-sortedness": spearmanr,
-                 "tau-sortedness": kendalltau,
-                 "wtau-sortedness_x": weightedtau,
-                 "wtau-sortedness_x²": partial(weightedtau, weigher=lambda x: 1 / (1 + x ** 2)),
-                 "wtau-sortedness_Ushaped": partial(weightedtau, weigher=ushaped_decay_f(n=len(d.X)))
-                 }
-        f = lambda X, X_, coef: sortedness(X, X_, f=coefs[coef])
-        for coef in coefs:
-            d["coef"] = coef
-            d[coef] = f
-        d = d >> {"-1*kruskal": lambda X, X_: -kruskal(X, X_),
-                  "-1*nonmetric_kruskal": lambda X, X_: -kruskal(X, X_, f=rank_by_distances),
-                  "trustworthiness": trustworthiness,
-                  "continuity": continuity} >> [db]
-        d.show()
+    with sopen(local_cache_uri) as local, sopen(remote_cache_uri) as remote:
+        for name in ["abalone", "iris"][:1]:
+            data["dataset"] = name
+            data["X"] = fetch
+            data["X_"] = project
+            data >>= [local, remote]
+            data.evaluate()
 
-        # Plot
-        for xlabel in popular_methods:
-            p = Plot(d, projection, xlabel, "'sortedness'", legend=True, plt=plt)
-            for slabel, color in zip(coefs.keys(), colors):
-                p << (slabel, color)
-            p.finish()
+            data, corr_functions = prepare_experiment(data, [local, remote])
+            data >>= [local, remote]
 
-        for xlabel in ["-1*kruskal", "-1*nonmetric_kruskal"]:
-            p = Plot(d, projection, xlabel, "cont, trust", legend=True, plt=plt)
-            for slabel, color in zip(popular_methods[1:-1], colors[1:]):
-                p << (slabel, color)
-            p.finish()
-
-        p = Plot(d, projection, "trustworthiness", "continuity", legend=False, plt=plt)
-        p << ("continuity", "blue")
-        p.finish()
-
-        p = Plot(d, projection, "-1*kruskal", "-1*nonmetric_kruskal", legend=False, plt=plt)
-        p << ("-1*nonmetric_kruskal", "green")
-        p.finish()
-
-        plt.show()
+            plot(projection, data, corr_functions)
+            data.show()
