@@ -54,8 +54,8 @@ from pathlib import Path
 
 config = ConfigParser()
 config.read(f&#34;{Path.home()}/.sortedness-cache.config&#34;)
-remote_cache_uri = config.get(&#34;storages&#34;, &#34;remote&#34;)
-local_cache_uri = f&#34;sqlite+pysqlite:///{Path.home()}/.sortedness-cache.db&#34;</code></pre>
+local_cache_uri = config.get(&#34;storages&#34;, &#34;local&#34;)
+remote_cache_uri = config.get(&#34;storages&#34;, &#34;remote&#34;)</code></pre>
 </details>
 </section>
 <section>

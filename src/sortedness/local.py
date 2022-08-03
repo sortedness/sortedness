@@ -24,7 +24,7 @@
 from functools import partial
 
 import numpy as np
-from numpy import eye, argsort
+from numpy import eye, argsort, nan
 from numpy.linalg import norm
 from numpy.random import shuffle, permutation
 from scipy.stats import spearmanr, weightedtau, kendalltau, rankdata
@@ -42,7 +42,7 @@ from sortedness.rank import (
 def ushaped_decay_f(n):
     def f(i):
         x = (n - i) / n
-        return 4 * x ** 2 - 4 * x + 1
+        return 4 * x**2 - 4 * x + 1
 
     return f
 
@@ -271,7 +271,9 @@ def ff(X, a, X_, b, weights):
         t += sum(weights[p] for p in range(mn, mx))
     return round(t, 12)
 
+
 # Still non-reliable proposal attempts: #####################################
+
 
 def sortedness_(X, X_, f="lw", normalized=False, decay=None):
     """Implement a version of sortedness able to use other (non-)standard correlation functions.
@@ -483,6 +485,7 @@ def sortedness_(X, X_, f="lw", normalized=False, decay=None):
         result.append(d)
     return result
 
+
 def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=False):  # pragma: no cover
     """
     Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
@@ -573,6 +576,7 @@ def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=Fals
         return result, pvalues
         # return list(zip(result, pvalues))
     return result
+
 
 def asortedness__(X, X_, f=spearmanr, return_pvalues=False):  # pragma: no cover
     """
