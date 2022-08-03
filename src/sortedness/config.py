@@ -26,5 +26,5 @@ from pathlib import Path
 
 config = ConfigParser()
 config.read(f"{Path.home()}/.sortedness-cache.config")
+local_cache_uri = config.get("storages", "local")
 remote_cache_uri = config.get("storages", "remote")
-local_cache_uri = f"sqlite+pysqlite:///{Path.home()}/.sortedness-cache.db"

@@ -42,13 +42,13 @@ from sortedness.rank import (
 def ushaped_decay_f(n):
     def f(i):
         x = (n - i) / n
-        return 4 * x**2 - 4 * x + 1
+        return 4 * x ** 2 - 4 * x + 1
 
     return f
 
 
 # noinspection PyTypeChecker
-def sortedness(X, X_, f=spearmanr, return_pvalues=False):
+def sortedness(X, X_, f=spearmanr, return_pvalues=False, weigher=None, normalized=True):
     """
      Calculate the sortedness (a anti-stress alike correlation-based measure that ignores distance proportions) value for each point
      Functions available as scipy correlation coefficients:
@@ -162,6 +162,46 @@ def sortedness(X, X_, f=spearmanr, return_pvalues=False):
              0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
             -0.05230386,  0.25653798]))
 
+     >>> s = sortedness(original, original, f=None)
+     >>> min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     >>> pvalues
+     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+     >>> s = sortedness(original, projected2, f=None)
+     >>> min(s), max(s), s
+     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+     >>> s = sortedness(original, projected1, f=None)
+     >>> min(s), max(s), s
+     (0.3845013898860591, 0.914950019329497, array([0.38450139, 0.48271387, 0.7969938 , 0.91495002, 0.74879881,
+            0.70840007, 0.66547008, 0.85116253, 0.81856004, 0.83840504,
+            0.41072513, 0.79243755]))
+     >>> s = sortedness(original, projectedrnd, f=None)
+     >>> min(s), max(s), s
+     (-0.37488264207211563, 0.26744721194375687, array([ 0.12002725, -0.26401392,  0.22603597, -0.08439646, -0.04187147,
+             0.26744721, -0.09755896,  0.08033725, -0.37488264,  0.00915852,
+             0.02333352, -0.07022146]))
+
+     >>> s = sortedness(original, original, f=None, normalized=False)
+     >>> min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     >>> s = sortedness(original, projected2, f=None, normalized=False)
+     >>> min(s), max(s), s
+     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+     >>> s = sortedness(original, projected1, f=None, normalized=False)
+     >>> min(s), max(s), s
+     (0.666666666667, 4.824603174603, array([4.82460317, 4.0547619 , 1.59126984, 0.66666667, 1.96904762,
+            2.28571429, 2.62222222, 1.16666667, 1.42222222, 1.26666667,
+            4.61904762, 1.62698413]))
+    >>> s = sortedness(original, projectedrnd, f=None, normalized=False)
+    >>> min(s), max(s), s
+    (5.742135642136, 10.777056277056, array([ 6.8976912 ,  9.90800866,  6.06673882,  8.50007215,  8.16673882,
+            5.74213564,  8.60324675,  7.20880231, 10.77705628,  7.76673882,
+            7.65562771,  8.38896104]))
+    >>> s = sortedness(original, np.flipud(original), f=None, normalized=False)
+    >>> min(s), max(s), s
+    (4.908802308802, 9.508008658009, array([9.03896104, 4.90880231, 6.76197691, 7.32229437, 5.98896104,
+           9.50800866, 9.50800866, 5.98896104, 7.32229437, 6.76197691,
+           4.90880231, 9.03896104]))
 
      Parameters
      ----------
@@ -178,29 +218,60 @@ def sortedness(X, X_, f=spearmanr, return_pvalues=False):
                  1.0:    perfect projection          (regarding order of examples)
                  0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
                 -1.0:    worst possible projection   (mostly theoretical; it represents the "opposite" of the original ordering)
+         None        =   special internal sortedness function will be used
      return_pvalues
          For scipy correlation functions, return a tuple '«corr, pvalue»' instead of just 'corr'
          This makes more sense for Kendall's tau. [the weighted version might not have yet a established pvalue calculation method at this moment]
          The null hypothesis is that the projection is random, i.e., sortedness = 0.5.
+     normalized
+         Only for 'f=None'
+     weigher
+         Only for 'f=None'
 
      Returns
      -------
          list of sortedness values (or tuples that also include pvalues)
     """
     result, pvalues = [], []
-    for a, b in zip(X, X_):
-        corr, pvalue = f(euclidean__n_vs_1(X, a), euclidean__n_vs_1(X_, b))
-        result.append(round(corr, 12))
-        pvalues.append(round(pvalue, 12))
-    result = np.array(result)
+    if f is None:
+        if weigher is None:
+            weigher = lambda r: 1 / (1 + r)
+        weights = [weigher(i) for i in range(len(X))]
+        if normalized:
+            woa = np.array(range(len(X)), dtype=np.float).reshape(len(X), 1)
+            wob = np.array(list(range(len(X) - 1, -1, -1)), dtype=np.float).reshape(len(X), 1)
+            worst = ff(woa, woa[0], wob, woa[0], weights)
+        for a, b in zip(X, X_):
+            t = ff(X, a, X_, b, weights)
+            if normalized:
+                if t != 0:
+                    t /= worst
+                t = 1 - (2 * t)
+            result.append(t)
+            pvalues.append(nan)
+    else:
+        if weigher is not None:
+            raise Exception("Cannot provide both 'f' and 'weigher'.")
+        for a, b in zip(X, X_):
+            corr, pvalue = f(euclidean__n_vs_1(X, a), euclidean__n_vs_1(X_, b))
+            result.append(round(corr, 12))
+            pvalues.append(round(pvalue, 12))
+
+    result = np.array(result, dtype=np.float)
     if return_pvalues:
         return result, pvalues
         # return list(zip(result, pvalues))
     return result
 
 
-# Still non-reliable proposal attempts: #####################################
+def ff(X, a, X_, b, weights):
+    t = 0
+    for idxa, idxb in zip(rank_by_distances(X, a), rank_by_distances(X_, b)):
+        mn, mx = sorted([int(idxa), int(idxb)])
+        t += sum(weights[p] for p in range(mn, mx))
+    return round(t, 12)
 
+# Still non-reliable proposal attempts: #####################################
 
 def sortedness_(X, X_, f="lw", normalized=False, decay=None):
     """Implement a version of sortedness able to use other (non-)standard correlation functions.
@@ -412,7 +483,6 @@ def sortedness_(X, X_, f="lw", normalized=False, decay=None):
         result.append(d)
     return result
 
-
 def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=False):  # pragma: no cover
     """
     Calculate the 𝛼-sortedness (a anti-stress alike correlation-based measure that is independent of distance function)
@@ -503,7 +573,6 @@ def asortedness_(X, X_, f=spearmanr, return_pvalues=False, use_kemeny_young=Fals
         return result, pvalues
         # return list(zip(result, pvalues))
     return result
-
 
 def asortedness__(X, X_, f=spearmanr, return_pvalues=False):  # pragma: no cover
     """

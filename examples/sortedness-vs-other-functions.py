@@ -20,7 +20,6 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-from functools import partial
 
 import matplotlib.pyplot as plt
 from openml.datasets import get_dataset
@@ -29,51 +28,54 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 from hoshmap import idict
-from shelchemy.core import sopen
+from shelchemy.cache import sopen
 from sortedness.config import local_cache_uri, remote_cache_uri
 from sortedness.evaluation.plot import Plot, colors
 from sortedness.kruskal import kruskal
-from sortedness.local import ushaped_decay_f, sortedness, sortedness_, asortedness_, asortedness__
+from sortedness.local import ushaped_decay_f, sortedness
 from sortedness.rank import rank_by_distances
 from sortedness.trustworthiness import trustworthiness, continuity
 
-functions = {"-1*kruskal": lambda X, X_: -kruskal(X, X_),
-             "-1*nonmetric_kruskal": lambda X, X_: -kruskal(X, X_, f=rank_by_distances),
-             "trustworthiness": trustworthiness,
-             "continuity": continuity,
-             # "sortedness_lw": lambda X, X_: sortedness_(X, X_, f="lw", normalized=True),
-             # "asortedness_1": asortedness_,
-             # "asortedness_2": asortedness__
-             }
-projectors = {"PCA": PCA(n_components=2).fit_transform,
-              "TSNE": lambda seed, X: TSNE(n_components=2, random_state=seed).fit_transform(X)}
+functions = {
+    "-1*kruskal": lambda X, X_: -kruskal(X, X_),
+    "-1*nonmetric_kruskal": lambda X, X_: -kruskal(X, X_, f=rank_by_distances),
+    "trustworthiness": trustworthiness,
+    "continuity": continuity
+}
+projectors = {
+    "PCA": PCA(n_components=2).fit_transform,
+    "TSNE": lambda seed, X: TSNE(n_components=2, random_state=seed).fit_transform(X)
+}
+corr_funcs = {
+    "ρ": spearmanr,
+    "tau": kendalltau,
+    "wtau-x": weightedtau,
+    "wtau-x²": lambda X, X_: weightedtau(X, X_, weigher=lambda x: 1 / (1 + x ** 2)),
+    "wtau-Ushaped": lambda X, X_: weightedtau(X, X_, weigher=ushaped_decay_f(n=len(X))),
+    "sortedness": None,
+}
 
 
-def fetch(dataset):
+def fetch_asnumpy(dataset):
+    print(f"Loading {dataset}...", end="\t", flush=True)
     X = get_dataset(dataset).get_data(dataset_format="dataframe")[0]
-    print("loaded", dataset)
     X.drop(X.columns[len(X.columns) - 1], axis=1, inplace=True)
     if dataset == "abalone":
         X.replace(['M', 'I', "F"], [-1, 0, 1], inplace=True)
+    print("loaded!")
     return X.to_numpy()
 
 
-def prepare_experiment(d, cache):
-    corr_funcs = {"ρ-sortedness": spearmanr,
-                  "tau-sortedness": kendalltau,
-                  "wtau-sortedness_x": weightedtau,
-                  "wtau-sortedness_x²": partial(weightedtau, weigher=lambda x: 1 / (1 + x ** 2)),
-                  "wtau-sortedness_Ushaped": lambda X, X_: weightedtau(X, X_, weigher=ushaped_decay_f(n=len(X)))
-                  }
+def prepare_experiment(d):
     f = lambda X, X_, coefname: sortedness(X, X_, f=corr_funcs[coefname])
-    for coef in corr_funcs:
-        d["coefname"] = coef
-        d[coef] = f
-    d >>= functions
-    return d, corr_funcs
+    for coefname in corr_funcs:
+        d["coefname"] = coefname
+        d[coefname] = f  # Apply proposed f functions (but don't evaluate yet)
+    d >>= functions  # Apply all f functions from literature (but don't evaluate yet)
+    return d
 
 
-def plot(proj_name, d, corr_funcs):
+def plot(proj_name, d):
     for xlabel in functions:
         p = Plot(d, proj_name, xlabel, "'sortedness'", legend=True, plt=plt)
         for slabel, color in zip(corr_funcs.keys(), colors):
@@ -98,17 +100,16 @@ def plot(proj_name, d, corr_funcs):
 
 
 data = idict(seed=0)
-for projection, project in projectors.items():
+for projection, fproject in projectors.items():
     with sopen(local_cache_uri) as local, sopen(remote_cache_uri) as remote:
-        for name in ["abalone", "iris"][:1]:
+        for name in ["abalone", "iris"]:
             data["dataset"] = name
-            data["X"] = fetch
-            data["X_"] = project
-            data >>= [local, remote]
-            data.evaluate()
+            data["X"] = fetch_asnumpy  # Apply proposed fetch() (but don't evaluate yet)
+            data["X_"] = fproject  # Apply proposed fproject() (but don't evaluate yet)
 
-            data, corr_functions = prepare_experiment(data, [local, remote])
-            data >>= [local, remote]
+            data = prepare_experiment(data)
+            data >>= [local, remote]  # Add caches (but don't send/fetch anything yet)
+            data.evaluate()  # Evaluate each needed field (and store it, or just fetch it when possible)
 
-            plot(projection, data, corr_functions)
+            plot(f"{name}: {projection}", data)
             data.show()

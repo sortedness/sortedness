@@ -23,6 +23,7 @@
 
 from math import nan
 
+import numpy as np
 from numpy import eye, where, setdiff1d
 from numpy.random import shuffle
 from sklearn.decomposition import PCA
@@ -125,6 +126,7 @@ def trustworthiness(X, X_, k=5, return_pvalues=False):
         U = setdiff1d(b_neighbors, a_neighbors)
         r = 1 - 2 * sum(ra[U] - k) / k / (2 * n - 3 * k - 1)
         result.append(r)
+    result = np.array(result)
     if return_pvalues:
-        return result, [nan for _ in result]
+        return result, np.array([nan for _ in result])
     return result
