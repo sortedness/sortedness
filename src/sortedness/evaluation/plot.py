@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 from hoshmap import idict
 
-colors = ["blue", "green", "red", "gray", "yellow"]
+colors = ["blue", "green", "red", "gray", "yellow", "black", "pink"]
 
 
 @dataclass
@@ -37,7 +37,7 @@ class Plot:
     legend: bool
     plt: callable
     fontsize: int = 18
-    marksize: int = 7
+    marksize: int = 2
 
     def __post_init__(self):
         self.fig = self.plt.figure()
