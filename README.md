@@ -16,7 +16,8 @@
 
 
 `sortedness` is a measure of how much distortion occurred after dimensionality reduction.
-It complements Kruskal's stress.<br>This [Python library](https://pypi.org/project/sortedness) / [code](https://github.com/sortedness/sortedness) provides a reference implementation for the stress function presented [here](https://arxiv.org/abs/2109.06028.9999).
+It is less sensitive to irrelevant distortions and return more meaningful values than Kruskal stress formula I.
+<br>This [Python library](https://pypi.org/project/sortedness) / [code](https://github.com/sortedness/sortedness) provides a reference implementation for the stress function presented [here (link broken until the paper is published)](https://arxiv.org/abs/2109.06028.9999).
 
 ## Overview
 
@@ -28,7 +29,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install from PyPI
-pip install sortedness
+pip install -U sortedness
 ```
 
 ### from source
@@ -41,7 +42,7 @@ poetry install
 ### Examples
 Some usage examples.
 
-** Copyright (c) 2022. Davi Pereira dos Santos**
+** Copyright (c) 2022. Davi Pereira dos Santos and Tacito Neves**
 <details>
 <p>
 
