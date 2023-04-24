@@ -42,7 +42,7 @@ from sortedness.rank import (
 def ushaped_decay_f(n):
     def f(i):
         x = (n - i) / n
-        return 4 * x ** 2 - 4 * x + 1
+        return 4 * x**2 - 4 * x + 1
 
     return f
 
@@ -56,161 +56,165 @@ def sortedness(X, X_, f=spearmanr, return_pvalues=False, weigher=None, normalize
          𝜏-sortedness (Kendall's 𝜏),
          w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)
 
-     >>> import numpy as np
-     >>> from functools import partial
-     >>> from scipy.stats import spearmanr, weightedtau
-     >>> mean = (1, 2)
-     >>> cov = eye(2)
-     >>> rng = np.random.default_rng(seed=0)
-     >>> original = rng.multivariate_normal(mean, cov, size=12)
-     >>> projected2 = PCA(n_components=2).fit_transform(original)
-     >>> projected1 = PCA(n_components=1).fit_transform(original)
-     >>> np.random.seed(0)
-     >>> projectedrnd = permutation(original)
+    >>> import numpy as np
+    >>> from functools import partial
+    >>> from scipy.stats import spearmanr, weightedtau
+    >>> mean = (1, 2)
+    >>> cov = eye(2)
+    >>> rng = np.random.default_rng(seed=0)
+    >>> original = rng.multivariate_normal(mean, cov, size=12)
+    >>> projected2 = PCA(n_components=2).fit_transform(original)
+    >>> projected1 = PCA(n_components=1).fit_transform(original)
+    >>> np.random.seed(0)
+    >>> projectedrnd = permutation(original)
 
-     >>> s = sortedness(original, original)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected2)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected1)
-     >>> min(s), max(s), s
-     (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
+    >>> s = sortedness(original, original)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected2)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected1)
+    >>> min(s), max(s), s
+    (0.734265734266, 0.993006993007, array([0.78321678, 0.73426573, 0.94405594, 0.99300699, 0.86713287,
             0.95804196, 0.9020979 , 0.97902098, 0.96503497, 0.97902098,
             0.7972028 , 0.88811189]))
-     >>> s = sortedness(original, projectedrnd)
-     >>> min(s), max(s), s
-     (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
-             0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
-             0.03496503,  0.12587413]))
+    >>> s = sortedness(original, projectedrnd)
+    >>> min(s), max(s), s
+    (-0.398601398601, 0.496503496503, array([ 0.3986014 , -0.16783217,  0.46153846,  0.1048951 ,  0.18881119,
+            0.4965035 ,  0.12587413,  0.43356643, -0.3986014 ,  0.16783217,
+            0.03496503,  0.12587413]))
 
-     >>> from sortedness.kruskal import kruskal
-     >>> s = kruskal(original, original, f=partial(rank_by_distances))
-     >>> min(s), max(s), s
-     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
-     >>> s = kruskal(original, projected2, f=partial(rank_by_distances))
-     >>> min(s), max(s), s
-     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
-     >>> s = kruskal(original, projected1, f=partial(rank_by_distances))
-     >>> min(s), max(s), s
-     (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
+    >>> from sortedness.kruskal import kruskal
+    >>> s = kruskal(original, original, f=partial(rank_by_distances))
+    >>> min(s), max(s), s
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    >>> s = kruskal(original, projected2, f=partial(rank_by_distances))
+    >>> min(s), max(s), s
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    >>> s = kruskal(original, projected1, f=partial(rank_by_distances))
+    >>> min(s), max(s), s
+    (0.062869461346, 0.387553387882, array([0.35004235, 0.38755339, 0.17782169, 0.06286946, 0.27404163,
             0.1539981 , 0.23523598, 0.1088931 , 0.14058039, 0.1088931 ,
             0.33856241, 0.25147785]))
     >>> s = kruskal(original, projectedrnd, f=partial(rank_by_distances))
-     >>> min(s), max(s), s
-     (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
+    >>> min(s), max(s), s
+    (0.533465069369, 0.889108448949, array([0.5830274 , 0.81245249, 0.55167728, 0.71128676, 0.67712482,
             0.53346507, 0.70290195, 0.56582515, 0.88910845, 0.68582485,
             0.73854895, 0.70290195]))
 
-     >>> s, pvalues = sortedness(original, original, f=kendalltau, return_pvalues=True)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> pvalues
-     [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
-     >>> s = sortedness(original, projected2, f=kendalltau)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected1, f=kendalltau)
-     >>> min(s), max(s), s
-     (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
+    >>> s, pvalues = sortedness(original, original, f=kendalltau, return_pvalues=True)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> pvalues
+    [4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09, 4.175e-09]
+    >>> s = sortedness(original, projected2, f=kendalltau)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected1, f=kendalltau)
+    >>> min(s), max(s), s
+    (0.606060606061, 0.969696969697, array([0.63636364, 0.60606061, 0.84848485, 0.96969697, 0.75757576,
             0.87878788, 0.78787879, 0.93939394, 0.87878788, 0.90909091,
             0.66666667, 0.78787879]))
     >>> s = sortedness(original, projectedrnd, f=kendalltau)
-     >>> min(s), max(s), s
-     (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
-             0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
-             0.        ,  0.15151515]))
+    >>> min(s), max(s), s
+    (-0.363636363636, 0.363636363636, array([ 0.33333333, -0.15151515,  0.36363636,  0.09090909,  0.12121212,
+         0.36363636,  0.09090909,  0.36363636, -0.36363636,  0.15151515,
+         0.        ,  0.15151515]))
 
-     >>> wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
-     >>> s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> pvalues
-     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
-     >>> s = sortedness(original, projected2, f=wf)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected1, f=wf)
-     >>> min(s), max(s), s
-     (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
-            0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
-            0.88462681, 0.88907089]))
+    >>> wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+    >>> s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> pvalues
+    [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    >>> s = sortedness(original, projected2, f=wf)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected1, f=wf)
+    >>> min(s), max(s), s
+    (0.878046135266, 0.99748013867, array([0.9046595 , 0.90285305, 0.93592798, 0.99748014, 0.87804614,
+        0.98014052, 0.94867572, 0.99418203, 0.89099364, 0.92922697,
+        0.88462681, 0.88907089]))
     >>> s = sortedness(original, projectedrnd, f=wf)
-     >>> min(s), max(s), s
-     (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
-             0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
-            -0.25956322,  0.20448257]))
+    >>> min(s), max(s), s
+    (-0.517196452192, 0.516271063981, array([ 0.30986815, -0.15794336,  0.43126186, -0.05584362,  0.15059539,
+         0.46072496,  0.093474  ,  0.51627106, -0.51719645, -0.12129132,
+        -0.25956322,  0.20448257]))
 
-     >>> wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
-     >>> s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> pvalues
-     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
-     >>> s = sortedness(original, projected2, f=wf)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected1, f=wf)
-     >>> min(s), max(s), s
-     (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
-            0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
-            0.84059776, 0.89290162]))
-     >>> s = sortedness(original, projectedrnd, f=wf)
-     >>> min(s), max(s), s
-     (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
-             0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
-            -0.05230386,  0.25653798]))
+    >>> wf = partial(weightedtau, weigher=ushaped_decay_f(n=len(original)))
+    >>> s, pvalues = sortedness(original, original, f=wf, return_pvalues=True)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> pvalues
+    [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    >>> s = sortedness(original, projected2, f=wf)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected1, f=wf)
+    >>> min(s), max(s), s
+    (0.795765877958, 0.983810709838, array([0.80821918, 0.79576588, 0.93524284, 0.98381071, 0.88542964,
+        0.94271482, 0.91656289, 0.97633873, 0.89912827, 0.93150685,
+        0.84059776, 0.89290162]))
+    >>> s = sortedness(original, projectedrnd, f=wf)
+    >>> min(s), max(s), s
+    (-0.252801992528, 0.572851805729, array([ 0.39726027, -0.03611457,  0.48069738,  0.15566625,  0.24408468,
+         0.57285181,  0.16562889,  0.49937733, -0.25280199,  0.14445828,
+        -0.05230386,  0.25653798]))
 
-     >>> s = sortedness(original, original, f=None)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> pvalues
-     [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
-     >>> s = sortedness(original, projected2, f=None)
-     >>> min(s), max(s), s
-     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-     >>> s = sortedness(original, projected1, f=None)
-     >>> min(s), max(s), s
-     (0.10465287541006485, 0.8762803775857956, array([0.10465288, 0.24751958, 0.70469304, 0.87628038, 0.63458526,
-            0.57581844, 0.51336949, 0.78349066, 0.73606481, 0.76493272,
-            0.14279976, 0.69806521]))
-     >>> np.random.seed(14980)
-     >>> projectedrnd = permutation(original)
-     >>> s = sortedness(original, projectedrnd, f=None)
-     >>> min(s), max(s), s
-     (-0.37488264207211563, 0.26744721194375687, array([ 0.12002725, -0.26401392,  0.22603597, -0.08439646, -0.04187147,
-             0.26744721, -0.09755896,  0.08033725, -0.37488264,  0.00915852,
-             0.02333352, -0.07022146]))
+    >>> s = sortedness(original, original, f=None)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> pvalues
+    [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]
+    >>> s = sortedness(original, projected2, f=None)
+    >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+    >>> s = sortedness(original, projected1, f=None)
+    >>> min(s), max(s), s
+    (0.10465287541006485, 0.8762803775857956, array([0.10465288, 0.24751958, 0.70469304, 0.87628038, 0.63458526,
+        0.57581844, 0.51336949, 0.78349066, 0.73606481, 0.76493272,
+        0.14279976, 0.69806521]))
+    >>> np.random.seed(14980)
+    >>> projectedrnd = permutation(original)
+    >>> s = sortedness(original, projectedrnd, f=None)
+    >>> min(s), max(s), s
+    (-0.7603668742049587, -0.11820311976973263, array([-0.24398474, -0.6032135 , -0.41188994, -0.62957756, -0.39082814,
+       -0.25841869, -0.24295374, -0.66094932, -0.11820312, -0.60836848,
+       -0.76036687, -0.35886724]))
 
-     >>> s = sortedness(original, original, f=None, normalized=False)
-     >>> min(s), max(s), s
-     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
-     >>> s = sortedness(original, projected2, f=None, normalized=False)
-     >>> min(s), max(s), s
-     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
-     >>> s = sortedness(original, projected1, f=None, normalized=False)
-     >>> min(s), max(s), s
-     (0.666666666667, 4.824603174603, array([4.82460317, 4.0547619 , 1.59126984, 0.66666667, 1.96904762,
+    >>> s = sortedness(original, original, f=None, normalized=False)
+    >>> min(s), max(s), s
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    >>> s = sortedness(original, projected2, f=None, normalized=False)
+    >>> min(s), max(s), s
+    (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+    >>> s = sortedness(original, projected1, f=None, normalized=False)
+    >>> min(s), max(s), s
+    (0.666666666667, 4.824603174603, array([4.82460317, 4.0547619 , 1.59126984, 0.66666667, 1.96904762,
             2.28571429, 2.62222222, 1.16666667, 1.42222222, 1.26666667,
             4.61904762, 1.62698413]))
     >>> s = sortedness(original, projectedrnd, f=None, normalized=False)
     >>> min(s), max(s), s
-    (5.742135642136, 10.777056277056, array([ 6.8976912 ,  9.90800866,  6.06673882,  8.50007215,  8.16673882,
-            5.74213564,  8.60324675,  7.20880231, 10.77705628,  7.76673882,
-            7.65562771,  8.38896104]))
+    (6.025468975469, 9.485786435786, array([6.70324675, 8.63896104, 7.60800866, 8.78102453, 7.49451659,
+    6.78102453, 6.6976912 , 8.95007215, 6.02546898, 8.66673882,
+    9.48578644, 7.32229437]))
     >>> s = sortedness(original, np.flipud(original), f=None, normalized=False)
     >>> min(s), max(s), s
     (4.908802308802, 9.508008658009, array([9.03896104, 4.90880231, 6.76197691, 7.32229437, 5.98896104,
-           9.50800866, 9.50800866, 5.98896104, 7.32229437, 6.76197691,
-           4.90880231, 9.03896104]))
+       9.50800866, 9.50800866, 5.98896104, 7.32229437, 6.76197691,
+       4.90880231, 9.03896104]))
     >>> original = np.array([[0],[1],[2],[3],[4],[5],[6]])
-    >>> projected = np.array([[0],[6],[5],[4],[3],[2],[1]])
+    >>> projected = np.array([[6],[5],[4],[3],[2],[1],[0]])
     >>> s = sortedness(original, projected, f=None)
     >>> min(s), max(s), s
+    (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1.]))
     (4.908802308802, 9.508008658009, array([9.03896104, 4.90880231, 6.76197691, 7.32229437, 5.98896104,
            9.50800866, 9.50800866, 5.98896104, 7.32229437, 6.76197691,
            4.90880231, 9.03896104]))
+    >>> projected = np.array([[0],[6],[5],[4],[3],[2],[1]])
+    >>> s = sortedness(original, projected, f=None)
+    >>> min(s), max(s), s
 
      Parameters
      ----------
@@ -248,7 +252,8 @@ def sortedness(X, X_, f=spearmanr, return_pvalues=False, weigher=None, normalize
         weights = [weigher(i) for i in range(len(X))]
         if normalized:
             woa = np.array(range(len(X)), dtype=np.float).reshape(len(X), 1)
-            wob = np.array([0] + list(range(len(X) - 1, 0, -1)), dtype=np.float).reshape(len(X), 1)
+            # wob = np.array([0] + list(range(len(X) - 1, 0, -1)), dtype=np.float).reshape(len(X), 1)
+            wob = np.array(list(range(len(X) - 1, -1, -1)), dtype=np.float).reshape(len(X), 1)
             worst = ff(woa, woa[0], wob, wob[0], weights, rank=False)
         for a, b in zip(X, X_):
             t = ff(X, a, X_, b, weights)

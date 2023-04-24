@@ -256,8 +256,9 @@ multi-dimensional array. The order of sub-arrays is changed but
 their contents remains the same.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>New code should use the <code><a title="sortedness.kruskal.shuffle" href="#sortedness.kruskal.shuffle">RandomState.shuffle()</a></code> method of a <code>default_rng()</code>
-instance instead; please see the :ref:<code>random-quick-start</code>.</p>
+<p>New code should use the <code>~numpy.random.Generator.shuffle</code>
+method of a <code>~numpy.random.Generator</code> instance instead;
+please see the :ref:<code>random-quick-start</code>.</p>
 </div>
 <h2 id="parameters">Parameters</h2>
 <dl>
