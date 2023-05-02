@@ -1,2 +1,2 @@
-1st version for camera ready paper
-Fix pwsortedness inverted signal of distances
+Trigger Release for Zenodo DOI creation
+Update README
