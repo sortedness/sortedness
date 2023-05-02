@@ -1,4 +1,4 @@
-#  Copyright (c) 2022. Davi Pereira dos Santos
+#  Copyright (c) 2023. Davi Pereira dos Santos
 #  This file is part of the sortedness project.
 #  Please respect the license - more about this in the section (*) below.
 #
