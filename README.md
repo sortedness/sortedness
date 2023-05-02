@@ -47,9 +47,188 @@ poetry install
 
 ### Examples
 
-<<sortedness>>
+**Sortedness**
+<details>
+<p>
 
-<<pwsortedness>>
+```python3
+
+import numpy as np
+from numpy.random import permutation
+from sklearn.decomposition import PCA
+
+from sortedness import sortedness
+
+# Some synthetic data.
+mean = (1, 2)
+cov = np.eye(2)
+rng = np.random.default_rng(seed=0)
+original = rng.multivariate_normal(mean, cov, size=12)
+projected2 = PCA(n_components=2).fit_transform(original)
+projected1 = PCA(n_components=1).fit_transform(original)
+np.random.seed(0)
+projectedrnd = permutation(original)
+
+# Print `min`, `mean`, and `max` values.
+s = sortedness(original, original)
+print(min(s), sum(s) / len(s), max(s))
+"""
+1.0 1.0 1.0
+"""
+```
+
+```python3
+
+s = sortedness(original, projected2)
+print(min(s), sum(s) / len(s), max(s))
+"""
+1.0 1.0 1.0
+"""
+```
+
+```python3
+
+s = sortedness(original, projected1)
+print(min(s), sum(s) / len(s), max(s))
+"""
+0.432937128932 0.7813889452999166 0.944810120534
+"""
+```
+
+```python3
+
+s = sortedness(original, projectedrnd)
+print(min(s), sum(s) / len(s), max(s))
+"""
+-0.578096068617 -0.06328160775358334 0.396112816715
+"""
+```
+
+
+</p>
+</details>
+
+**Pairwise sortedness**
+<details>
+<p>
+
+```python3
+
+import numpy as np
+from numpy.random import permutation
+from sklearn.decomposition import PCA
+
+from sortedness import pwsortedness
+
+# Some synthetic data.
+mean = (1, 2)
+cov = np.eye(2)
+rng = np.random.default_rng(seed=0)
+original = rng.multivariate_normal(mean, cov, size=12)
+projected2 = PCA(n_components=2).fit_transform(original)
+projected1 = PCA(n_components=1).fit_transform(original)
+np.random.seed(0)
+projectedrnd = permutation(original)
+
+# Print `min`, `mean`, and `max` values.
+s = pwsortedness(original, original)
+print(min(s), sum(s) / len(s), max(s))
+"""
+1.0 1.0 1.0
+"""
+```
+
+```python3
+
+s = pwsortedness(original, projected2)
+print(min(s), sum(s) / len(s), max(s))
+"""
+1.0 1.0 1.0
+"""
+```
+
+```python3
+
+s = pwsortedness(original, projected1)
+print(min(s), sum(s) / len(s), max(s))
+"""
+0.730078995423 0.7744573488776667 0.837310352695
+"""
+```
+
+```python3
+
+s = pwsortedness(original, projectedrnd)
+print(min(s), sum(s) / len(s), max(s))
+"""
+-0.198780473657 -0.0645984203715 0.147224384381
+"""
+```
+
+
+</p>
+</details>
+
+**Sortedness**
+<details>
+<p>
+
+```python3
+
+import numpy as np
+from numpy.random import permutation
+from sklearn.decomposition import PCA
+
+from sortedness import global_pwsortedness
+
+# Some synthetic data.
+mean = (1, 2)
+cov = np.eye(2)
+rng = np.random.default_rng(seed=0)
+original = rng.multivariate_normal(mean, cov, size=12)
+projected2 = PCA(n_components=2).fit_transform(original)
+projected1 = PCA(n_components=1).fit_transform(original)
+np.random.seed(0)
+projectedrnd = permutation(original)
+
+# Print measurement result and p-value.
+s = global_pwsortedness(original, original)
+print(list(s))
+"""
+[1.0, 3.6741408919675163e-93]
+"""
+```
+
+```python3
+
+s = global_pwsortedness(original, projected2)
+print(list(s))
+"""
+[1.0, 3.6741408919675163e-93]
+"""
+```
+
+```python3
+
+s = global_pwsortedness(original, projected1)
+print(list(s))
+"""
+[0.7715617715617715, 5.240847664048334e-20]
+"""
+```
+
+```python3
+
+s = global_pwsortedness(original, projectedrnd)
+print(list(s))
+"""
+[-0.06107226107226107, 0.46847188611226276]
+"""
+```
+
+
+</p>
+</details>
 
 
 ** Copyright (c) 2022. Davi Pereira dos Santos and Tacito Neves**

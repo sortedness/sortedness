@@ -44,7 +44,7 @@ pip install -e .
 #################################################################################
 #################################################################################
 rm docs -rf
-#poetry run black -l200 src/ tests/
+#poetry run black -l200 src/ tests/   # black destroys pyx files
 poetry run pdoc --html --force sortedness -o docs
 mv docs/sortedness/* docs/
 rm docs/sortedness -rf
@@ -53,7 +53,7 @@ echo "----------------- docs/noblack done -----------------------"
 echo; echo
 
 echo "---------------- readme ----------------"
-#poetry run autoreadme -i README-edit.md -s examples/ -o README.md
+autoreadme -i README-edit.md -s examples/ -o README.md
 echo "---------------- readme done ----------------"
 echo; echo
 
