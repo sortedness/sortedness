@@ -22,18 +22,16 @@
 #
 
 import json
-import shelve
 
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
+from hoshmap import idict
+from lange import ap
 from shelchemy.core import sopen
 
 from sortedness.config import remote_cache_uri, local_cache_uri
-
-from hoshmap import idict
-from lange import ap
 from sortedness.rank import neighbors
 
 did = "KHQLW5GBeVGVUk4UZUEGJVLrBN3TLlQjnqPNrnWV"

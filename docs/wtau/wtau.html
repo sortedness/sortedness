@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>sortedness.evaluation.plot API documentation</title>
-<meta name="description" content="" />
+<title>sortedness.wtau.wtau API documentation</title>
+<meta name="description" content="Copyright (c) 2001-2002 Enthought, Inc. 2003-2023, SciPy Developers.
+All rights reserved …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,79 +20,57 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>sortedness.evaluation.plot</code></h1>
+<h1 class="title">Module <code>sortedness.wtau.wtau</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python"># #  Copyright (c) 2022. Davi Pereira dos Santos
-# #  This file is part of the sortedness project.
-# #  Please respect the license - more about this in the section (*) below.
-# #
-# #  sortedness is free software: you can redistribute it and/or modify
-# #  it under the terms of the GNU General Public License as published by
-# #  the Free Software Foundation, either version 3 of the License, or
-# #  (at your option) any later version.
-# #
-# #  sortedness is distributed in the hope that it will be useful,
-# #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-# #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# #  GNU General Public License for more details.
-# #
-# #  You should have received a copy of the GNU General Public License
-# #  along with sortedness.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
-# #
-# #  (*) Removing authorship by any means, e.g. by distribution of derived
-# #  works or verbatim, obfuscated, compiled or rewritten versions of any
-# #  part of this work is illegal and it is unethical regarding the effort and
-# #  time spent here.
-# #
-#
-# from dataclasses import dataclass
-#
-#
-# colors = [&#34;blue&#34;, &#34;green&#34;, &#34;red&#34;, &#34;gray&#34;, &#34;yellow&#34;, &#34;black&#34;, &#34;pink&#34;]
-#
-#
-# @dataclass
-# class Plot:
-#     d: object
-#     projection: str
-#     xlabel: str
-#     ylabel: str
-#     legend: bool
-#     plt: callable
-#     fontsize: int = 18
-#     marksize: int = 2
-#
-#     def __post_init__(self):
-#         self.fig = self.plt.figure()
-#         self.plt.title(f&#34;{self.projection}&#34;, fontsize=self.fontsize)
-#         self.ax = self.fig.gca()
-#         # ax.set_yscale(&#39;log&#39;)
-#
-#     def __lshift__(self, other):
-#         slabel, color = other
-#         self.ax.scatter(self.d[self.xlabel], self.d[slabel], s=self.marksize, c=color, label=slabel)
-#
-#     def finish(self):
-#         if self.legend:
-#             self.ax.legend(fontsize=self.fontsize)
-#         self.plt.xlabel(self.xlabel, fontsize=self.fontsize)
-#         self.plt.ylabel(self.ylabel, fontsize=self.fontsize)
-#         self.plt.tight_layout()
-#         figManager = self.plt.get_current_fig_manager()
-#         figManager.window.showMaximized()
-#         figManager.window.setWindowTitle(f&#34;{self.projection}     {self.xlabel}&#34;)</code></pre>
-</details>
+<p>Copyright (c) 2001-2002 Enthought, Inc. 2003-2023, SciPy Developers.
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:</p>
+<ol>
+<li>
+<p>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</p>
+</li>
+<li>
+<p>Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided
+with the distribution.</p>
+</li>
+<li>
+<p>Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.</p>
+</li>
+</ol>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 </section>
 <section>
 </section>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="sortedness.wtau.wtau.weigh"><code class="name flex">
+<span>def <span class="ident">weigh</span></span>(<span>offset, length, rank, perm, temp, exchanges_weight, x, y)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 </section>
 <section>
 </section>
@@ -104,7 +83,12 @@
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="sortedness.evaluation" href="index.html">sortedness.evaluation</a></code></li>
+<li><code><a title="sortedness.wtau" href="index.html">sortedness.wtau</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="sortedness.wtau.wtau.weigh" href="#sortedness.wtau.wtau.weigh">weigh</a></code></li>
 </ul>
 </li>
 </ul>

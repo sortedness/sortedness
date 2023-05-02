@@ -1,13 +1,20 @@
 echo
 echo "----------------- updating poetry... -----------------------"
 poetry update
-poetry install --no-root --extras full
+poetry install --no-root #--extras full
 
 echo "----------------- updated -----------------------"
 echo; echo
 
 echo
+echo "----------------- cython... -----------------------"
+CYTHONIZE=1 ; poetry run cythonize -a -i ./src/sortedness/wtau/wtau.  pyx
+echo "----------------- cython. -----------------------"
+echo; echo
+
+echo
 echo "----------------- testing... -----------------------"
+read -p "press enter"
 poetry run pytest src tests --cov=src --doctest-modules  --cov-report term-missing
 echo "----------------- tested -----------------------"
 echo; echo
@@ -26,34 +33,34 @@ echo; echo
 
 
 echo
-echo "----------------- docs/black... -----------------------"
+echo "----------------- docs/noblack... -----------------------"
 read -p "press enter"
 #################################################################################
 #################################################################################
 echo ">>>>>>   install project package for IDE class hierarchy <<<<<<<<" 
 echo "          (to remove duplicates from IDE class hierarchy)"
-source /home/davi/.cache/pypoetry/virtualenvs/hdict-ZUd5y1Rg-py3.10/bin/activate
-pip install .
+source /home/davi/.cache/pypoetry/virtualenvs/sortedness-WulHZRF3-py3.10/bin/activate
+pip install -e .
 #################################################################################
 #################################################################################
 rm docs -rf
-poetry run black -l200 src/ tests/
+#poetry run black -l200 src/ tests/
 poetry run pdoc --html --force sortedness -o docs
 mv docs/sortedness/* docs/
 rm docs/sortedness -rf
 git add docs
-echo "----------------- docs/black done -----------------------"
+echo "----------------- docs/noblack done -----------------------"
 echo; echo
 
 echo "---------------- readme ----------------"
-poetry run autoreadme -i README-edit.md -s examples/ -o README.md
+#poetry run autoreadme -i README-edit.md -s examples/ -o README.md
 echo "---------------- readme done ----------------"
 echo; echo
 
 #################################################################################
 #################################################################################
 echo ">>>>>>   uninstall project package for IDE class hierarchy <<<<<<<<" 
-pip uninstall hdict -y
+pip uninstall sortedness -y
 deactivate
 #################################################################################
 #################################################################################
@@ -97,4 +104,4 @@ echo "------------------- pushed ----------------------"
 echo; echo
 
 echo "------------------- publish ----------------------"
-poetry publish --build
+poetry build

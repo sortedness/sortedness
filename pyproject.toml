@@ -1,37 +1,47 @@
 [tool.poetry]
 name = "sortedness"
-version = "0.220803.1"
+version = "0.230501.7"
 description = "Measures of projection quality"
-authors = ["davips <dpsabc@gmail.com>, tacito <tacito.neves@gmail.com>"]
+authors = ["davips <dpsabc@gmail.com>", "tacito <tacito.neves@gmail.com>"]
 license = "GPLv3"
+build = "build.py"  # For Cython. apt-get package needed: python3-numpy
+readme = 'README.md'
+packages = [
+    { include = "sortedness", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10,<4.0"
-scipy = {version = "^1.8.1", python = ">=3.8,<3.11"}
+scipy = {version = "^1.10.1", python = ">=3.8,<3.11"}
 lange = "^1.230203.1"
+pathos = "^0.3.0"
+shelchemy = "^0.220906.5"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
-pytest-cov = "^3.0.0"
-black = "^22.6.0"
+#[tool.poetry.dev-dependencies]
+#ipython = "^8.13.1"
+#openml = "^0.13.1"
+#pandas = "^2.0.1"
+#hoshmap = "^0.220808.0"
+#dash = "^2.9.3"
+##ranky = "^0.3.3"
+#sympy = "^1.10.1"
+#matplotlib = "^3.7.1"
+#PyQt5 = "^5.15.7"
+#PyMySQL = "^1.0.2"
+#lz4 = "^4.0.2"
+#cryptography = "^40.0.2"
+
+[tool.poetry.group.dev.dependencies]
+setuptools = "^67.7.2"
+Cython = "^0.29.27"
+pytest = "^7.3.1"
+pytest-cov = "^4.0.0"
+black = "^23.3.0"
 pdoc3 = "^0.10.0"
-autoreadme = "^0.2102.20"
-ipython = "^8.4.0"
-scikit-learn = "^1.1.1"
-openml = "^0.12.2"
-pandas = "^1.4.3"
-hoshmap = "^0.220808.0"
-dash = "^2.6.0"
-ranky = "^0.2.9"
-sympy = "^1.10.1"
-matplotlib = "^3.5.2"
-PyQt5 = "^5.15.7"
-shelchemy = "^0.220726.8"
-PyMySQL = "^1.0.2"
-lazydf = "^0.220725.4"
-lz4 = "^4.0.2"
-cryptography = "^37.0.4"
+autoreadme = "^0.2302.3"
+scikit-learn = "^1.2.2"
+numpy = "^1.24.3"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "Cython>=0.29.27", "setuptools>=60.8.1", "numpy>=1.23.3", "scipy>=1.10.1"]
 build-backend = "poetry.core.masonry.api"

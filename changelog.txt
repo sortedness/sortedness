@@ -1,4 +1,2 @@
-Add possibly the correct (local) 'sortedness' measure
-Add U-shaped weigher
-Draft visual interactive (plotly) example
-Add kruskal
+1st version for camera ready paper
+Fix pwsortedness inverted signal of distances

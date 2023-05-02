@@ -39,12 +39,17 @@ cd sortedness
 poetry install
 ```
 
+
 ### Examples
-Some usage examples.
+
+<<sortedness>>
+
+<<pwsortedness>>
+
 
 ** Copyright (c) 2022. Davi Pereira dos Santos and Tacito Neves**
 
-<<mean-dist>>
+
 
 
 
