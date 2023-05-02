@@ -47,9 +47,11 @@ poetry install
 
 ### Examples
 
-<<sortedness>>
+<<sortedness_>>
 
-<<pwsortedness>>
+<<pwsortedness_>>
+
+<<gsortedness>>
 
 
 ** Copyright (c) 2022. Davi Pereira dos Santos and Tacito Neves**

@@ -1,2 +1,2 @@
-Trigger Release for Zenodo DOI creation
-Update README
+Fix import of global_pwsortedness due to python limitation on keyword `global`
+Improve README examples

@@ -1,11 +1,12 @@
-# Pairwise sortedness
+# Sortedness
 
 import numpy as np
 from numpy.random import permutation
 from sklearn.decomposition import PCA
 
-from sortedness.local import pwsortedness
+from sortedness import global_pwsortedness
 
+# Some synthetic data.
 mean = (1, 2)
 cov = np.eye(2)
 rng = np.random.default_rng(seed=0)
@@ -15,18 +16,19 @@ projected1 = PCA(n_components=1).fit_transform(original)
 np.random.seed(0)
 projectedrnd = permutation(original)
 
-s = pwsortedness(original, original)
-print(min(s), max(s), s)
+# Print measurement result and p-value.
+s = global_pwsortedness(original, original)
+print(list(s))
 # ...
 
-s = pwsortedness(original, projected2)
-print(min(s), max(s), s)
+s = global_pwsortedness(original, projected2)
+print(list(s))
 # ...
 
-s = pwsortedness(original, projected1)
-print(min(s), max(s), s)
+s = global_pwsortedness(original, projected1)
+print(list(s))
 # ...
 
-s = pwsortedness(original, projectedrnd)
+s = global_pwsortedness(original, projectedrnd)
+print(list(s))
 # ...
-print(min(s), max(s), s)
