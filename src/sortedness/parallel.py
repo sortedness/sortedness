@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 #     return X.astype(int) - 1
 
 
-def rank_alongcol(X, method="average", step=10, parallel=True, **parallel_kwargs):
+def rank_alongcol(X, method="average", step=10, parallel=True, **parallel_kwargs):   # pragma: no cover
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel else map
     n = len(X)
     if step > n or step < 1:  # pragma: no cover

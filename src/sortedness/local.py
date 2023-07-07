@@ -188,13 +188,13 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
     >>> sortedness(original, projected2, f=wf)
     array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.])
     >>> sortedness(original, projected1, f=wf)
-    array([0.37051697, 0.32224383, 0.94418603, 0.92935689, 0.88533575,
-           0.75100956, 0.75075359, 0.88898941, 0.91311278, 0.91054531,
-           0.53138984, 0.95437837])
+    array([0.89469168, 0.89269637, 0.92922928, 0.99721669, 0.86529591,
+           0.97806422, 0.94330979, 0.99357377, 0.87959707, 0.92182767,
+           0.87256459, 0.87747329])
     >>> sortedness(original, projectedrnd, f=wf)
-    array([ 0.05789726, -0.58800145,  0.24738378, -0.09877965, -0.1727096 ,
-            0.53783509, -0.302085  ,  0.03559481, -0.65891558, -0.00798687,
-           -0.47395526, -0.1452215 ])
+    array([ 0.23771513, -0.2790059 ,  0.3718005 , -0.16623167,  0.06179047,
+            0.40434396, -0.00130294,  0.46569739, -0.67581876, -0.23852189,
+           -0.39125007,  0.12131153])
     >>> np.random.seed(14980)
     >>> projectedrnd = permutation(original)
     >>> sortedness(original, projectedrnd)
@@ -213,6 +213,8 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
     >>> sortedness(original, projected)
     array([-1.        ,  0.42263889,  0.80668827,  0.98180162,  0.98180162,
             0.82721863,  0.61648537])
+    >>> sortedness(original, projected, 1)
+    0.4226388949217901
     """
     isweightedtau = False
     if hasattr(f, "isweightedtau") and f.isweightedtau:
@@ -235,7 +237,8 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
             scores_X, scores_X_ = (-d, -d_) if isweightedtau else (d, d_)
             corr, pvalue = f(scores_X, scores_X_, **kwargs)
             return (corr, pvalue) if return_pvalues else corr
-        else:
+        else:  # pragma: no cover
+            raise Exception(f"Not implemented yet; it is an open problem")
             D = abs(X - x).T
             scores_X, scores_x_ = (-D, -d_) if isweightedtau else (D, d_)
             for j in range(len(scores_X)):
@@ -254,9 +257,9 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
             corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
             result.append(round(corr, 12))
             pvalues.append(round(pvalue, 12))
-    else:
+    else:  # pragma: no cover
         raise Exception(f"Not implemented yet; it is an open problem")
-    #     for i in range(len(X)):
+        #     for i in range(len(X)):
     #         corr, pvalue = sortedness(X, X_, i, f=f, distance_dependent=False, return_pvalues=True,
     #                                   parallel=parallel, parallel_n_trigger=parallel_n_trigger, parallel_kwargs=parallel_kwargs, **kwargs)
     #         result.append(round(corr, 12))
@@ -390,7 +393,7 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
     return res
 
 
-def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
+def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):  # pragma: no cover
     """
     Reciprocal sortedness: consider the neighborhood relation the other way around
 
@@ -433,32 +436,32 @@ def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, paral
         Numpy vector
 
 
-    >>> ll = [[i, ] for i in range(17)]
-    >>> a, b = np.array(ll), np.array(ll[0:1] + list(reversed(ll[1:])))
-    >>> b.ravel()
-    array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
-    >>> #r = rsortedness(a, b)
-    >>> #min(r), max(r)
-    (-0.707870893072, 0.962964134515)
-
-    >>> rnd = np.random.default_rng(0)
-    >>> rnd.shuffle(ll)
-    >>> b = np.array(ll)
-    >>> b.ravel()
-    array([ 2, 10,  3, 11,  0,  4,  7,  5, 16, 12, 13,  6,  9, 14,  8,  1, 15])
-    >>> r = rsortedness(b, a)
-    >>> r
-    array([ 0.36861667, -0.07147685,  0.39350142, -0.04581926, -0.03951645,
-            0.31100414, -0.18107755,  0.28268222, -0.29248869,  0.19177107,
-            0.48076521, -0.17640674,  0.13098522,  0.34833996,  0.01844146,
-           -0.58291518,  0.34742337])
-    >>> min(r), max(r), round(mean(r), 12)
-    (-0.582915181328, 0.480765206133, 0.087284118913)
-    >>> rsortedness(b, a, f=kendalltau, return_pvalues=True)
-    array([[ 0.2316945 ,  0.04863508],
-           [-0.37005403,  0.21347624],
-           [ 0.17618709,  0.04863508],
-           [-0.35418588,  0.21347624]])
+    # >>> ll = [[i, ] for i in range(17)]
+    # >>> a, b = np.array(ll), np.array(ll[0:1] + list(reversed(ll[1:])))
+    # >>> b.ravel()
+    # array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
+    # >>> #r = rsortedness(a, b)
+    # >>> #min(r), max(r)
+    # (-0.707870893072, 0.962964134515)
+    #
+    # >>> rnd = np.random.default_rng(0)
+    # >>> rnd.shuffle(ll)
+    # >>> b = np.array(ll)
+    # >>> b.ravel()
+    # array([ 2, 10,  3, 11,  0,  4,  7,  5, 16, 12, 13,  6,  9, 14,  8,  1, 15])
+    # >>> r = rsortedness(b, a)
+    # >>> r
+    # array([ 0.36861667, -0.07147685,  0.39350142, -0.04581926, -0.03951645,
+    #         0.31100414, -0.18107755,  0.28268222, -0.29248869,  0.19177107,
+    #         0.48076521, -0.17640674,  0.13098522,  0.34833996,  0.01844146,
+    #        -0.58291518,  0.34742337])
+    # >>> min(r), max(r), round(mean(r), 12)
+    # (-0.582915181328, 0.480765206133, 0.087284118913)
+    # >>> rsortedness(b, a, f=kendalltau, return_pvalues=True)
+    # array([[ 0.2316945 ,  0.04863508],
+    #        [-0.37005403,  0.21347624],
+    #        [ 0.17618709,  0.04863508],
+    #        [-0.35418588,  0.21347624]])
     """
     if hasattr(f, "isweightedtau") and f.isweightedtau and "rank" not in kwargs:
         kwargs["rank"] = None

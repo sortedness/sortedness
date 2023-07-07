@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sortedness"
-version = "0.230501.10"
+version = "0.230706.1"
 description = "Measures of projection quality"
 authors = ["davips <dpsabc@gmail.com>", "tacito <tacito.neves@gmail.com>"]
 license = "GPLv3"
@@ -30,9 +30,9 @@ pathos = "^0.3.0"
 #PyMySQL = "^1.0.2"
 #lz4 = "^4.0.2"
 #cryptography = "^40.0.2"
-scikit-tensor-py3 = {git = "https://github.com/jonjoncardoso/scikit-tensor-py3"}
-fastrlock = "0.7.0"
-cupy-cuda11x = "^12.1.0"
+#scikit-tensor-py3 = {git = "https://github.com/jonjoncardoso/scikit-tensor-py3"}
+#fastrlock = "0.7.0"
+#cupy-cuda11x = "^12.1.0"
 
 [tool.poetry.group.dev.dependencies]
 setuptools = "^67.7.2"

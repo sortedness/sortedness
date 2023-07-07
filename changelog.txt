@@ -1,1 +1,2 @@
+Make schelchemy optional
 Hide cython imports for better compatibility with conda; only pwsortedness will break it now.
