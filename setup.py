@@ -12,8 +12,7 @@ package_data = \
 
 install_requires = \
 ['lange>=1.230203.1,<2.0.0',
- 'pathos>=0.3.0,<0.4.0',
- 'shelchemy>=0.220906.5,<0.220907.0']
+ 'pathos>=0.3.0,<0.4.0']
 
 extras_require = \
 {':python_version >= "3.8" and python_version < "3.11"': ['scipy>=1.10.1,<2.0.0']}

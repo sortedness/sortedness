@@ -43,7 +43,7 @@ def remove_diagonal(X):
 weightedtau.isweightedtau = True
 
 
-def sortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
+def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
     """
      Calculate the sortedness (stress-like correlation-based measure that ignores distance proportions) value for each point
      Functions available as scipy correlation coefficients:
@@ -485,7 +485,11 @@ def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, paral
         return lst1, lst2
 
     result, pvalues = [], []
-    from shelchemy.lazy import ichunks
+    try:
+        from shelchemy.lazy import ichunks
+    except Exception as e:
+        print("please install shelchemy library.")
+        exit()
     jobs = pmap(thread, ichunks(range(npoints), 15, asgenerators=False))
     for corrs, pvalues in jobs:
         result.extend(corrs)
