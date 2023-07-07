@@ -215,6 +215,8 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
             0.82721863,  0.61648537])
     >>> sortedness(original, projected, 1)
     0.4226388949217901
+    >>> sortedness([[1,2,3,3],[1,2,7,3],[3,4,8,5],[1,8,3,5]], [[2,1,2,3],[3,1,2,3],[5,4,5,6],[9,7,6,3]], 1)
+    0.18181818181818177
     """
     isweightedtau = False
     if hasattr(f, "isweightedtau") and f.isweightedtau:
@@ -227,8 +229,8 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
     npoints = len(X)
 
     if i is not None:
-        x = X[i] if isinstance(X, ndarray) else X.iloc[i]
-        x_ = X_[i] if isinstance(X_, ndarray) else X_.iloc[i]
+        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i]
+        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i]
         X = np.delete(X, i, axis=0)
         X_ = np.delete(X_, i, axis=0)
         d_ = np.sum((X_ - x_) ** 2, axis=1)
