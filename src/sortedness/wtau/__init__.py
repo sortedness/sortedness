@@ -34,8 +34,6 @@ from itertools import repeat, tee
 import pathos.multiprocessing as mp
 from numpy import lexsort, array, empty
 
-from .wtau import _weightedrankedtau  # Source wtau.pyx becomes wtau.c and shared so
-
 
 def parwtau(scoresX, scoresX_, npoints, R=True, parallel=True, **kwargs):
     """**kwargs is for ProcessingPool, e.g.: npcus=8"""
@@ -68,6 +66,7 @@ def parwtau(scoresX, scoresX_, npoints, R=True, parallel=True, **kwargs):
     pmap = mp.ProcessingPool(**kwargs).imap if parallel else map
     if not add:
         jobs = repeat(scoresX), repeat(scoresX_), genR(perms_for_r, scoresX), repeat(npositions), perms, exchanges_weights, temps
+        from .wtau import _weightedrankedtau  # Source wtau.pyx becomes wtau.c and shared so
         return array(list(pmap(_weightedrankedtau, *jobs)))
 
     # def f(scoresX, scoresX_, rank, rank_, perm, perm_, exchanges_weight, temp):

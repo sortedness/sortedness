@@ -26,14 +26,12 @@ from functools import partial
 
 import numpy as np
 import pathos.multiprocessing as mp
-from numpy import eye, mean, sqrt
+from numpy import eye, mean, sqrt, ndarray
 from numpy.random import permutation
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata, kendalltau, weightedtau
-from shelchemy.lazy import ichunks
 
 from sortedness.parallel import rank_alongrow, rank_alongcol
-from sortedness.wtau import parwtau
 
 
 def remove_diagonal(X):
@@ -64,6 +62,9 @@ def sortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parall
         matrix with an instance by row in a given space (often the original one)
     X_
         matrix with an instance by row in another given space (often the projected one)
+    i
+        None:   calculate sortedness for all instances
+        `int`:  index of the instance of interest
     f
         Distance criteria:
         callable    =   scipy correlation function:
@@ -119,10 +120,10 @@ def sortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parall
     >>> import numpy as np
     >>> from functools import partial
     >>> from scipy.stats import spearmanr, weightedtau
-    >>> mean = (1, 2)
+    >>> me = (1, 2)
     >>> cov = eye(2)
     >>> rng = np.random.default_rng(seed=0)
-    >>> original = rng.multivariate_normal(mean, cov, size=12)
+    >>> original = rng.multivariate_normal(me, cov, size=12)
     >>> from sklearn.decomposition import PCA
     >>> projected2 = PCA(n_components=2).fit_transform(original)
     >>> projected1 = PCA(n_components=1).fit_transform(original)
@@ -213,25 +214,53 @@ def sortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parall
     array([-1.        ,  0.42263889,  0.80668827,  0.98180162,  0.98180162,
             0.82721863,  0.61648537])
     """
-    if hasattr(f, "isweightedtau") and f.isweightedtau and "rank" not in kwargs:
-        kwargs["rank"] = None
+    isweightedtau = False
+    if hasattr(f, "isweightedtau") and f.isweightedtau:
+        isweightedtau = True
+        if "rank" not in kwargs:
+            kwargs["rank"] = None
     if parallel_kwargs is None:
         parallel_kwargs = {}
     result, pvalues = [], []
     npoints = len(X)
 
-    tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
-    sqdist_X, sqdist_X_ = tmap(lambda M: cdist(M, M), [X, X_])
+    if i is not None:
+        x = X[i] if isinstance(X, ndarray) else X.iloc[i]
+        x_ = X_[i] if isinstance(X_, ndarray) else X_.iloc[i]
+        X = np.delete(X, i, axis=0)
+        X_ = np.delete(X_, i, axis=0)
+        d_ = np.sum((X_ - x_) ** 2, axis=1)
+        if distance_dependent:
+            d = np.sum((X - x) ** 2, axis=1)
+            scores_X, scores_X_ = (-d, -d_) if isweightedtau else (d, d_)
+            corr, pvalue = f(scores_X, scores_X_, **kwargs)
+            return (corr, pvalue) if return_pvalues else corr
+        else:
+            D = abs(X - x).T
+            scores_X, scores_x_ = (-D, -d_) if isweightedtau else (D, d_)
+            for j in range(len(scores_X)):
+                corr, pvalue = f(scores_X[j], scores_x_, **kwargs)
+                result.append(round(corr, 12))
+                pvalues.append(round(pvalue, 12))
+            return (mean(result), mean(pvalues)) if return_pvalues else mean(result)
 
-    # For f=weightedtau: scores = -ranks.
-    scores_X = -remove_diagonal(sqdist_X)
-    scores_X_ = -remove_diagonal(sqdist_X_)
-
-    # TODO: Offer option to use a parallel wtau (when/if it becomes a working thing)
-    for i in range(len(X)):
-        corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
-        result.append(round(corr, 12))
-        pvalues.append(round(pvalue, 12))
+    if distance_dependent:
+        tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
+        sqdist_X, sqdist_X_ = tmap(lambda M: cdist(M, M, metric='sqeuclidean'), [X, X_])
+        D = remove_diagonal(sqdist_X)
+        D_ = remove_diagonal(sqdist_X_)
+        scores_X, scores_X_ = (-D, -D_) if isweightedtau else (D, D_)
+        for i in range(len(X)):
+            corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
+            result.append(round(corr, 12))
+            pvalues.append(round(pvalue, 12))
+    else:
+        raise Exception(f"Not implemented yet; it is an open problem")
+    #     for i in range(len(X)):
+    #         corr, pvalue = sortedness(X, X_, i, f=f, distance_dependent=False, return_pvalues=True,
+    #                                   parallel=parallel, parallel_n_trigger=parallel_n_trigger, parallel_kwargs=parallel_kwargs, **kwargs)
+    #         result.append(round(corr, 12))
+    #         pvalues.append(round(pvalue, 12))
 
     result = np.array(result, dtype=float)
     if return_pvalues:
@@ -317,9 +346,10 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
     if debug:  # pragma: no cover
         print(3)
     n = len(D)
-    m = (n**2 - n) // 2
 
     def makeM(E):
+        n = len(E)
+        m = (n ** 2 - n) // 2
         M = np.zeros((m, n))
         if debug:  # pragma: no cover
             print(4)
@@ -327,7 +357,7 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
         for i in range(n - 1):  # a bit slow, but only a fraction of wtau (~5%)
             h = n - i - 1
             d = c + h
-            M[c:d] = E[i] + E[i + 1 :]
+            M[c:d] = E[i] + E[i + 1:]
             c = d
         if debug:  # pragma: no cover
             print(5)
@@ -343,6 +373,7 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
     gc.collect()
     if debug:  # pragma: no cover
         print(7)
+    from sortedness.wtau import parwtau
     res = np.round(parwtau(scores_X, scores_X_, npoints, R, parallel=parallel, **parallel_kwargs), 12)
     del R
     gc.collect()
@@ -454,6 +485,7 @@ def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, paral
         return lst1, lst2
 
     result, pvalues = [], []
+    from shelchemy.lazy import ichunks
     jobs = pmap(thread, ichunks(range(npoints), 15, asgenerators=False))
     for corrs, pvalues in jobs:
         result.extend(corrs)
@@ -528,7 +560,7 @@ def stress(X, X_, metric=True, parallel=True, parallel_size_trigger=10000, **par
     else:
         thread = lambda M: rankdata(cdist(M, M, metric="sqeuclidean"), method="average", axis=1) - 1
         D, D_ = tmap(thread, [X, X_])
-        Dsq = D**2
+        Dsq = D ** 2
 
     sqdiff = (D - D_) ** 2
     nume = sum(sqdiff)
