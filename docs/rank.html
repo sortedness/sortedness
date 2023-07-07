@@ -47,190 +47,192 @@
 #  works or verbatim, obfuscated, compiled or rewritten versions of any
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
+# #
 #
-
-from typing import Union
-
-from numpy import argsort
+# from typing import Union
+#
+# from numpy import argsort
 from numpy.linalg import norm
 from scipy.stats import rankdata
 
 
-def rdist_by_index_lw(indices, normalized=False, **kwargs):
-    &#34;&#34;&#34;
-    Calculate distance between two rankings
-    E.g.:
-        d(abc, cba) = d(abc, cab)
-        &gt;&gt;&gt; rdist_by_index_lw([2, 1, 0]) == rdist_by_index_lw([1, 2, 0])
-        True
-
-        d(abc, acb) &lt; d(abc, bac)
-        &gt;&gt;&gt; rdist_by_index_lw([0, 2, 1]) &lt; rdist_by_index_lw([1, 0, 2])
-        True
-
-    For performance reasons, one of them (called `original`)
-     is given as a transformation of the other (called `new`).
-
-    &gt;&gt;&gt; rdist_by_index_lw([2, 1, 5, 4, 3, 0], normalized=False)
-    3.3
-    &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 4, 3, 0], normalized=False)
-    3.3
-    &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 0, 4, 3], normalized=False)
-    2.9
-    &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
-    0
-    &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-    -1.0
-    &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
-    4.967
-    &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
-    0.333
-
-    Parameters
-    ----------
-    indices
-        Map between original position (index) and new position (value)
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-        This makes the measure dependent on dataset size
-    Returns
-    -------
-        Distance between original and new rankings
-
-
-    &#34;&#34;&#34;
-    costs = [1 / x for x in range(2, len(indices) + 1)]
-    # TODO cache costs
-    total = 0
-    for i, idx in enumerate(indices):
-        start, end = (i, idx) if i &lt;= idx else (idx, i)
-        cost = sum(costs[start:end])
-        total += cost
-    if total and normalized:
-        total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
-        total = 1 - 2 * total
-    # TODO: calculate denominator analytically
-    return round(total, 10)
-
-
-def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
-    &#34;&#34;&#34;
-    Calculate distance between two rankings
-    E.g.:
-        d(abc, cba) = d(abc, cab)
-        &gt;&gt;&gt; rdist_by_index_iw([2, 1, 0]) == rdist_by_index_iw([1, 2, 0])
-        True
-
-        d(abc, acb) &lt; d(abc, bac)
-        &gt;&gt;&gt; rdist_by_index_iw([0, 2, 1]) == rdist_by_index_iw([1, 0, 2])
-        True
-
-    For performance reasons, one of them (called `original`)
-     is given as a transformation of the other (called `new`).
-
-    &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0])
-    12
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0])
-    12
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3])
-    10
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
-    0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-    -1.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
-    18
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
-    2
-    &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0], decay=0.1)
-    8.76755
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0], decay=0.1)
-    8.66755
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3], decay=0.1)
-    7.69798
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
-    0.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-    -1.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
-    14.15975
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
-    1.24659
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4]) == rdist_by_index_iw([1, 0, 2, 3, 4, 5])
-    True
-
-    Parameters
-    ----------
-    indices
-        Map between original position (index) and new position (value)
-    decay
-        Decay factor to make the instance weight lesser than the previous instance in the ranking
-        `decay=0` means uniform weights
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-        This makes the measure dependent on dataset size
-    Returns
-    -------
-        Distance between original and new rankings
-
-
-    &#34;&#34;&#34;
-    total = 0
-    for i, idx in enumerate(indices):
-        start, end = (i, idx) if i &lt;= idx else (idx, i)
-        w = (1 - decay) ** i
-        cost = (end - start) * w
-        total += cost
-    if total and normalized:
-        # TODO: calculate denominator analytically
-        total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
-        total = 1 - 2 * round(total, 10)
-    return total
-
-
-def rdist(a, b, normalized=False, f=rdist_by_index_iw):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3], f=rdist_by_index_lw)
-    0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3], f=rdist_by_index_lw)
-    1.0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-    0.5
-    &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-    1.5
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3])
-    0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3])
-    2
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2])
-    2
-    &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2])
-    4
-
-    Parameters
-    ----------
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-    a
-        List of numbers intended to be a rank
-    b
-        List of numbers intended to be a rank
-    f
-        Index-based distance function
-
-    Returns
-    -------
-
-    &#34;&#34;&#34;
-    ranks_a = rankdata(a, method=&#34;ordinal&#34;) - 1
-    ranks_b = rankdata(b, method=&#34;ordinal&#34;) - 1
-    ranks = ranks_b[argsort(ranks_a)]
-    return f(argsort(ranks), normalized=normalized)
-
-
+#
+#
+# def rdist_by_index_lw(indices, normalized=False, **kwargs):
+#     &#34;&#34;&#34;
+#     Calculate distance between two rankings
+#     E.g.:
+#         d(abc, cba) = d(abc, cab)
+#         &gt;&gt;&gt; rdist_by_index_lw([2, 1, 0]) == rdist_by_index_lw([1, 2, 0])
+#         True
+#
+#         d(abc, acb) &lt; d(abc, bac)
+#         &gt;&gt;&gt; rdist_by_index_lw([0, 2, 1]) &lt; rdist_by_index_lw([1, 0, 2])
+#         True
+#
+#     For performance reasons, one of them (called `original`)
+#      is given as a transformation of the other (called `new`).
+#
+#     &gt;&gt;&gt; rdist_by_index_lw([2, 1, 5, 4, 3, 0], normalized=False)
+#     3.3
+#     &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 4, 3, 0], normalized=False)
+#     3.3
+#     &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 0, 4, 3], normalized=False)
+#     2.9
+#     &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
+#     0
+#     &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
+#     -1.0
+#     &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
+#     4.967
+#     &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
+#     0.333
+#
+#     Parameters
+#     ----------
+#     indices
+#         Map between original position (index) and new position (value)
+#     normalized
+#         Whether to normalize result to [0; 1] interval
+#         If True, divide value by the longest possible distance.
+#         This makes the measure dependent on dataset size
+#     Returns
+#     -------
+#         Distance between original and new rankings
+#
+#
+#     &#34;&#34;&#34;
+#     costs = [1 / x for x in range(2, len(indices) + 1)]
+#     # TODO cache costs
+#     total = 0
+#     for i, idx in enumerate(indices):
+#         start, end = (i, idx) if i &lt;= idx else (idx, i)
+#         cost = sum(costs[start:end])
+#         total += cost
+#     if total and normalized:
+#         total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
+#         total = 1 - 2 * total
+#     # TODO: calculate denominator analytically
+#     return round(total, 10)
+#
+#
+# def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
+#     &#34;&#34;&#34;
+#     Calculate distance between two rankings
+#     E.g.:
+#         d(abc, cba) = d(abc, cab)
+#         &gt;&gt;&gt; rdist_by_index_iw([2, 1, 0]) == rdist_by_index_iw([1, 2, 0])
+#         True
+#
+#         d(abc, acb) &lt; d(abc, bac)
+#         &gt;&gt;&gt; rdist_by_index_iw([0, 2, 1]) == rdist_by_index_iw([1, 0, 2])
+#         True
+#
+#     For performance reasons, one of them (called `original`)
+#      is given as a transformation of the other (called `new`).
+#
+#     &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0])
+#     12
+#     &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0])
+#     12
+#     &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3])
+#     10
+#     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
+#     0
+#     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
+#     -1.0
+#     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
+#     18
+#     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
+#     2
+#     &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0], decay=0.1)
+#     8.76755
+#     &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0], decay=0.1)
+#     8.66755
+#     &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3], decay=0.1)
+#     7.69798
+#     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
+#     0.0
+#     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
+#     -1.0
+#     &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
+#     14.15975
+#     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
+#     1.24659
+#     &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4]) == rdist_by_index_iw([1, 0, 2, 3, 4, 5])
+#     True
+#
+#     Parameters
+#     ----------
+#     indices
+#         Map between original position (index) and new position (value)
+#     decay
+#         Decay factor to make the instance weight lesser than the previous instance in the ranking
+#         `decay=0` means uniform weights
+#     normalized
+#         Whether to normalize result to [0; 1] interval
+#         If True, divide value by the longest possible distance.
+#         This makes the measure dependent on dataset size
+#     Returns
+#     -------
+#         Distance between original and new rankings
+#
+#
+#     &#34;&#34;&#34;
+#     total = 0
+#     for i, idx in enumerate(indices):
+#         start, end = (i, idx) if i &lt;= idx else (idx, i)
+#         w = (1 - decay) ** i
+#         cost = (end - start) * w
+#         total += cost
+#     if total and normalized:
+#         # TODO: calculate denominator analytically
+#         total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
+#         total = 1 - 2 * round(total, 10)
+#     return total
+#
+#
+# def rdist(a, b, normalized=False, f=rdist_by_index_iw):
+#     &#34;&#34;&#34;
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3], f=rdist_by_index_lw)
+#     0
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3], f=rdist_by_index_lw)
+#     1.0
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
+#     0.5
+#     &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
+#     1.5
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3])
+#     0
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3])
+#     2
+#     &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2])
+#     2
+#     &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2])
+#     4
+#
+#     Parameters
+#     ----------
+#     normalized
+#         Whether to normalize result to [0; 1] interval
+#         If True, divide value by the longest possible distance.
+#     a
+#         List of numbers intended to be a rank
+#     b
+#         List of numbers intended to be a rank
+#     f
+#         Index-based distance function
+#
+#     Returns
+#     -------
+#
+#     &#34;&#34;&#34;
+#     ranks_a = rankdata(a, method=&#34;ordinal&#34;) - 1
+#     ranks_b = rankdata(b, method=&#34;ordinal&#34;) - 1
+#     ranks = ranks_b[argsort(ranks_a)]
+#     return f(argsort(ranks), normalized=normalized)
+#
+#
 def rank_by_distances(X, instance, method=&#34;average&#34;):
     distances = euclidean__n_vs_1(X, instance)
     return rankdata(distances, method=method) - 1
@@ -238,65 +240,65 @@ def rank_by_distances(X, instance, method=&#34;average&#34;):
 
 def euclidean__n_vs_1(X, instance):
     return norm(X - instance, axis=1, keepdims=True)
-
-
-def differences__n_vs_1(X, instance):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
-    array([[0, 0],
-           [0, 2],
-           [1, 1]])
-
-
-    Parameters
-    ----------
-    X
-    instance
-
-    Returns
-    -------
-    Absolute differences between attributes.
-    &#34;&#34;&#34;
-    return abs(X - instance)
-
-
-def neighbors(X, k=None):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; neighbors(np.array([[1,2],[2,3],[5,4],[2,3],[2,1]]), 3)
-    [array([[0],
-           [1],
-           [3]]), array([[1],
-           [3],
-           [0]]), array([[2],
-           [1],
-           [3]]), array([[1],
-           [3],
-           [0]]), array([[4],
-           [0],
-           [1]])]
-
-    Parameters
-    ----------
-    X
-        Matrix: one point/instance per row
-    k
-        Limit on the number of neighbors
-
-    Returns
-    -------
-    M
-        Matrix: one list of neighbors (instance index) per row
-
-    &#34;&#34;&#34;
-    result = []
-    for a in X:
-        ds = euclidean__n_vs_1(X, a)
-        idxs = argsort(ds, axis=0)
-        r = idxs if k is None else idxs[:k]
-        result.append(r)
-    return result</code></pre>
+#
+#
+# def differences__n_vs_1(X, instance):
+#     &#34;&#34;&#34;
+#     &gt;&gt;&gt; import numpy as np
+#     &gt;&gt;&gt; differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
+#     array([[0, 0],
+#            [0, 2],
+#            [1, 1]])
+#
+#
+#     Parameters
+#     ----------
+#     X
+#     instance
+#
+#     Returns
+#     -------
+#     Absolute differences between attributes.
+#     &#34;&#34;&#34;
+#     return abs(X - instance)
+#
+#
+# def neighbors(X, k=None):
+#     &#34;&#34;&#34;
+#     &gt;&gt;&gt; import numpy as np
+#     &gt;&gt;&gt; neighbors(np.array([[1,2],[2,3],[5,4],[2,3],[2,1]]), 3)
+#     [array([[0],
+#            [1],
+#            [3]]), array([[1],
+#            [3],
+#            [0]]), array([[2],
+#            [1],
+#            [3]]), array([[1],
+#            [3],
+#            [0]]), array([[4],
+#            [0],
+#            [1]])]
+#
+#     Parameters
+#     ----------
+#     X
+#         Matrix: one point/instance per row
+#     k
+#         Limit on the number of neighbors
+#
+#     Returns
+#     -------
+#     M
+#         Matrix: one list of neighbors (instance index) per row
+#
+#     &#34;&#34;&#34;
+#     result = []
+#     for a in X:
+#         ds = euclidean__n_vs_1(X, a)
+#         idxs = argsort(ds, axis=0)
+#         r = idxs if k is None else idxs[:k]
+#         result.append(r)
+#     return result</code></pre>
 </details>
 </section>
 <section>
@@ -306,50 +308,6 @@ def neighbors(X, k=None):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="sortedness.rank.differences__n_vs_1"><code class="name flex">
-<span>def <span class="ident">differences__n_vs_1</span></span>(<span>X, instance)</span>
-</code></dt>
-<dd>
-<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
-array([[0, 0],
-       [0, 2],
-       [1, 1]])
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>X</code></strong></dt>
-<dd>&nbsp;</dd>
-<dt><strong><code>instance</code></strong></dt>
-<dd>&nbsp;</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<p>Absolute differences between attributes.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def differences__n_vs_1(X, instance):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; differences__n_vs_1(np.array([[1,0],[1,2],[2,1]]), [1,0])
-    array([[0, 0],
-           [0, 2],
-           [1, 1]])
-
-
-    Parameters
-    ----------
-    X
-    instance
-
-    Returns
-    -------
-    Absolute differences between attributes.
-    &#34;&#34;&#34;
-    return abs(X - instance)</code></pre>
-</details>
-</dd>
 <dt id="sortedness.rank.euclidean__n_vs_1"><code class="name flex">
 <span>def <span class="ident">euclidean__n_vs_1</span></span>(<span>X, instance)</span>
 </code></dt>
@@ -361,78 +319,6 @@ array([[0, 0],
 </summary>
 <pre><code class="python">def euclidean__n_vs_1(X, instance):
     return norm(X - instance, axis=1, keepdims=True)</code></pre>
-</details>
-</dd>
-<dt id="sortedness.rank.neighbors"><code class="name flex">
-<span>def <span class="ident">neighbors</span></span>(<span>X, k=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; neighbors(np.array([[1,2],[2,3],[5,4],[2,3],[2,1]]), 3)
-[array([[0],
-       [1],
-       [3]]), array([[1],
-       [3],
-       [0]]), array([[2],
-       [1],
-       [3]]), array([[1],
-       [3],
-       [0]]), array([[4],
-       [0],
-       [1]])]
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>X</code></strong></dt>
-<dd>Matrix: one point/instance per row</dd>
-<dt><strong><code>k</code></strong></dt>
-<dd>Limit on the number of neighbors</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>M</code></dt>
-<dd>Matrix: one list of neighbors (instance index) per row</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def neighbors(X, k=None):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; neighbors(np.array([[1,2],[2,3],[5,4],[2,3],[2,1]]), 3)
-    [array([[0],
-           [1],
-           [3]]), array([[1],
-           [3],
-           [0]]), array([[2],
-           [1],
-           [3]]), array([[1],
-           [3],
-           [0]]), array([[4],
-           [0],
-           [1]])]
-
-    Parameters
-    ----------
-    X
-        Matrix: one point/instance per row
-    k
-        Limit on the number of neighbors
-
-    Returns
-    -------
-    M
-        Matrix: one list of neighbors (instance index) per row
-
-    &#34;&#34;&#34;
-    result = []
-    for a in X:
-        ds = euclidean__n_vs_1(X, a)
-        idxs = argsort(ds, axis=0)
-        r = idxs if k is None else idxs[:k]
-        result.append(r)
-    return result</code></pre>
 </details>
 </dd>
 <dt id="sortedness.rank.rank_by_distances"><code class="name flex">
@@ -447,330 +333,6 @@ array([[0, 0],
 <pre><code class="python">def rank_by_distances(X, instance, method=&#34;average&#34;):
     distances = euclidean__n_vs_1(X, instance)
     return rankdata(distances, method=method) - 1</code></pre>
-</details>
-</dd>
-<dt id="sortedness.rank.rdist"><code class="name flex">
-<span>def <span class="ident">rdist</span></span>(<span>a, b, normalized=False, f=&lt;function rdist_by_index_iw&gt;)</span>
-</code></dt>
-<dd>
-<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3], f=rdist_by_index_lw)
-0
-&gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3], f=rdist_by_index_lw)
-1.0
-&gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-0.5
-&gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-1.5
-&gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3])
-0
-&gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3])
-2
-&gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2])
-2
-&gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2])
-4
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>normalized</code></strong></dt>
-<dd>Whether to normalize result to [0; 1] interval
-If True, divide value by the longest possible distance.</dd>
-<dt><strong><code>a</code></strong></dt>
-<dd>List of numbers intended to be a rank</dd>
-<dt><strong><code>b</code></strong></dt>
-<dd>List of numbers intended to be a rank</dd>
-<dt><strong><code>f</code></strong></dt>
-<dd>Index-based distance function</dd>
-</dl>
-<h2 id="returns">Returns</h2></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def rdist(a, b, normalized=False, f=rdist_by_index_iw):
-    &#34;&#34;&#34;
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3], f=rdist_by_index_lw)
-    0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3], f=rdist_by_index_lw)
-    1.0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-    0.5
-    &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2], f=rdist_by_index_lw)
-    1.5
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 2, 3])
-    0
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [1, 0, 2, 3])
-    2
-    &gt;&gt;&gt; rdist([0, 1, 2, 3], [0, 1, 3, 2])
-    2
-    &gt;&gt;&gt; rdist([1, 0, 2, 3], [0, 1, 3, 2])
-    4
-
-    Parameters
-    ----------
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-    a
-        List of numbers intended to be a rank
-    b
-        List of numbers intended to be a rank
-    f
-        Index-based distance function
-
-    Returns
-    -------
-
-    &#34;&#34;&#34;
-    ranks_a = rankdata(a, method=&#34;ordinal&#34;) - 1
-    ranks_b = rankdata(b, method=&#34;ordinal&#34;) - 1
-    ranks = ranks_b[argsort(ranks_a)]
-    return f(argsort(ranks), normalized=normalized)</code></pre>
-</details>
-</dd>
-<dt id="sortedness.rank.rdist_by_index_iw"><code class="name flex">
-<span>def <span class="ident">rdist_by_index_iw</span></span>(<span>indices, normalized=False, decay: Union[float, int] = 0)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Calculate distance between two rankings
-E.g.:
-d(abc, cba) = d(abc, cab)
-&gt;&gt;&gt; rdist_by_index_iw([2, 1, 0]) == rdist_by_index_iw([1, 2, 0])
-True</p>
-<pre><code>d(abc, acb) &lt; d(abc, bac)
-&gt;&gt;&gt; rdist_by_index_iw([0, 2, 1]) == rdist_by_index_iw([1, 0, 2])
-True
-</code></pre>
-<p>For performance reasons, one of them (called <code>original</code>)
-is given as a transformation of the other (called <code>new</code>).</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0])
-12
-&gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0])
-12
-&gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3])
-10
-&gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
-0
-&gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
--1.0
-&gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
-18
-&gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
-2
-&gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0], decay=0.1)
-8.76755
-&gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0], decay=0.1)
-8.66755
-&gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3], decay=0.1)
-7.69798
-&gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
-0.0
-&gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
--1.0
-&gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
-14.15975
-&gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
-1.24659
-&gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4]) == rdist_by_index_iw([1, 0, 2, 3, 4, 5])
-True
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>indices</code></strong></dt>
-<dd>Map between original position (index) and new position (value)</dd>
-<dt><strong><code>decay</code></strong></dt>
-<dd>Decay factor to make the instance weight lesser than the previous instance in the ranking
-<code>decay=0</code> means uniform weights</dd>
-<dt><strong><code>normalized</code></strong></dt>
-<dd>Whether to normalize result to [0; 1] interval
-If True, divide value by the longest possible distance.
-This makes the measure dependent on dataset size</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<pre><code>Distance between original and new rankings
-</code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def rdist_by_index_iw(indices, normalized=False, decay: Union[float, int] = 0):
-    &#34;&#34;&#34;
-    Calculate distance between two rankings
-    E.g.:
-        d(abc, cba) = d(abc, cab)
-        &gt;&gt;&gt; rdist_by_index_iw([2, 1, 0]) == rdist_by_index_iw([1, 2, 0])
-        True
-
-        d(abc, acb) &lt; d(abc, bac)
-        &gt;&gt;&gt; rdist_by_index_iw([0, 2, 1]) == rdist_by_index_iw([1, 0, 2])
-        True
-
-    For performance reasons, one of them (called `original`)
-     is given as a transformation of the other (called `new`).
-
-    &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0])
-    12
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0])
-    12
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3])
-    10
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5])
-    0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], normalized=True)
-    -1.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0])
-    18
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4])
-    2
-    &gt;&gt;&gt; rdist_by_index_iw([2, 1, 5, 4, 3, 0], decay=0.1)
-    8.76755
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 4, 3, 0], decay=0.1)
-    8.66755
-    &gt;&gt;&gt; rdist_by_index_iw([1, 2, 5, 0, 4, 3], decay=0.1)
-    7.69798
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 4, 5], decay=0.1)
-    0.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1, normalized=True)
-    -1.0
-    &gt;&gt;&gt; rdist_by_index_iw([5, 4, 3, 2, 1, 0], decay=0.1)
-    14.15975
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4], decay=0.1)
-    1.24659
-    &gt;&gt;&gt; rdist_by_index_iw([0, 1, 2, 3, 5, 4]) == rdist_by_index_iw([1, 0, 2, 3, 4, 5])
-    True
-
-    Parameters
-    ----------
-    indices
-        Map between original position (index) and new position (value)
-    decay
-        Decay factor to make the instance weight lesser than the previous instance in the ranking
-        `decay=0` means uniform weights
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-        This makes the measure dependent on dataset size
-    Returns
-    -------
-        Distance between original and new rankings
-
-
-    &#34;&#34;&#34;
-    total = 0
-    for i, idx in enumerate(indices):
-        start, end = (i, idx) if i &lt;= idx else (idx, i)
-        w = (1 - decay) ** i
-        cost = (end - start) * w
-        total += cost
-    if total and normalized:
-        # TODO: calculate denominator analytically
-        total /= rdist_by_index_iw(list(range(len(indices) - 1, -1, -1)), decay=decay, normalized=False)
-        total = 1 - 2 * round(total, 10)
-    return total</code></pre>
-</details>
-</dd>
-<dt id="sortedness.rank.rdist_by_index_lw"><code class="name flex">
-<span>def <span class="ident">rdist_by_index_lw</span></span>(<span>indices, normalized=False, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Calculate distance between two rankings
-E.g.:
-d(abc, cba) = d(abc, cab)
-&gt;&gt;&gt; rdist_by_index_lw([2, 1, 0]) == rdist_by_index_lw([1, 2, 0])
-True</p>
-<pre><code>d(abc, acb) &lt; d(abc, bac)
-&gt;&gt;&gt; rdist_by_index_lw([0, 2, 1]) &lt; rdist_by_index_lw([1, 0, 2])
-True
-</code></pre>
-<p>For performance reasons, one of them (called <code>original</code>)
-is given as a transformation of the other (called <code>new</code>).</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; rdist_by_index_lw([2, 1, 5, 4, 3, 0], normalized=False)
-3.3
-&gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 4, 3, 0], normalized=False)
-3.3
-&gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 0, 4, 3], normalized=False)
-2.9
-&gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
-0
-&gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
--1.0
-&gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
-4.967
-&gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
-0.333
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>indices</code></strong></dt>
-<dd>Map between original position (index) and new position (value)</dd>
-<dt><strong><code>normalized</code></strong></dt>
-<dd>Whether to normalize result to [0; 1] interval
-If True, divide value by the longest possible distance.
-This makes the measure dependent on dataset size</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<pre><code>Distance between original and new rankings
-</code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def rdist_by_index_lw(indices, normalized=False, **kwargs):
-    &#34;&#34;&#34;
-    Calculate distance between two rankings
-    E.g.:
-        d(abc, cba) = d(abc, cab)
-        &gt;&gt;&gt; rdist_by_index_lw([2, 1, 0]) == rdist_by_index_lw([1, 2, 0])
-        True
-
-        d(abc, acb) &lt; d(abc, bac)
-        &gt;&gt;&gt; rdist_by_index_lw([0, 2, 1]) &lt; rdist_by_index_lw([1, 0, 2])
-        True
-
-    For performance reasons, one of them (called `original`)
-     is given as a transformation of the other (called `new`).
-
-    &gt;&gt;&gt; rdist_by_index_lw([2, 1, 5, 4, 3, 0], normalized=False)
-    3.3
-    &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 4, 3, 0], normalized=False)
-    3.3
-    &gt;&gt;&gt; rdist_by_index_lw([1, 2, 5, 0, 4, 3], normalized=False)
-    2.9
-    &gt;&gt;&gt; rdist_by_index_lw([0, 1, 2, 3, 4, 5])
-    0
-    &gt;&gt;&gt; rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=True)
-    -1.0
-    &gt;&gt;&gt; round(rdist_by_index_lw([5, 4, 3, 2, 1, 0], normalized=False), 3)
-    4.967
-    &gt;&gt;&gt; round(rdist_by_index_lw([0, 1, 2, 3, 5, 4], normalized=False), 3)
-    0.333
-
-    Parameters
-    ----------
-    indices
-        Map between original position (index) and new position (value)
-    normalized
-        Whether to normalize result to [0; 1] interval
-        If True, divide value by the longest possible distance.
-        This makes the measure dependent on dataset size
-    Returns
-    -------
-        Distance between original and new rankings
-
-
-    &#34;&#34;&#34;
-    costs = [1 / x for x in range(2, len(indices) + 1)]
-    # TODO cache costs
-    total = 0
-    for i, idx in enumerate(indices):
-        start, end = (i, idx) if i &lt;= idx else (idx, i)
-        cost = sum(costs[start:end])
-        total += cost
-    if total and normalized:
-        total /= rdist_by_index_lw(list(range(len(indices) - 1, -1, -1)), normalized=False)
-        total = 1 - 2 * total
-    # TODO: calculate denominator analytically
-    return round(total, 10)</code></pre>
 </details>
 </dd>
 </dl>
@@ -790,14 +352,9 @@ This makes the measure dependent on dataset size</dd>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="two-column">
-<li><code><a title="sortedness.rank.differences__n_vs_1" href="#sortedness.rank.differences__n_vs_1">differences__n_vs_1</a></code></li>
+<ul class="">
 <li><code><a title="sortedness.rank.euclidean__n_vs_1" href="#sortedness.rank.euclidean__n_vs_1">euclidean__n_vs_1</a></code></li>
-<li><code><a title="sortedness.rank.neighbors" href="#sortedness.rank.neighbors">neighbors</a></code></li>
 <li><code><a title="sortedness.rank.rank_by_distances" href="#sortedness.rank.rank_by_distances">rank_by_distances</a></code></li>
-<li><code><a title="sortedness.rank.rdist" href="#sortedness.rank.rdist">rdist</a></code></li>
-<li><code><a title="sortedness.rank.rdist_by_index_iw" href="#sortedness.rank.rdist_by_index_iw">rdist_by_index_iw</a></code></li>
-<li><code><a title="sortedness.rank.rdist_by_index_lw" href="#sortedness.rank.rdist_by_index_lw">rdist_by_index_lw</a></code></li>
 </ul>
 </li>
 </ul>
