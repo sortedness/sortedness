@@ -348,6 +348,8 @@ def pwsortedness(X, X_, i=None, parallel=True, parallel_n_trigger=200, batches=1
     (-0.198780473657, -0.064598420372, 0.147224384381)
     >>> pwsortedness(original, projected1)[1]
     0.730078995423
+    >>> pwsortedness(original, projected1, cython=True)[1]
+    0.730078995423
     >>> pwsortedness(original, projected1, i=1)
     0.730078995423
     """
