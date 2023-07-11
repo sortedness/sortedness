@@ -273,7 +273,7 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
     return result
 
 
-def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, **parallel_kwargs):
+def pwsortedness(X, X_, i=None, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, **parallel_kwargs):
     """
     Local pairwise sortedness (Λ𝜏w) based on Sebastiano Vigna weighted Kendall's 𝜏
 
@@ -290,6 +290,9 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
         Original dataset
     X_
         Projected points
+    i
+        None:   calculate pwsortedness for all instances
+        `int`:  index of the instance of interest
     parallel
         None: Avoid high-memory parallelization
         True: Full parallelism
@@ -304,7 +307,12 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
         Whether to print more info
     dist
         Provide distance matrices (D, D_) instead of points
-        X and X_ are ignored
+        X and X_ should be None
+    cython
+        Whether to:
+            (True) improve speed by ~2x; or,
+            (False) be more compatible/portable.
+
 
     Returns
     -------
@@ -338,24 +346,31 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
     >>> r = pwsortedness(original, projectedrnd)
     >>> min(r), round(mean(r), 12), max(r)
     (-0.198780473657, -0.064598420372, 0.147224384381)
+    >>> pwsortedness(original, projected1)[1]
+    0.730078995423
+    >>> pwsortedness(original, projected1, i=1)
+    0.730078995423
     """
     npoints = len(X) if X is not None else len(dist[0])  # pragma: no cover
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
+    pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     if debug:  # pragma: no cover
         print(1)
     thread = lambda M: -pdist(M, metric="sqeuclidean")
+
+    # if i is not None:
+    #     tmp, tmp_ = X[0], X_[0]
+    #     X[0], X_[0] = X[i], X_[i]
+    #     X[i], X_[i] = tmp, tmp_
+
     scores_X, scores_X_ = tmap(thread, [X, X_]) if X is not None else (-squareform(dist[0]), -squareform(dist[1]))
     if debug:  # pragma: no cover
         print(2)
-    D, D_ = tmap(squareform, [-scores_X, -scores_X_]) if dist is None else (dist[0], dist[1])
-    if debug:  # pragma: no cover
-        print(3)
-    n = len(D)
 
-    def makeM(E):
+    def makeM(E, single=False):
         n = len(E)
         m = (n ** 2 - n) // 2
-        M = np.zeros((m, n))
+        M = np.zeros((m, 1 if single else n))
         if debug:  # pragma: no cover
             print(4)
         c = 0
@@ -370,29 +385,46 @@ def pwsortedness(X, X_, parallel=True, parallel_n_trigger=200, batches=10, debug
         gc.collect()
         return M.T
 
-    M = makeM(D)
-    if debug:  # pragma: no cover
-        print(6)
-    R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T
-    del M
-    gc.collect()
-    if debug:  # pragma: no cover
-        print(7)
-    from sortedness.wtau import parwtau
-    res = np.round(parwtau(scores_X, scores_X_, npoints, R, parallel=parallel, **parallel_kwargs), 12)
-    del R
-    gc.collect()
+    D = squareform(-scores_X) if dist is None else dist[0]
+    if i is None:
+        if debug:  # pragma: no cover
+            print(3)
+        n = len(D)
+        M = makeM(D)
+        if debug:  # pragma: no cover
+            print(6)
+        R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T
+        del M
+        gc.collect()
+        if debug:  # pragma: no cover
+            print(7)
+        if cython:
+            from sortedness.wtau import parwtau
+            res = np.round(parwtau(scores_X, scores_X_, npoints, R, parallel=parallel, **parallel_kwargs), 12)
+            del R
+            gc.collect()
+            return res
+        else:
+            def thread(r):
+                corr, pvalue = weightedtau(scores_X, scores_X_, rank=r)
+                return round(corr, 12), round(pvalue, 12)
 
-    # M_ = makeM(D_)
-    # if debug: print(6)
-    # R_ = rank_alongrow(M_, step=n // batches, parallel=parallel, **parallel_kwargs).T
-    # del M_
-    # gc.collect()
-    # if debug: print(7)
-    # r_ = np.round(parwtau(scores_X, scores_X_, npoints, parallel=parallel, **parallel_kwargs), 12)
-    # del R_
-    # gc.collect()
-    return res
+            result, pvalues = [], []
+            lst = (R[:, i] for i in range(len(X)))
+            for corrs, pvalue in pmap(thread, lst):
+                result.append(corrs)
+                pvalues.append(pvalue)
+            result = np.array(result, dtype=float)
+            return result
+
+    M = makeM(D[:, i:i + 1], single=True)
+    r = rankdata(M, axis=1, method="average")[0].astype(int) - 1
+    return round(weightedtau(scores_X, scores_X_, r)[0], 12)
+
+    # D = cdist(X, X[:1])
+    # M = makeM(D, single=True)
+    # r = rankdata(M[0], method="average").astype(int) - 1
+    # return round(weightedtau(scores_X, scores_X_, r)[0], 12)
 
 
 def rsortedness(X, X_, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):  # pragma: no cover
