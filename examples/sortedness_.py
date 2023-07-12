@@ -32,3 +32,8 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 # ...
+
+# Single point fast calculation.
+s = sortedness(original, projectedrnd, 2)
+print(s)
+# ...

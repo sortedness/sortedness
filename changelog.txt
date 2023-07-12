@@ -1,3 +1,4 @@
-Make cython optional (disabled by default)
-
-Speed up pwsortedness by removing unneeded D_ calculation and adding optional calculation for a single point.
+Add better defaults (symmetric)
+Improve stress and make API more uniform
+More pandas support
+Add interactive example

@@ -32,3 +32,8 @@ print(min(s), sum(s) / len(s), max(s))
 s = pwsortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 # ...
+
+# Single point fast calculation.
+s = pwsortedness(original, projectedrnd, 2)
+print(s)
+# ...

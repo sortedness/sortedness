@@ -14,8 +14,9 @@
 
 # sortedness
 
-`sortedness` is a measure of quality of data transformation, often dimensionality reduction.
-It is less sensitive to irrelevant distortions and return values in a more meaningful interval than Kruskal stress formula I.
+`sortedness` is the level of agreement between two points regarding to how they rank all remaining points in a dataset.
+This ia valid even for points from different spaces, enabling the measurement of the quality of data transformation processes, often dimensionality reduction.
+It is less sensitive to irrelevant distortions, and return values in a more meaningful interval, than Kruskal stress formula I.
 <br>This [Python library](https://pypi.org/project/sortedness) / [code](https://github.com/sortedness/sortedness) provides a reference implementation for the functions presented [here (paper unavailable until publication)](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=Nonparametric+Dimensionality+Reduction+Quality+Assessment+based+on+Sortedness+of+Unrestricted+Neighborhood&btnG=).
 
 ## Overview
@@ -57,7 +58,32 @@ poetry install
 ** Copyright (c) 2023. Davi Pereira dos Santos and Tacito Neves**
 
 
+### TODO
+Future work address handling large datasets: approximate sortedness value, and size-insensitive weighting scheme.
 
-
+## Reference
+Please use the following reference to cite this work:
+```
+@inproceedings {10.2312:eurova.20231093,
+booktitle = {EuroVis Workshop on Visual Analytics (EuroVA)},
+editor = {Angelini, Marco and El-Assady, Mennatallah},
+title = {{Nonparametric Dimensionality Reduction Quality Assessment based on Sortedness of Unrestricted Neighborhood}},
+author = {Pereira-Santos, Davi and Neves, Tácito Trindade Araújo Tiburtino and Carvalho, André C. P. L. F. de and Paulovich, Fernando V.},
+year = {2023},
+publisher = {The Eurographics Association},
+ISSN = {2664-4487},
+ISBN = {978-3-03868-222-6},
+DOI = {10.2312/eurova.20231093}
+}
+```
 
 ## Grants
+This work was supported by Wellcome Leap 1kD Program; São
+Paulo Research Foundation (FAPESP) - grant 2020/09835-1; Cana-
+dian Institute for Health Research (CIHR) Canadian Research
+Chairs (CRC) stipend [award number 1024586]; Canadian Foun-
+dation for Innovation (CFI) John R. Evans Leaders Fund (JELF)
+[grant number 38835]; Dalhousie Medical Research Fund (DMRF)
+COVID-19 Research Grant [grant number 603082]; and the Cana-
+dian Institute for Health Research (CIHR) Project Grant [award
+number 177968].

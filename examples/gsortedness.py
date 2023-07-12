@@ -1,4 +1,4 @@
-# Sortedness
+# Global pairwise sortedness
 
 import numpy as np
 from numpy.random import permutation
