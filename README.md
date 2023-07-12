@@ -15,7 +15,7 @@
 # sortedness
 
 `sortedness` is the level of agreement between two points regarding to how they rank all remaining points in a dataset.
-This ia valid even for points from different spaces, enabling the measurement of the quality of data transformation processes, often dimensionality reduction.
+This is valid even for points from different spaces, enabling measurement of quality of data transformation processes, often dimensionality reduction.
 It is less sensitive to irrelevant distortions, and return values in a more meaningful interval, than Kruskal stress formula I.
 <br>This [Python library](https://pypi.org/project/sortedness) / [code](https://github.com/sortedness/sortedness) provides a reference implementation for the functions presented [here (paper unavailable until publication)](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=Nonparametric+Dimensionality+Reduction+Quality+Assessment+based+on+Sortedness+of+Unrestricted+Neighborhood&btnG=).
 
