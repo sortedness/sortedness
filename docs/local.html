@@ -51,6 +51,7 @@
 
 import gc
 from functools import partial
+from math import exp
 
 import numpy as np
 import pathos.multiprocessing as mp
@@ -73,7 +74,7 @@ weightedtau.isweightedtau = True
 
 def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=True, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
     &#34;&#34;&#34;
-     Calculate the sortedness (stress-like correlation-based measure that ignores distance proportions) value for each point
+     Calculate the sortedness (stress-like correlation-based measure that focuses on ordering of points) value for each point
      Functions available as scipy correlation coefficients:
          ρ-sortedness (Spearman),
          𝜏-sortedness (Kendall&#39;s 𝜏),
@@ -99,7 +100,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
     f
-        Distance criteria:
+        Agreement function:
         callable    =   scipy correlation function:
             weightedtau (weighted Kendall’s τ is the default), kendalltau, spearmanr
             Meaning of resulting values for correlation-based functions:
@@ -312,7 +313,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
     return result
 
 
-def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, **parallel_kwargs):
+def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, parallel_kwargs=None, **kwargs):
     &#34;&#34;&#34;
     Local pairwise sortedness (Λ𝜏w) based on Sebastiano Vigna weighted Kendall&#39;s 𝜏
 
@@ -337,12 +338,17 @@ def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigge
             Equivalent to `(pwsortedness(a, b) + pwsortedness(b, a)) / 2` at a slightly lower cost.
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
+    f
+        Agreement function that accept the parameter `rank`:
+        callable    =   weightedtau (weighted Kendall’s τ is the default) or other compatible correlation function
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
     parallel
         None: Avoid high-memory parallelization
         True: Full parallelism
         False: No parallelism
-    parallel_kwargs
-        Any extra argument to be provided to pathos parallelization
     parallel_n_trigger
         Threshold to disable parallelization for small n values
     batches
@@ -356,11 +362,15 @@ def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigge
         Whether to:
             (True) improve speed by ~2x; or,
             (False) be more compatible/portable.
-
+    parallel_kwargs
+        Dict of extra arguments to be provided to pathos parallelization
+    kwargs
+        Any extra argument to be provided to `weightedtau`, e.g., a custom weighting function.
+        This only works for `cython=False`.
 
     Returns
     -------
-        Numpy vector
+        Numpy vector or Python float
 
     &gt;&gt;&gt; import numpy as np
     &gt;&gt;&gt; from functools import partial
@@ -404,16 +414,33 @@ def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigge
     array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
            0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
            0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False)
+    array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
+           0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+           0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=hyperbolic)
+    array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
+           0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+           0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=gaussian)
+    array([0.74141933, 0.71595198, 0.94457495, 0.72528033, 0.78637383,
+           0.92562531, 0.77600408, 0.74811014, 0.87241023, 0.8485321 ,
+           0.82264118, 0.95322218])
     &#34;&#34;&#34;
+    if &#34;rank&#34; in kwargs:  # pragma: no cover
+        raise Exception(f&#34;Cannot provide `rank` as kwarg for pwsortedness. The pairwise distances ranking is calculated internally.&#34;)
+    isweightedtau = hasattr(f, &#34;isweightedtau&#34;) and f.isweightedtau
+    if parallel_kwargs is None:
+        parallel_kwargs = {}
+    if cython and (kwargs or not isweightedtau):  # pragma: no cover
+        raise Exception(f&#34;Cannot provide custom `f` or `f` kwargs with `cython=True`&#34;)
     npoints = len(X) if X is not None else len(dist[0])  # pragma: no cover
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints &gt; parallel_n_trigger else map
     pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints &gt; parallel_n_trigger else map
-    if debug:  # pragma: no cover
-        print(1)
-    thread = lambda M: -pdist(M, metric=&#34;sqeuclidean&#34;)
-    scores_X, scores_X_ = tmap(thread, [X, X_]) if X is not None else (-squareform(dist[0]), -squareform(dist[1]))
-    if debug:  # pragma: no cover
-        print(2)
+    thread = lambda M: pdist(M, metric=&#34;sqeuclidean&#34;)
+    scores_X, scores_X_ = tmap(thread, [X, X_]) if X is not None else (squareform(dist[0]), squareform(dist[1]))
+    if isweightedtau:
+        scores_X, scores_X_ = -scores_X, -scores_X_
 
     def makeM(E):
         n = len(E)
@@ -459,7 +486,7 @@ def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigge
             return np.round((res + res_) / 2, 12)
         else:
             def thread(r):
-                corr = weightedtau(scores_X, scores_X_, rank=r)[0]
+                corr = f(scores_X, scores_X_, rank=r, **kwargs)[0]
                 return round(corr, 12)
 
             gen = (R[:, i] for i in range(len(X)))
@@ -479,13 +506,13 @@ def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigge
         M, M_ = pmap(makeM, [D[:, i:i + 1], D_[:, i:i + 1]])
         thread = lambda M: rankdata(M, axis=1, method=&#34;average&#34;)
         r, r_ = [r[0].astype(int) - 1 for r in tmap(thread, [M, M_])]
-        s1 = weightedtau(scores_X, scores_X_, r)[0]
-        s2 = weightedtau(scores_X, scores_X_, r_)[0]
+        s1 = f(scores_X, scores_X_, r, **kwargs)[0]
+        s2 = f(scores_X, scores_X_, r_, **kwargs)[0]
         return round((s1 + s2) / 2, 12)
 
     M = makeM(D[:, i:i + 1])
     r = rankdata(M, axis=1, method=&#34;average&#34;)[0].astype(int) - 1
-    return round(weightedtau(scores_X, scores_X_, r)[0], 12)
+    return round(f(scores_X, scores_X_, r, **kwargs)[0], 12)
 
 
 def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):  # pragma: no cover
@@ -516,7 +543,7 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
     f
-        Distance criteria:
+        Agreement function:
         callable    =   scipy correlation function:
             weightedtau (weighted Kendall’s τ is the default), kendalltau, spearmanr
             Meaning of resulting values for correlation-based functions:
@@ -707,7 +734,43 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
     D /= D.max(axis=1, keepdims=True)
     s = ((D - D_) ** 2).sum(axis=1) / 2
     result = np.round(np.sqrt(s / (Dsq_.sum(axis=1) / 2)), 12)
-    return result if i is None else result[0]</code></pre>
+    return result if i is None else result[0]
+
+
+def hyperbolic(x):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(list(map(hyperbolic, range(10))), 12).tolist()
+    [1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+    &#34;&#34;&#34;
+    return 1 / (1 + x)
+
+
+def hyperbolic_np(x):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(hyperbolic_np(list(range(10))), 12).tolist()
+    [1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+    &#34;&#34;&#34;
+    return np.divide(1, np.add(1, x))
+
+
+def gaussian(x, ampl=1., sigma=1.):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(list(map(gaussian, range(10))), 12).tolist()
+    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    &#34;&#34;&#34;
+    return ampl * exp(- (x / sigma) ** 2 / 2)
+
+
+def gaussian_np(x, ampl=1., sigma=1.):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(gaussian_np(list(range(10))), 12).tolist()
+    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    &#34;&#34;&#34;
+    return ampl * np.exp(- np.divide(x, sigma) ** 2 / 2)</code></pre>
 </details>
 </section>
 <section>
@@ -717,6 +780,90 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="sortedness.local.gaussian"><code class="name flex">
+<span>def <span class="ident">gaussian</span></span>(<span>x, ampl=1.0, sigma=1.0)</span>
+</code></dt>
+<dd>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; np.round(list(map(gaussian, range(10))), 12).tolist()
+[1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gaussian(x, ampl=1., sigma=1.):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(list(map(gaussian, range(10))), 12).tolist()
+    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    &#34;&#34;&#34;
+    return ampl * exp(- (x / sigma) ** 2 / 2)</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.gaussian_np"><code class="name flex">
+<span>def <span class="ident">gaussian_np</span></span>(<span>x, ampl=1.0, sigma=1.0)</span>
+</code></dt>
+<dd>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; np.round(gaussian_np(list(range(10))), 12).tolist()
+[1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gaussian_np(x, ampl=1., sigma=1.):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(gaussian_np(list(range(10))), 12).tolist()
+    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    &#34;&#34;&#34;
+    return ampl * np.exp(- np.divide(x, sigma) ** 2 / 2)</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.hyperbolic"><code class="name flex">
+<span>def <span class="ident">hyperbolic</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; np.round(list(map(hyperbolic, range(10))), 12).tolist()
+[1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hyperbolic(x):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(list(map(hyperbolic, range(10))), 12).tolist()
+    [1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+    &#34;&#34;&#34;
+    return 1 / (1 + x)</code></pre>
+</details>
+</dd>
+<dt id="sortedness.local.hyperbolic_np"><code class="name flex">
+<span>def <span class="ident">hyperbolic_np</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; np.round(hyperbolic_np(list(range(10))), 12).tolist()
+[1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hyperbolic_np(x):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; np.round(hyperbolic_np(list(range(10))), 12).tolist()
+    [1.0, 0.5, 0.333333333333, 0.25, 0.2, 0.166666666667, 0.142857142857, 0.125, 0.111111111111, 0.1]
+    &#34;&#34;&#34;
+    return np.divide(1, np.add(1, x))</code></pre>
+</details>
+</dd>
 <dt id="sortedness.local.permutation"><code class="name flex">
 <span>def <span class="ident">permutation</span></span>(<span>x)</span>
 </code></dt>
@@ -763,7 +910,7 @@ array([[6, 7, 8], # random
 </code></pre></div>
 </dd>
 <dt id="sortedness.local.pwsortedness"><code class="name flex">
-<span>def <span class="ident">pwsortedness</span></span>(<span>X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, **parallel_kwargs)</span>
+<span>def <span class="ident">pwsortedness</span></span>(<span>X, X_, i=None, symmetric=True, f=&lt;function weightedtau&gt;, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, parallel_kwargs=None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Local pairwise sortedness (Λ𝜏w) based on Sebastiano Vigna weighted Kendall's 𝜏</p>
@@ -789,12 +936,25 @@ index of the instance of interest</dd>
 Equivalent to <code>(pwsortedness(a, b) + pwsortedness(b, a)) / 2</code> at a slightly lower cost.
 Might increase memory usage.
 False: Weight by original distances (extrusion emphasis), not the projected distances.</dd>
+<dt><strong><code>f</code></strong></dt>
+<dd>Agreement function that accept the parameter <code>rank</code>:
+callable
+=
+weightedtau (weighted Kendall’s τ is the default) or other compatible correlation function
+Meaning of resulting values for correlation-based functions:
+1.0:
+perfect projection
+(regarding order of examples)
+0.0:
+random projection
+(enough distortion to have no information left when considering the overall ordering)
+-1.0:
+worst possible projection
+(mostly theoretical; it represents the "opposite" of the original ordering)</dd>
 <dt><strong><code>parallel</code></strong></dt>
 <dd>None: Avoid high-memory parallelization
 True: Full parallelism
 False: No parallelism</dd>
-<dt><strong><code>parallel_kwargs</code></strong></dt>
-<dd>Any extra argument to be provided to pathos parallelization</dd>
 <dt><strong><code>parallel_n_trigger</code></strong></dt>
 <dd>Threshold to disable parallelization for small n values</dd>
 <dt><strong><code>batches</code></strong></dt>
@@ -808,9 +968,14 @@ X and X_ should be None</dd>
 <dd>Whether to:
 (True) improve speed by ~2x; or,
 (False) be more compatible/portable.</dd>
+<dt><strong><code>parallel_kwargs</code></strong></dt>
+<dd>Dict of extra arguments to be provided to pathos parallelization</dd>
+<dt><strong><code>kwargs</code></strong></dt>
+<dd>Any extra argument to be provided to <code>weightedtau</code>, e.g., a custom weighting function.
+This only works for <code>cython=False</code>.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<pre><code>Numpy vector
+<pre><code>Numpy vector or Python float
 </code></pre>
 <pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
 &gt;&gt;&gt; from functools import partial
@@ -871,12 +1036,30 @@ X and X_ should be None</dd>
        0.74425225, 0.83731035])
 
 
+&gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False)
+&lt;code&gt;array(\[0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,&lt;/code&gt;
+:   0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+       0.74425225, 0.83731035])
+
+
+&gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=hyperbolic)
+&lt;code&gt;array(\[0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,&lt;/code&gt;
+:   0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+       0.74425225, 0.83731035])
+
+
+&gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=gaussian)
+&lt;code&gt;array(\[0.74141933, 0.71595198, 0.94457495, 0.72528033, 0.78637383,&lt;/code&gt;
+:   0.92562531, 0.77600408, 0.74811014, 0.87241023, 0.8485321 ,
+       0.82264118, 0.95322218])
+
+
 </code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pwsortedness(X, X_, i=None, symmetric=True, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, **parallel_kwargs):
+<pre><code class="python">def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, parallel_kwargs=None, **kwargs):
     &#34;&#34;&#34;
     Local pairwise sortedness (Λ𝜏w) based on Sebastiano Vigna weighted Kendall&#39;s 𝜏
 
@@ -901,12 +1084,17 @@ X and X_ should be None</dd>
             Equivalent to `(pwsortedness(a, b) + pwsortedness(b, a)) / 2` at a slightly lower cost.
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
+    f
+        Agreement function that accept the parameter `rank`:
+        callable    =   weightedtau (weighted Kendall’s τ is the default) or other compatible correlation function
+            Meaning of resulting values for correlation-based functions:
+                1.0:    perfect projection          (regarding order of examples)
+                0.0:    random projection           (enough distortion to have no information left when considering the overall ordering)
+               -1.0:    worst possible projection   (mostly theoretical; it represents the &#34;opposite&#34; of the original ordering)
     parallel
         None: Avoid high-memory parallelization
         True: Full parallelism
         False: No parallelism
-    parallel_kwargs
-        Any extra argument to be provided to pathos parallelization
     parallel_n_trigger
         Threshold to disable parallelization for small n values
     batches
@@ -920,11 +1108,15 @@ X and X_ should be None</dd>
         Whether to:
             (True) improve speed by ~2x; or,
             (False) be more compatible/portable.
-
+    parallel_kwargs
+        Dict of extra arguments to be provided to pathos parallelization
+    kwargs
+        Any extra argument to be provided to `weightedtau`, e.g., a custom weighting function.
+        This only works for `cython=False`.
 
     Returns
     -------
-        Numpy vector
+        Numpy vector or Python float
 
     &gt;&gt;&gt; import numpy as np
     &gt;&gt;&gt; from functools import partial
@@ -968,16 +1160,33 @@ X and X_ should be None</dd>
     array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
            0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
            0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False)
+    array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
+           0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+           0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=hyperbolic)
+    array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
+           0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
+           0.74425225, 0.83731035])
+    &gt;&gt;&gt; pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=gaussian)
+    array([0.74141933, 0.71595198, 0.94457495, 0.72528033, 0.78637383,
+           0.92562531, 0.77600408, 0.74811014, 0.87241023, 0.8485321 ,
+           0.82264118, 0.95322218])
     &#34;&#34;&#34;
+    if &#34;rank&#34; in kwargs:  # pragma: no cover
+        raise Exception(f&#34;Cannot provide `rank` as kwarg for pwsortedness. The pairwise distances ranking is calculated internally.&#34;)
+    isweightedtau = hasattr(f, &#34;isweightedtau&#34;) and f.isweightedtau
+    if parallel_kwargs is None:
+        parallel_kwargs = {}
+    if cython and (kwargs or not isweightedtau):  # pragma: no cover
+        raise Exception(f&#34;Cannot provide custom `f` or `f` kwargs with `cython=True`&#34;)
     npoints = len(X) if X is not None else len(dist[0])  # pragma: no cover
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints &gt; parallel_n_trigger else map
     pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints &gt; parallel_n_trigger else map
-    if debug:  # pragma: no cover
-        print(1)
-    thread = lambda M: -pdist(M, metric=&#34;sqeuclidean&#34;)
-    scores_X, scores_X_ = tmap(thread, [X, X_]) if X is not None else (-squareform(dist[0]), -squareform(dist[1]))
-    if debug:  # pragma: no cover
-        print(2)
+    thread = lambda M: pdist(M, metric=&#34;sqeuclidean&#34;)
+    scores_X, scores_X_ = tmap(thread, [X, X_]) if X is not None else (squareform(dist[0]), squareform(dist[1]))
+    if isweightedtau:
+        scores_X, scores_X_ = -scores_X, -scores_X_
 
     def makeM(E):
         n = len(E)
@@ -1023,7 +1232,7 @@ X and X_ should be None</dd>
             return np.round((res + res_) / 2, 12)
         else:
             def thread(r):
-                corr = weightedtau(scores_X, scores_X_, rank=r)[0]
+                corr = f(scores_X, scores_X_, rank=r, **kwargs)[0]
                 return round(corr, 12)
 
             gen = (R[:, i] for i in range(len(X)))
@@ -1043,13 +1252,13 @@ X and X_ should be None</dd>
         M, M_ = pmap(makeM, [D[:, i:i + 1], D_[:, i:i + 1]])
         thread = lambda M: rankdata(M, axis=1, method=&#34;average&#34;)
         r, r_ = [r[0].astype(int) - 1 for r in tmap(thread, [M, M_])]
-        s1 = weightedtau(scores_X, scores_X_, r)[0]
-        s2 = weightedtau(scores_X, scores_X_, r_)[0]
+        s1 = f(scores_X, scores_X_, r, **kwargs)[0]
+        s2 = f(scores_X, scores_X_, r_, **kwargs)[0]
         return round((s1 + s2) / 2, 12)
 
     M = makeM(D[:, i:i + 1])
     r = rankdata(M, axis=1, method=&#34;average&#34;)[0].astype(int) - 1
-    return round(weightedtau(scores_X, scores_X_, r)[0], 12)</code></pre>
+    return round(f(scores_X, scores_X_, r, **kwargs)[0], 12)</code></pre>
 </details>
 </dd>
 <dt id="sortedness.local.remove_diagonal"><code class="name flex">
@@ -1096,7 +1305,7 @@ Equivalent to <code>(rsortedness(a, b) + rsortedness(b, a)) / 2</code> at a slig
 Might increase memory usage.
 False: Weight by original distances (extrusion emphasis), not the projected distances.</dd>
 <dt><strong><code>f</code></strong></dt>
-<dd>Distance criteria:
+<dd>Agreement function:
 callable
 =
 scipy correlation function:
@@ -1216,7 +1425,7 @@ False: No parallelism</dd>
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
     f
-        Distance criteria:
+        Agreement function:
         callable    =   scipy correlation function:
             weightedtau (weighted Kendall’s τ is the default), kendalltau, spearmanr
             Meaning of resulting values for correlation-based functions:
@@ -1328,7 +1537,7 @@ False: No parallelism</dd>
 <span>def <span class="ident">sortedness</span></span>(<span>X, X_, i=None, symmetric=True, f=&lt;function weightedtau&gt;, distance_dependent=True, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the sortedness (stress-like correlation-based measure that ignores distance proportions) value for each point
+<div class="desc"><p>Calculate the sortedness (stress-like correlation-based measure that focuses on ordering of points) value for each point
 Functions available as scipy correlation coefficients:
 ρ-sortedness (Spearman),
 𝜏-sortedness (Kendall's 𝜏),
@@ -1356,7 +1565,7 @@ Equivalent to <code>(sortedness(a, b) + sortedness(b, a)) / 2</code> at a slight
 Might increase memory usage.
 False: Weight by original distances (extrusion emphasis), not the projected distances.</dd>
 <dt><strong><code>f</code></strong></dt>
-<dd>Distance criteria:
+<dd>Agreement function:
 callable
 =
 scipy correlation function:
@@ -1523,7 +1732,7 @@ array([-1.        ,  0.51956213,  0.81695345,  0.98180162,  0.98180162,
 </summary>
 <pre><code class="python">def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=True, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
     &#34;&#34;&#34;
-     Calculate the sortedness (stress-like correlation-based measure that ignores distance proportions) value for each point
+     Calculate the sortedness (stress-like correlation-based measure that focuses on ordering of points) value for each point
      Functions available as scipy correlation coefficients:
          ρ-sortedness (Spearman),
          𝜏-sortedness (Kendall&#39;s 𝜏),
@@ -1549,7 +1758,7 @@ array([-1.        ,  0.51956213,  0.81695345,  0.98180162,  0.98180162,
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
     f
-        Distance criteria:
+        Agreement function:
         callable    =   scipy correlation function:
             weightedtau (weighted Kendall’s τ is the default), kendalltau, spearmanr
             Meaning of resulting values for correlation-based functions:
@@ -1935,6 +2144,10 @@ array([0.36599664, 0.39465927, 0.27349092, 0.25096851, 0.31476019,
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
+<li><code><a title="sortedness.local.gaussian" href="#sortedness.local.gaussian">gaussian</a></code></li>
+<li><code><a title="sortedness.local.gaussian_np" href="#sortedness.local.gaussian_np">gaussian_np</a></code></li>
+<li><code><a title="sortedness.local.hyperbolic" href="#sortedness.local.hyperbolic">hyperbolic</a></code></li>
+<li><code><a title="sortedness.local.hyperbolic_np" href="#sortedness.local.hyperbolic_np">hyperbolic_np</a></code></li>
 <li><code><a title="sortedness.local.permutation" href="#sortedness.local.permutation">permutation</a></code></li>
 <li><code><a title="sortedness.local.pwsortedness" href="#sortedness.local.pwsortedness">pwsortedness</a></code></li>
 <li><code><a title="sortedness.local.remove_diagonal" href="#sortedness.local.remove_diagonal">remove_diagonal</a></code></li>
