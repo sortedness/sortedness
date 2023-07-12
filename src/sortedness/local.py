@@ -229,8 +229,8 @@ def sortedness(X, X_, i=None, f=weightedtau, distance_dependent=True, return_pva
     npoints = len(X)
 
     if i is not None:
-        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i]
-        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i]
+        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i].to_numpy()
+        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i].to_numpy()
         X = np.delete(X, i, axis=0)
         X_ = np.delete(X_, i, axis=0)
         d_ = np.sum((X_ - x_) ** 2, axis=1)
