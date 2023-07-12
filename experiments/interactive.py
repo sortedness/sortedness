@@ -21,13 +21,13 @@
 #  time spent here.
 #
 
-from math import dist
+from math import dist, exp
 
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame
 
-from sortedness.local import stress, sortedness, pwsortedness
+from sortedness.local import stress, sortedness, pwsortedness, gaussian, hyperbolic
 
 np.random.seed(86)
 fig, ax = plt.subplots()
@@ -45,15 +45,12 @@ print(1111111111111, len(selected))
 
 
 def f(idx):
-    # plt.title(f"σ - 1: {(round(1 - mean(stress(o, p)), 2))}"
-    #           f"        gλτ: {round(mean(global_gtau(o, p)), 2)}"
-    #           f"        λτw: {round(mean(sortedness(o, p)), 2)}"
-    #           f"        Λτw: {round(mean(pwsortedness(o, p)), 2)}", fontsize=30)
     plt.title(
-        f"σ - 1: {round(1 - stress(o, p)[idx], 2)}"
-        # f"        gτw: {round(gtau(idx, o, p), 2)}"
-        f"        λτw: {round(sortedness(o, p, idx, weigher=lambda r: 1 / (1 + r)), 2)}"
-        f"        Λτw: {round(pwsortedness(o, p, idx), 2)}", fontsize=30)
+        f"σ - 1: {round(1 - stress(o, p)[idx], 5)}"
+        f"      λτw: {round(sortedness(o, p, idx), 5)}"
+        f"      λτwG: {round(sortedness(o, p, idx, weigher=lambda r: exp(- r ** 2 / 2)), 5)}"
+        f"      Λτw: {round(pwsortedness(o, p, idx), 5)}"
+        f"      ΛτwG: {round(pwsortedness(o, p, idx, cython=False, weigher=lambda r: exp(- r ** 2 / 2)), 5)}", fontsize=26)
 
 
 def onmove(event):
@@ -96,4 +93,6 @@ fig.canvas.mpl_connect("motion_notify_event", onmove)
 fig.canvas.mpl_connect('button_press_event', onpress)
 fig.canvas.mpl_connect('button_release_event', onrelease)
 
+mng = plt.get_current_fig_manager()
+mng.resize(*mng.window.maxsize())
 plt.show()
