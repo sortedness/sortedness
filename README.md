@@ -14,8 +14,9 @@
 
 # sortedness
 
-`sortedness` is a measure of quality of data transformation, often dimensionality reduction.
-It is less sensitive to irrelevant distortions and return values in a more meaningful interval than Kruskal stress formula I.
+`sortedness` is the level of agreement between two points regarding to how they rank all remaining points in a dataset.
+This ia valid even for points from different spaces, enabling the measurement of the quality of data transformation processes, often dimensionality reduction.
+It is less sensitive to irrelevant distortions, and return values in a more meaningful interval, than Kruskal stress formula I.
 <br>This [Python library](https://pypi.org/project/sortedness) / [code](https://github.com/sortedness/sortedness) provides a reference implementation for the functions presented [here (paper unavailable until publication)](https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=Nonparametric+Dimensionality+Reduction+Quality+Assessment+based+on+Sortedness+of+Unrestricted+Neighborhood&btnG=).
 
 ## Overview
@@ -91,7 +92,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projected1)
 print(min(s), sum(s) / len(s), max(s))
 """
-0.432937128932 0.7813889452999166 0.944810120534
+0.393463224666 0.7565797804351666 0.944810120534
 """
 ```
 
@@ -100,7 +101,17 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 """
--0.578096068617 -0.06328160775358334 0.396112816715
+-0.648305479567 -0.09539895194975 0.397019507592
+"""
+```
+
+```python3
+
+# Single point fast calculation.
+s = sortedness(original, projectedrnd, 2)
+print(s)
+"""
+0.231079547491
 """
 ```
 
@@ -152,7 +163,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = pwsortedness(original, projected1)
 print(min(s), sum(s) / len(s), max(s))
 """
-0.730078995423 0.7744573488776667 0.837310352695
+0.649315577592 0.7534291438323333 0.834601601062
 """
 ```
 
@@ -161,7 +172,17 @@ print(min(s), sum(s) / len(s), max(s))
 s = pwsortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 """
--0.198780473657 -0.0645984203715 0.147224384381
+-0.168611098044 -0.07988253899799999 0.14442446342
+"""
+```
+
+```python3
+
+# Single point fast calculation.
+s = pwsortedness(original, projectedrnd, 2)
+print(s)
+"""
+0.036119718802
 """
 ```
 
@@ -169,7 +190,7 @@ print(min(s), sum(s) / len(s), max(s))
 </p>
 </details>
 
-**Sortedness**
+**Global pairwise sortedness**
 <details>
 <p>
 
@@ -234,7 +255,32 @@ print(list(s))
 ** Copyright (c) 2023. Davi Pereira dos Santos and Tacito Neves**
 
 
+### TODO
+Future work address handling large datasets: approximate sortedness value, and size-insensitive weighting scheme.
 
-
+## Reference
+Please use the following reference to cite this work:
+```
+@inproceedings {10.2312:eurova.20231093,
+booktitle = {EuroVis Workshop on Visual Analytics (EuroVA)},
+editor = {Angelini, Marco and El-Assady, Mennatallah},
+title = {{Nonparametric Dimensionality Reduction Quality Assessment based on Sortedness of Unrestricted Neighborhood}},
+author = {Pereira-Santos, Davi and Neves, Tácito Trindade Araújo Tiburtino and Carvalho, André C. P. L. F. de and Paulovich, Fernando V.},
+year = {2023},
+publisher = {The Eurographics Association},
+ISSN = {2664-4487},
+ISBN = {978-3-03868-222-6},
+DOI = {10.2312/eurova.20231093}
+}
+```
 
 ## Grants
+This work was supported by Wellcome Leap 1kD Program; São
+Paulo Research Foundation (FAPESP) - grant 2020/09835-1; Cana-
+dian Institute for Health Research (CIHR) Canadian Research
+Chairs (CRC) stipend [award number 1024586]; Canadian Foun-
+dation for Innovation (CFI) John R. Evans Leaders Fund (JELF)
+[grant number 38835]; Dalhousie Medical Research Fund (DMRF)
+COVID-19 Research Grant [grant number 603082]; and the Cana-
+dian Institute for Health Research (CIHR) Project Grant [award
+number 177968].

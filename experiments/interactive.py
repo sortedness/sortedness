@@ -51,9 +51,9 @@ def f(idx):
     #           f"        Λτw: {round(mean(pwsortedness(o, p)), 2)}", fontsize=30)
     plt.title(
         f"σ - 1: {round(1 - stress(o, p)[idx], 2)}"
-              # f"        gτw: {round(gtau(idx, o, p), 2)}"
-              f"        λτw: {round(sortedness(o, p, idx, weigher=lambda r:1/(1+10*r/points)), 2)}"
-              f"        Λτw: {round(pwsortedness(o, p, idx), 2)}", fontsize=30)
+        # f"        gτw: {round(gtau(idx, o, p), 2)}"
+        f"        λτw: {round(sortedness(o, p, idx, weigher=lambda r: 1 / (1 + r)), 2)}"
+        f"        Λτw: {round(pwsortedness(o, p, idx), 2)}", fontsize=30)
 
 
 def onmove(event):
