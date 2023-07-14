@@ -1,2 +1,2 @@
-Add custom 'f'/kwargs support for pwsortedness
-Intended to support other and convergent weighting functions, e.g., Gaussian
+Speed up sortedness by 4x and rsortedness by 2x through multiprocessing
+Remove unneeded dependence on shelchemy

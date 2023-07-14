@@ -237,7 +237,6 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
         raise Exception(f"`symmetric=False` not implemented for custom `f`")
     if parallel_kwargs is None:
         parallel_kwargs = {}
-    result, pvalues = [], []
     npoints = len(X)
 
     if i is not None:
@@ -253,36 +252,28 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             return (np.round(corr, 12), pvalue) if return_pvalues else np.round(corr, 12)
         else:  # pragma: no cover
             raise Exception(f"Not implemented yet; it is an open problem")
-            # D = abs(X - x).T
-            # scores_X, scores_x_ = (-D, -d_) if isweightedtau else (D, d_)
-            # for j in range(len(scores_X)):
-            #     corr, pvalue = f(scores_X[j], scores_x_, **kwargs)
-            #     result.append(round(corr, 12))
-            #     pvalues.append(round(pvalue, 12))
-            # return (mean(result), mean(pvalues)) if return_pvalues else mean(result)
 
     if distance_dependent:
+        def thread(a, b):
+            return f(a, b, **kwargs)
         tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
+        pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
         sqdist_X, sqdist_X_ = tmap(lambda M: cdist(M, M, metric='sqeuclidean'), [X, X_])
         D = remove_diagonal(sqdist_X)
         D_ = remove_diagonal(sqdist_X_)
         scores_X, scores_X_ = (-D, -D_) if isweightedtau else (D, D_)
-        for i in range(len(X)):
-            corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
-            result.append(round(corr, 12))
-            pvalues.append(round(pvalue, 12))
+        jobs = pmap(thread if kwargs else f, scores_X, scores_X_)
+        result, pvalues = [], []
+        for corr, pvalue in jobs:
+            result.append(corr)
+            pvalues.append(pvalue)
     else:  # pragma: no cover
         raise Exception(f"Not implemented yet; it is an open problem")
-        #     for i in range(len(X)):
-    #         corr, pvalue = sortedness(X, X_, i, f=f, distance_dependent=False, return_pvalues=True,
-    #                                   parallel=parallel, parallel_n_trigger=parallel_n_trigger, parallel_kwargs=parallel_kwargs, **kwargs)
-    #         result.append(round(corr, 12))
-    #         pvalues.append(round(pvalue, 12))
 
     result = np.array(result, dtype=float)
     if return_pvalues:
-        return np.array(list(zip(result, pvalues)))
-    return result
+        return np.round(np.array(list(zip(result, pvalues))), 12)
+    return np.round(result, 12)
 
 
 def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, parallel_kwargs=None, **kwargs):
@@ -591,26 +582,15 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
         raise Exception("TODO: Pairtau implementation disagree with scipy weightedtau")
         # return parwtau(scores_X, scores_X_, npoints, parallel=parallel, **kwargs)
 
-    def thread(l):
-        lst1 = []
-        lst2 = []
-        for i in l:
-            corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
-            lst1.append(round(corr, 12))
-            lst2.append(round(pvalue, 12))
-        return lst1, lst2
-
-    result, pvalues = [], []
-    try:
-        from shelchemy.lazy import ichunks
-    except Exception as e:
-        print("please install shelchemy library.")
-        exit()
     if i is None:
-        jobs = pmap(thread, ichunks(range(npoints), 15, asgenerators=False))
-        for corrs, pvalues in jobs:
-            result.extend(corrs)
-            pvalues.extend(pvalues)
+        def thread(a, b):
+            return f(a, b, **kwargs)
+
+        jobs = pmap(thread if kwargs else f, scores_X, scores_X_)
+        result, pvalues = [], []
+        for corr, pvalue in jobs:
+            result.append(corr)
+            pvalues.append(pvalue)
 
         result = np.array(result, dtype=float)
         if return_pvalues:
