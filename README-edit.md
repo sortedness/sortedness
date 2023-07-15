@@ -80,11 +80,8 @@ DOI = {10.2312/eurova.20231093}
 
 ## Grants
 This work was supported by Wellcome Leap 1kD Program; São
-Paulo Research Foundation (FAPESP) - grant 2020/09835-1; Cana-
-dian Institute for Health Research (CIHR) Canadian Research
-Chairs (CRC) stipend [award number 1024586]; Canadian Foun-
-dation for Innovation (CFI) John R. Evans Leaders Fund (JELF)
+Paulo Research Foundation (FAPESP) - grant 2020/09835-1; Canadian Institute for Health Research (CIHR) Canadian Research
+Chairs (CRC) stipend [award number 1024586]; Canadian Foundation for Innovation (CFI) John R. Evans Leaders Fund (JELF)
 [grant number 38835]; Dalhousie Medical Research Fund (DMRF)
-COVID-19 Research Grant [grant number 603082]; and the Cana-
-dian Institute for Health Research (CIHR) Project Grant [award
+COVID-19 Research Grant [grant number 603082]; and the Canadian Institute for Health Research (CIHR) Project Grant [award
 number 177968].
