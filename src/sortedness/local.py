@@ -221,6 +221,10 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             0.81695345,  0.51956213])
     >>> sortedness(original, projected, 1)
     0.519562134793
+    >>> sortedness(original, projected, rank=True)[1]
+    0.519562134793
+    >>> sortedness(original, projected, rank=False)[1]
+    0.074070734162
     >>> sortedness(original, projected, 1, symmetric=False)
     0.422638894922
     >>> sortedness([[1,2,3,3],[1,2,7,3],[3,4,8,5],[1,8,3,5]], [[2,1,2,3],[3,1,2,3],[5,4,5,6],[9,7,6,3]], 1)
@@ -608,6 +612,27 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
     Kruskal's "Stress Formula 1" normalized before comparing distances.
     default: Euclidean
 
+    Parameters
+    ----------
+    X
+        matrix with an instance by row in a given space (often the original one)
+    X_
+        matrix with an instance by row in another given space (often the projected one)
+    i
+        None:   calculate stress for all instances
+        `int`:  index of the instance of interest
+    metric
+        Stress formula version: metric or nonmetric
+    parallel
+        Parallelize processing when |X|>1000. Might use more memory.
+
+    Returns
+    -------
+    parallel_kwargs
+        Any extra argument to be provided to pathos parallelization
+    parallel_n_trigger
+        Threshold to disable parallelization for small n values
+
     >>> import numpy as np
     >>> from functools import partial
     >>> from scipy.stats import spearmanr, weightedtau
@@ -654,21 +679,6 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
     0.316031007598
     >>> stress(original, projected, 1, metric=False)
     0.39465927169
-
-    Parameters
-    ----------
-    X
-        matrix with an instance by row in a given space (often the original one)
-    X_
-        matrix with an instance by row in another given space (often the projected one)
-    metric
-        Stress formula version: metric or nonmetric
-    parallel
-        Parallelize processing when |X|>1000. Might use more memory.
-
-    Returns
-    -------
-
     """
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and X.size > parallel_size_trigger else map
     # TODO: parallelize cdist in slices?
@@ -686,7 +696,7 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
     D /= D.max(axis=1, keepdims=True)
     s = ((D - D_) ** 2).sum(axis=1) / 2
     result = np.round(np.sqrt(s / (Dsq_.sum(axis=1) / 2)), 12)
-    return result if i is None else result[0]
+    return result if i is None else result.flat[0]
 
 
 def hyperbolic(x):

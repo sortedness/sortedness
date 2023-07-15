@@ -10,6 +10,7 @@
 [![API documentation](https://img.shields.io/badge/doc-API%20%28auto%29-a0a0a0.svg)](https://sortedness.github.io/sortedness)
 [![DOI](https://zenodo.org/badge/513273889.svg)](https://zenodo.org/badge/latestdoi/513273889)
 [![Downloads](https://static.pepy.tech/badge/sortedness)](https://pepy.tech/project/sortedness)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/sortedness)
 
 
 # sortedness

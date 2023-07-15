@@ -1,2 +1,4 @@
+Improve interactive example
+Return scalar for stress(..., i=...)
 Speed up sortedness by 4x and rsortedness by 2x through multiprocessing
 Remove unneeded dependence on shelchemy

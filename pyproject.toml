@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sortedness"
-version = "1.230712.1"
+version = "1.230712.2"
 description = "Measures of projection quality"
 authors = ["davips <dpsabc@gmail.com>", "tacito <tacito.neves@gmail.com>"]
 license = "GPLv3"
