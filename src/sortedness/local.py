@@ -27,13 +27,24 @@ from math import exp
 
 import numpy as np
 import pathos.multiprocessing as mp
-from numpy import eye, mean, sqrt, ndarray
+from numpy import eye, mean, sqrt, ndarray, float64
 from numpy.random import permutation
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata, kendalltau, weightedtau
 
 from sortedness.parallel import rank_alongrow, rank_alongcol
 
+
+# todo: see if speed can benefit from:
+# gen = pairwise_distances_chunked(X, method='cosine', n_jobs=-1)
+# Z = np.concatenate(list(gen), axis=0)
+# Z_cond = Z[np.triu_indices(Z.shape[0], k=1)
+# https://stackoverflow.com/a/55940399/9681577
+#
+# import dask.dataframe as dd
+# from dask.multiprocessing import get
+# # o - is pandas DataFrame
+# o['dist_center_from'] = dd.from_pandas(o, npartitions=8).map_partitions(lambda df: df.apply(lambda x: vincenty((x.fromlatitude, x.fromlongitude), center).km, axis=1)).compute(get=get)
 
 def remove_diagonal(X):
     n_points = len(X)
@@ -237,8 +248,8 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             if "rank" in kwargs:  # pragma: no cover
                 raise Exception(f"Cannot set `symmetric=False` and provide `rank` at the same time.")
             kwargs["rank"] = None
-    elif not symmetric:  # pragma: no cover
-        raise Exception(f"`symmetric=False` not implemented for custom `f`")
+    elif symmetric:  # pragma: no cover
+        raise Exception(f"`symmetric=True` not implemented for custom `f`")
     if parallel_kwargs is None:
         parallel_kwargs = {}
     npoints = len(X)
@@ -252,14 +263,20 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
         if distance_dependent:
             d = np.sum((X - x) ** 2, axis=1)
             scores_X, scores_X_ = (-d, -d_) if isweightedtau else (d, d_)
-            corr, pvalue = f(scores_X, scores_X_, **kwargs)
-            return (np.round(corr, 12), pvalue) if return_pvalues else np.round(corr, 12)
+            tup = f(scores_X, scores_X_)#, **kwargs)
+
+            if return_pvalues:
+                corr, pvalue = tup
+                return np.round(corr, 12), pvalue
+            else:
+                return np.round(tup if isinstance(tup, float64) else tup[0], 12)
         else:  # pragma: no cover
             raise Exception(f"Not implemented yet; it is an open problem")
 
     if distance_dependent:
         def thread(a, b):
             return f(a, b, **kwargs)
+
         tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
         pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
         sqdist_X, sqdist_X_ = tmap(lambda M: cdist(M, M, metric='sqeuclidean'), [X, X_])
@@ -571,8 +588,8 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
             if "rank" in kwargs:
                 raise Exception(f"Cannot set `symmetric=False` and provide `rank` at the same time.")
             kwargs["rank"] = None
-    elif not symmetric:
-        raise Exception(f"`symmetric=False` not implemented for custom `f`")
+    elif symmetric:  # pragma: no cover
+        raise Exception(f"`symmetric=True` not implemented for custom `f`")
     if parallel_kwargs is None:
         parallel_kwargs = {}
     npoints = len(X)

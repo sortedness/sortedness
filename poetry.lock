@@ -89,7 +89,7 @@ files = [
 name = "contourpy"
 version = "1.1.0"
 description = "Python library for calculating contours of 2D quadrilateral grids"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -224,7 +224,7 @@ toml = ["tomli"]
 name = "cycler"
 version = "0.11.0"
 description = "Composable style cycles"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -278,7 +278,7 @@ test = ["pytest (>=6)"]
 name = "fonttools"
 version = "4.41.0"
 description = "Tools to manipulate font files"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -360,7 +360,7 @@ files = [
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -545,7 +545,7 @@ files = [
 name = "matplotlib"
 version = "3.7.2"
 description = "Python plotting package"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -681,7 +681,7 @@ files = [
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -806,7 +806,7 @@ markdown = ">=3.0"
 name = "pillow"
 version = "10.0.0"
 description = "Python Imaging Library (Fork)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -930,10 +930,42 @@ files = [
 dill = ["dill (>=0.3.6)"]
 
 [[package]]
+name = "pyfdm"
+version = "1.0.2"
+description = "Python library for Fuzzy Decision Making"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pyfdm-1.0.2-py3-none-any.whl", hash = "sha256:89e20a890e30c922426f9eca8e715e251c6f98808236118073390159f95db744"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[[package]]
+name = "pymcdm"
+version = "1.1.0"
+description = "Python library for Multi-Criteria Decision-Making"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pymcdm-1.1.0-py3-none-any.whl", hash = "sha256:f393509ea3c881f011ad23b862bea1e4bbe49fa06ad92d4a75315f14694318ed"},
+    {file = "pymcdm-1.1.0.tar.gz", hash = "sha256:537ec492c3a35bc544ec0a68ae747add9fbe369fde8abba4830223839d8f3121"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
+
+[[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6.8"
 files = [
@@ -990,7 +1022,7 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 files = [
@@ -1114,7 +1146,7 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
@@ -1158,7 +1190,19 @@ files = [
     {file = "tzdata-2023.3.tar.gz", hash = "sha256:11ef1e08e54acb0d4f95bdb1be05da659673de4acbd21bf9c69e94cc5e907a3a"},
 ]
 
+[[package]]
+name = "wcorr"
+version = "2.2"
+description = "Weighted correlation in Python. Pandas based implementation of weighted Pearson and Spearman correlations."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "wcorr-2.2-py2.py3-none-any.whl", hash = "sha256:31deb69c8a991469a4e80a910fb5306f92145cd397f7b5fc6037c7bf54d06103"},
+    {file = "wcorr-2.2.tar.gz", hash = "sha256:851e857b515fdca11bf5bdbb423d397a00ee5a300ab068d3e8365b29a7bd4f26"},
+]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<4.0"
-content-hash = "cdc6a5bef58feb12cc9779e394389aa53a5eb236e7b71f0e93575556caef92b3"
+content-hash = "339284beae058420d359f8ad87443c6043350b48de1e800b3d58b5c1dc8a9d2a"

@@ -7,8 +7,8 @@ from scipy.stats import kendalltau
 from sklearn.datasets import make_blobs
 from sklearn.manifold import trustworthiness
 
-from sortedness import rsortedness, sortedness, pwsortedness, global_pwsortedness
-from sortedness.local import stress, gaussian
+from sortedness import sortedness
+from sortedness.local import gaussian
 
 k = 5
 limit = 400
@@ -21,15 +21,6 @@ def tw(X, X_):
     return mean(trustworthiness(X, X_, n_neighbors=k))
 
 
-f1 = lambda r: 1 / (r + 1) ** 2
-f2 = lambda r: 1 / 2 ** r
-f3 = lambda r: 1 / (r + 1) ** 1.1
-f4 = lambda r: 1 / (r + 1)
-print([round(f1(x), 4) for x in range(10)])
-print([round(f2(x), 4) for x in range(10)])
-print([round(f3(x), 4) for x in range(10)])
-print([round(f4(x), 4) for x in range(10)])
-print([round(gaussian(x), 4) for x in range(10)])
 measures = {
     "$\\lambda_{\\tau_1}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_, f=kendalltau)),
     "$\\lambda_{\\tau_w}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_)),
@@ -53,7 +44,7 @@ for m, f in measures.items():
     print(m)
     d[m] = []
     for n in d[xlabel]:
-        print(n)
+        print("cluster size:", n)
         X = np.empty((3 * n, 2), dtype=float)
         for i in range(3):
             X[i * n:i * n + n] = xlst[i][:n]

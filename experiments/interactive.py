@@ -21,15 +21,15 @@
 #  time spent here.
 #
 
-from math import dist, exp
+from math import dist
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.backend_bases import MouseButton, KeyEvent
+from matplotlib.backend_bases import MouseButton
 from pandas import DataFrame
 from scipy.stats import kendalltau
 
-from sortedness.local import stress, sortedness, pwsortedness, gaussian, hyperbolic
+from sortedness.local import stress, sortedness
 
 np.random.seed(86)
 ax = [0]
@@ -45,7 +45,7 @@ sc[0] = ax[0].scatter(x, y, s=200, c=colors)
 plt.xlim(0, 10)
 plt.ylim(0, 10)
 o = DataFrame(list(zip(x, y)))
-
+o.iloc[0] = -1, -1
 print(o)
 p = o.copy()
 selected = dict(coords=None, idx=0, old_color=gray)
@@ -58,10 +58,8 @@ def f():
         f"σ - 1: {np.round(1 - stress(o, p, idx), 5)}"
         f"      λτ1: {np.round(sortedness(o, p, idx, f=kendalltau), 5)}"
         f"      λτw: {np.round(sortedness(o, p, idx), 5)}"
-        f"      λτ1+G: {np.round((sortedness(o, p, idx, f=kendalltau) + sortedness(o, p, idx, weigher=gaussian)) / 2, 5)}"
-        # f"      λτw²: {round(sortedness(o, p, idx, weigher=lambda r: (1 / (1 + r)) ** 2), 5)}"
-        # f"      Λτw: {round(pwsortedness(o, p, i=idx, cython=True), 5)}"
-        # f"      ΛτwG: {round(pwsortedness(o, p, idx, cython=False, weigher=lambda r: exp(- r ** 2 / 2)), 5)}"
+        f"      λτw: {np.round(sortedness(o, p, idx, weigher='dist'), 5)}"
+        # f"      Λτw: {round(pwsortedness(o, p, i=idx), 5)}"
         , fontsize=26)
 
 
