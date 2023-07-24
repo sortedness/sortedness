@@ -27,12 +27,37 @@ from math import exp
 
 import numpy as np
 import pathos.multiprocessing as mp
-from numpy import eye, mean, sqrt, ndarray, float64
+from numpy import eye, mean, sqrt, ndarray, nan
 from numpy.random import permutation
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata, kendalltau, weightedtau
 
 from sortedness.parallel import rank_alongrow, rank_alongcol
+
+
+def common(S, S_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs):
+    def thread(a, b):
+        return f(a, b, **kwargs)
+
+    def oneway(scores_a, scores_b):
+        jobs = pmap((thread if kwargs else f), scores_a, scores_b)
+        result, pvalues = [], []
+        for tup in jobs:
+            corr, pvalue = tup if isinstance(tup, tuple) else (tup, nan)
+            result.append(corr)
+            pvalues.append(pvalue)
+        return np.array(result, dtype=float), np.array(pvalues, dtype=float)
+
+    handle_f = lambda tup: tup if isinstance(tup, tuple) else (tup, nan)
+    result, pvalues = oneway(S, S_) if i is None else handle_f(f(S, S_, **kwargs))
+    if not isweightedtau and symmetric:
+        result_, pvalues_ = oneway(S_, S) if i is None else handle_f(f(S_, S, **kwargs))
+        result = (result + result_) / 2
+        pvalues = (pvalues + pvalues_) / 2
+
+    if return_pvalues:
+        return np.round(np.array(list(zip(result, pvalues))), 12)
+    return np.round(result, 12)
 
 
 # todo: see if speed can benefit from:
@@ -55,7 +80,7 @@ def remove_diagonal(X):
 weightedtau.isweightedtau = True
 
 
-def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=True, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
+def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
     """
      Calculate the sortedness (stress-like correlation-based measure that focuses on ordering of points) value for each point
      Functions available as scipy correlation coefficients:
@@ -232,14 +257,21 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             0.81695345,  0.51956213])
     >>> sortedness(original, projected, 1)
     0.519562134793
-    >>> sortedness(original, projected, rank=True)[1]
-    0.519562134793
-    >>> sortedness(original, projected, rank=False)[1]
-    0.074070734162
     >>> sortedness(original, projected, 1, symmetric=False)
     0.422638894922
-    >>> sortedness([[1,2,3,3],[1,2,7,3],[3,4,8,5],[1,8,3,5]], [[2,1,2,3],[3,1,2,3],[5,4,5,6],[9,7,6,3]], 1)
-    0.181818181818
+    >>> sortedness(projected, original, 1, symmetric=False)
+    0.616485374665
+    >>> sortedness(original, projected, rank=True)[1]
+    0.519562134793
+    >>> sortedness(original, projected, rank=False)[1]  # warning: will consider indexes as ranks!
+    0.074070734162
+    >>> sortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1)
+    -1.0
+    >>> from scipy.stats import weightedtau
+    >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
+    >>> sortedness(original, projected, 1, f=weightedtau, rank=None)
+    0.275652884819
+    >>> weightedtau.isweightedtau = True
     """
     isweightedtau = False
     if hasattr(f, "isweightedtau") and f.isweightedtau:
@@ -248,53 +280,28 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, distance_dependent=
             if "rank" in kwargs:  # pragma: no cover
                 raise Exception(f"Cannot set `symmetric=False` and provide `rank` at the same time.")
             kwargs["rank"] = None
-    elif symmetric:  # pragma: no cover
-        raise Exception(f"`symmetric=True` not implemented for custom `f`")
     if parallel_kwargs is None:
         parallel_kwargs = {}
     npoints = len(X)
 
-    if i is not None:
-        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i].to_numpy()
-        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i].to_numpy()
-        X = np.delete(X, i, axis=0)
-        X_ = np.delete(X_, i, axis=0)
-        d_ = np.sum((X_ - x_) ** 2, axis=1)
-        if distance_dependent:
-            d = np.sum((X - x) ** 2, axis=1)
-            scores_X, scores_X_ = (-d, -d_) if isweightedtau else (d, d_)
-            tup = f(scores_X, scores_X_)#, **kwargs)
-
-            if return_pvalues:
-                corr, pvalue = tup
-                return np.round(corr, 12), pvalue
-            else:
-                return np.round(tup if isinstance(tup, float64) else tup[0], 12)
-        else:  # pragma: no cover
-            raise Exception(f"Not implemented yet; it is an open problem")
-
-    if distance_dependent:
-        def thread(a, b):
-            return f(a, b, **kwargs)
-
+    if i is None:
         tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
         pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
         sqdist_X, sqdist_X_ = tmap(lambda M: cdist(M, M, metric='sqeuclidean'), [X, X_])
         D = remove_diagonal(sqdist_X)
         D_ = remove_diagonal(sqdist_X_)
         scores_X, scores_X_ = (-D, -D_) if isweightedtau else (D, D_)
-        jobs = pmap(thread if kwargs else f, scores_X, scores_X_)
-        result, pvalues = [], []
-        for corr, pvalue in jobs:
-            result.append(corr)
-            pvalues.append(pvalue)
-    else:  # pragma: no cover
-        raise Exception(f"Not implemented yet; it is an open problem")
+    else:
+        pmap = None
+        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i].to_numpy()
+        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i].to_numpy()
+        X = np.delete(X, i, axis=0)
+        X_ = np.delete(X_, i, axis=0)
+        d_ = np.sum((X_ - x_) ** 2, axis=1)
+        d = np.sum((X - x) ** 2, axis=1)
+        scores_X, scores_X_ = (-d, -d_) if isweightedtau else (d, d_)
 
-    result = np.array(result, dtype=float)
-    if return_pvalues:
-        return np.round(np.array(list(zip(result, pvalues))), 12)
-    return np.round(result, 12)
+    return common(scores_X, scores_X_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs)
 
 
 def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, parallel_n_trigger=200, batches=10, debug=False, dist=None, cython=False, parallel_kwargs=None, **kwargs):
@@ -553,33 +560,115 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     -------
         Numpy vector
 
+    >>> ll = [[i] for i in range(17)]
+    >>> a, b = np.array(ll), np.array(ll[0:1] + list(reversed(ll[1:])))
+    >>> b.ravel()
+    array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
+    >>> r = rsortedness(a, b)
+    >>> min(r), max(r)
+    (-0.707870893072, 0.961986592073)
 
-    # >>> ll = [[i, ] for i in range(17)]
-    # >>> a, b = np.array(ll), np.array(ll[0:1] + list(reversed(ll[1:])))
-    # >>> b.ravel()
-    # array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
-    # >>> #r = rsortedness(a, b)
-    # >>> #min(r), max(r)
-    # (-0.707870893072, 0.962964134515)
-    #
-    # >>> rnd = np.random.default_rng(0)
-    # >>> rnd.shuffle(ll)
-    # >>> b = np.array(ll)
-    # >>> b.ravel()
-    # array([ 2, 10,  3, 11,  0,  4,  7,  5, 16, 12, 13,  6,  9, 14,  8,  1, 15])
-    # >>> r = rsortedness(b, a)
-    # >>> r
-    # array([ 0.36861667, -0.07147685,  0.39350142, -0.04581926, -0.03951645,
-    #         0.31100414, -0.18107755,  0.28268222, -0.29248869,  0.19177107,
-    #         0.48076521, -0.17640674,  0.13098522,  0.34833996,  0.01844146,
-    #        -0.58291518,  0.34742337])
-    # >>> min(r), max(r), round(mean(r), 12)
-    # (-0.582915181328, 0.480765206133, 0.087284118913)
-    # >>> rsortedness(b, a, f=kendalltau, return_pvalues=True)
-    # array([[ 0.2316945 ,  0.04863508],
-    #        [-0.37005403,  0.21347624],
-    #        [ 0.17618709,  0.04863508],
-    #        [-0.35418588,  0.21347624]])
+    >>> rnd = np.random.default_rng(1)
+    >>> rnd.shuffle(ll)
+    >>> b = np.array(ll)
+    >>> b.ravel()
+    array([ 1, 10, 14, 15,  7, 12,  3,  4,  5,  8,  0,  9,  2, 16, 13, 11,  6])
+    >>> r = rsortedness(a, b)
+    >>> r
+    array([-0.38455603, -0.28634813,  0.23902905,  0.19345863, -0.43727482,
+           -0.3498781 ,  0.29240532,  0.52016504,  0.51878015,  0.07744892,
+           -0.03664284, -0.17163371, -0.16346701, -0.07260407, -0.03677776,
+            0.00183332, -0.25692691])
+    >>> min(r), max(r)
+    (-0.437274823593, 0.520165040078)
+    >>> round(mean(r), 12)
+    -0.020764055466
+
+    >>> import numpy as np
+    >>> from functools import partial
+    >>> from scipy.stats import spearmanr, weightedtau
+    >>> me = (1, 2)
+    >>> cov = eye(2)
+    >>> rng = np.random.default_rng(seed=10)
+    >>> original = rng.multivariate_normal(me, cov, size=30)
+    >>> from sklearn.decomposition import PCA
+    >>> projected2 = PCA(n_components=2).fit_transform(original)
+    >>> projected1 = PCA(n_components=1).fit_transform(original)
+    >>> np.random.seed(10)
+    >>> projectedrnd = permutation(original)
+
+    >>> s = rsortedness(original, original)
+    >>> min(s), max(s)
+    (1.0, 1.0)
+    >>> s = rsortedness(original, projected2)
+    >>> min(s), max(s)
+    (1.0, 1.0)
+    >>> s = rsortedness(original, projected1)
+    >>> min(s), max(s)
+    (0.160980548632, 0.967351026423)
+    >>> s = rsortedness(original, projectedrnd)
+    >>> min(s), max(s)
+    (-0.406104443754, 0.427134084097)
+    >>> s = rsortedness(original, original, f=kendalltau, return_pvalues=True)
+    >>> s.min(axis=0), s.max(axis=0)
+    (array([1., 0.]), array([1.00e+00, 3.58e-10]))
+    >>> s = rsortedness(original, projected2, f=kendalltau)
+    >>> min(s), max(s)
+    (1.0, 1.0)
+    >>> s = rsortedness(original, projected1, f=kendalltau)
+    >>> min(s), max(s)
+    (0.045545155427, 0.920252656485)
+    >>> s = rsortedness(original, projectedrnd, f=kendalltau)
+    >>> min(s), max(s)
+    (-0.302063337022, 0.306710199121)
+    >>> wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
+    >>> s = rsortedness(original, original, f=wf, return_pvalues=True)
+    >>> s.min(axis=0), s.max(axis=0)
+    (array([ 1., nan]), array([ 1., nan]))
+    >>> s = rsortedness(original, projected2, f=wf)
+    >>> min(s), max(s)
+    (1.0, 1.0)
+    >>> s = rsortedness(original, projected1, f=wf)
+    >>> min(s), max(s)
+    (-0.119320940022, 0.914184310816)
+    >>> s = rsortedness(original, projectedrnd, f=wf)
+    >>> min(s), max(s)
+    (-0.418929560486, 0.710828808816)
+    >>> np.random.seed(14980)
+    >>> projectedrnd = permutation(original)
+    >>> s = rsortedness(original, projectedrnd)
+    >>> min(s), max(s)
+    (-0.415049518972, 0.465004321022)
+    >>> s = rsortedness(original, np.flipud(original))
+    >>> min(s), max(s)
+    (-0.258519523874, 0.454184518962)
+    >>> original = np.array([[0],[1],[2],[3],[4],[5],[6]])
+    >>> projected = np.array([[6],[5],[4],[3],[2],[1],[0]])
+    >>> s = rsortedness(original, projected)
+    >>> min(s), max(s)
+    (1.0, 1.0)
+    >>> projected = np.array([[0],[6],[5],[4],[3],[2],[1]])
+    >>> s = rsortedness(original, projected)
+    >>> min(s), max(s)
+    (-0.755847611802, 0.872258373962)
+    >>> rsortedness(original, projected, 1)
+    0.544020048033
+    >>> rsortedness(original, projected, 1, symmetric=False)
+    0.498125132865
+    >>> rsortedness(projected, original, 1, symmetric=False)
+    0.589914963202
+    >>> rsortedness(original, projected, rank=True)[1]
+    0.544020048033
+    >>> rsortedness(original, projected, rank=False)[1]  # warning: will consider indexes as ranks!
+    0.208406304729
+    >>> rsortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1)
+    -0.405553943962
+    >>> from scipy.stats import weightedtau
+    >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
+    >>> rsortedness(original, projected, 1, f=weightedtau, rank=None)
+    0.483816220002
+    >>> weightedtau.isweightedtau = True
+
     """
     isweightedtau = False
     if hasattr(f, "isweightedtau") and f.isweightedtau:
@@ -588,8 +677,6 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
             if "rank" in kwargs:
                 raise Exception(f"Cannot set `symmetric=False` and provide `rank` at the same time.")
             kwargs["rank"] = None
-    elif symmetric:  # pragma: no cover
-        raise Exception(f"`symmetric=True` not implemented for custom `f`")
     if parallel_kwargs is None:
         parallel_kwargs = {}
     npoints = len(X)
@@ -597,34 +684,19 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     D, D_ = tmap(lambda M: cdist(M, M, metric="sqeuclidean"), [X, X_])
     R, R_ = (rank_alongcol(M, parallel=parallel) for M in [D, D_])
-    scores_X, scores_X_ = tmap(lambda M: -remove_diagonal(M), [R, R_])  # For f=weightedtau: scores = -ranks.
+    scores_X, scores_X_ = tmap(lambda M: remove_diagonal(M), [R, R_])
+    if isweightedtau:
+        scores_X, scores_X_ = -scores_X, -scores_X_
 
     if hasattr(f, "isparwtau"):  # pragma: no cover
         raise Exception("TODO: Pairtau implementation disagree with scipy weightedtau")
         # return parwtau(scores_X, scores_X_, npoints, parallel=parallel, **kwargs)
-
-    if i is None:
-        def thread(a, b):
-            return f(a, b, **kwargs)
-
-        jobs = pmap(thread if kwargs else f, scores_X, scores_X_)
-        result, pvalues = [], []
-        for corr, pvalue in jobs:
-            result.append(corr)
-            pvalues.append(pvalue)
-
-        result = np.array(result, dtype=float)
-        if return_pvalues:
-            return np.array(list(zip(result, pvalues)))
-        return result
-
-    corr, pvalue = f(scores_X[i], scores_X_[i], **kwargs)
-    if return_pvalues:
-        return round(corr, 12), pvalue
-    return round(corr, 12)
+    if i is not None:
+        scores_X, scores_X_ = scores_X[i], scores_X_[i]
+    return common(scores_X, scores_X_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs)
 
 
-def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=10000, **parallel_kwargs):
+def stress(X, X_, i=None, metric=True, parallel=True, parallel_n_trigger=10000, **parallel_kwargs):
     """
     Kruskal's "Stress Formula 1" normalized before comparing distances.
     default: Euclidean
@@ -697,7 +769,7 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_size_trigger=1000
     >>> stress(original, projected, 1, metric=False)
     0.39465927169
     """
-    tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and X.size > parallel_size_trigger else map
+    tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and X.size > parallel_n_trigger else map
     # TODO: parallelize cdist in slices?
     if metric:
         thread = (lambda M, m: cdist(M, M, metric=m)) if i is None else (lambda M, m: cdist(M[i:i + 1], M, metric=m))

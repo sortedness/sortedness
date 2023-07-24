@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sortedness"
-version = "1.230712.2"
+version = "1.230724.0"
 description = "Measures of projection quality"
 authors = ["davips <dpsabc@gmail.com>", "tacito <tacito.neves@gmail.com>"]
 license = "GPLv3"
@@ -49,6 +49,7 @@ matplotlib = "^3.7.2"
 pandas = "^2.0.3"
 wcorr = "^2.2"
 pyfdm = "^1.0.2"
+pycrunch = "^0.5.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "Cython>=0.29.27", "setuptools>=60.8.1", "numpy>=1.23.3", "scipy>=1.10.1"]
