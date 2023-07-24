@@ -15,25 +15,6 @@ python = "^3.10,<4.0"
 scipy = {version = "^1.10.1", python = ">=3.8,<3.11"}
 lange = "^1.230203.1"
 pathos = "^0.3.0"
-#shelchemy = "^0.220906.5"
-
-#[tool.poetry.dev-dependencies]
-#ipython = "^8.13.1"
-#openml = "^0.13.1"
-#pandas = "^2.0.1"
-#hoshmap = "^0.220808.0"
-#dash = "^2.9.3"
-##ranky = "^0.3.3"
-#sympy = "^1.10.1"
-#matplotlib = "^3.7.1"
-#PyQt5 = "^5.15.7"
-#PyMySQL = "^1.0.2"
-#lz4 = "^4.0.2"
-#cryptography = "^40.0.2"
-#scikit-tensor-py3 = {git = "https://github.com/jonjoncardoso/scikit-tensor-py3"}
-#fastrlock = "0.7.0"
-#cupy-cuda11x = "^12.1.0"
-pymcdm = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 setuptools = "^67.7.2"
@@ -47,9 +28,6 @@ scikit-learn = "^1.2.2"
 numpy = "^1.24.2"  #=1.24.2
 matplotlib = "^3.7.2"
 pandas = "^2.0.3"
-wcorr = "^2.2"
-pyfdm = "^1.0.2"
-pycrunch = "^0.5.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "Cython>=0.29.27", "setuptools>=60.8.1", "numpy>=1.23.3", "scipy>=1.10.1"]
