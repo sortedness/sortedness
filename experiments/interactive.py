@@ -58,7 +58,6 @@ def f():
         f"σ - 1: {np.round(1 - stress(o, p, idx), 5)}"
         f"      λτ1: {np.round(sortedness(o, p, idx, f=kendalltau), 5)}"
         f"      λτw: {np.round(sortedness(o, p, idx), 5)}"
-        f"      λτw: {np.round(sortedness(o, p, idx, weigher='dist'), 5)}"
         # f"      Λτw: {round(pwsortedness(o, p, i=idx), 5)}"
         , fontsize=26)
 

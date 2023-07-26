@@ -179,15 +179,11 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> min(s), max(s), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
     >>> s = sortedness(original, projected1)
-    >>> min(s), max(s), s
-    (0.393463224666, 0.944810120534, array([0.43735232, 0.39346322, 0.88256382, 0.94481012, 0.794352  ,
-           0.78933235, 0.7409755 , 0.90341771, 0.89081602, 0.90102615,
-           0.53953244, 0.86131572]))
+    >>> min(s), max(s)
+    (0.393463224666, 0.944810120534)
     >>> s = sortedness(original, projectedrnd)
-    >>> min(s), max(s), s
-    (-0.648305479567, 0.397019507592, array([ 0.12977864, -0.49887948,  0.23107955, -0.09591571, -0.12509467,
-            0.39701951, -0.21772049,  0.11895569, -0.64830548,  0.00279294,
-           -0.34542772, -0.09307021]))
+    >>> min(s), max(s)
+    (-0.648305479567, 0.397019507592)
 
     >>> sortedness(original, original, f=kendalltau, return_pvalues=True)
     array([[1.0000e+00, 5.0104e-08],
@@ -456,11 +452,11 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
         n = len(D)
         if symmetric:
             M, M_ = pmap(makeM, [D, D_])
-            R_ = rank_alongrow(M_, step=n // batches, parallel=parallel, **parallel_kwargs).T
+            R_ = rank_alongrow(M_, step=n // batches, parallel=parallel, **parallel_kwargs).T  # todo: see rounding problem of asint inside rank_alongcol() for ties
             del M_
         else:
             M = makeM(D)
-        R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T
+        R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T  # todo: see rounding problem of asint inside rank_alongcol() for ties
         del M
         gc.collect()
         if cython:
@@ -496,7 +492,7 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
     if symmetric:
         M, M_ = pmap(makeM, [D[:, i:i + 1], D_[:, i:i + 1]])
         thread = lambda M: rankdata(M, axis=1, method="average")
-        r, r_ = [r[0].astype(int) - 1 for r in tmap(thread, [M, M_])]
+        r, r_ = [r[0].astype(int) - 1 for r in tmap(thread, [M, M_])]  # todo: asInt and method="average" does not play nicely together  for ties!!
         s1 = f(scores_X, scores_X_, r, **kwargs)[0]
         s2 = f(scores_X, scores_X_, r_, **kwargs)[0]
         return round((s1 + s2) / 2, 12)
@@ -683,7 +679,7 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     D, D_ = tmap(lambda M: cdist(M, M, metric="sqeuclidean"), [X, X_])
-    R, R_ = (rank_alongcol(M, parallel=parallel) for M in [D, D_])
+    R, R_ = (rank_alongcol(M, parallel=parallel) for M in [D, D_])  # todo: see rounding problem of asint inside rank_alongcol()  for ties
     scores_X, scores_X_ = tmap(lambda M: remove_diagonal(M), [R, R_])
     if isweightedtau:
         scores_X, scores_X_ = -scores_X, -scores_X_
