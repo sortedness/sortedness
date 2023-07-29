@@ -1,3 +1,4 @@
+Update doc
 Remove unneeded dev deps
 Make sortedness and rsortedness implementation more uniform
 Fix inverted `symmetric` check

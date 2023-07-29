@@ -56,8 +56,8 @@ def common(S, S_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs):
         pvalues = (pvalues + pvalues_) / 2
 
     if return_pvalues:
-        return np.round(np.array(list(zip(result, pvalues))), 12)
-    return np.round(result, 12)
+        return np.round(np.array(list(zip(result, pvalues))), 12)  # todo: remove all roundings
+    return np.round(result, 12)  # todo: remove all roundings
 
 
 # todo: see if speed can benefit from:
@@ -88,10 +88,15 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
          𝜏-sortedness (Kendall's 𝜏),
          w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)  ← default
 
-    # TODO?: add flag to break extremely rare cases of ties that persist after projection (implies a much slower algorithm)
-        This probably doesn't make any difference on the result, except on categorical, pathological or toy datasets
-        Values can be lower due to the presence of ties, but only when the projection isn't perfect for all points.
-        In the end, it might be even desired to penalize ties, as they don't exactly contribute to a stronger ordering and are (probabilistically) easier to be kept than a specific order.
+    Note:
+        Categorical, or pathological data might present values lower than one due to the presence of ties even with a perfect projection.
+        Depending on the chosen correlation coefficient, ties are penalized, as they do not contribute to establishing any order.
+
+    Hint:
+        Swap two points A and B at X_ to be able to calculate sortedness between A and B in the same space (i.e., originally, `X = X_`):
+            `X = [A, B, C, ..., Z]`
+            `X_ = [B, A, C, ..., Z]`
+            `sortedness(X, X_, i=0)`
 
     Parameters
     ----------
@@ -132,7 +137,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
 
      Returns
      -------
-         list of sortedness values (or tuples that also include pvalues)
+         ndarray containing a sortedness value per row, or a single float (include pvalues as a second value if requested)
 
 
     >>> ll = [[i] for i in range(17)]
@@ -175,6 +180,13 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> s = sortedness(original, original)
     >>> min(s), max(s), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
+
+    # Measure sortedness between two points in the same space.
+    >>> M = original.copy()
+    >>> M[0], M[1] = original[1], original[0]
+    >>> sortedness(M, original, 0)
+    0.547929184934
+
     >>> s = sortedness(original, projected2)
     >>> min(s), max(s), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
@@ -465,16 +477,16 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
             del R
             if not symmetric:
                 gc.collect()
-                return np.round(res, 12)
+                return np.round(res, 12)  # todo: remove all roundings
 
             res_ = parwtau(scores_X, scores_X_, npoints, R_, parallel=parallel, **parallel_kwargs)
             del R_
             gc.collect()
-            return np.round((res + res_) / 2, 12)
+            return np.round((res + res_) / 2, 12)  # todo: remove all roundings
         else:
             def thread(r):
                 corr = f(scores_X, scores_X_, rank=r, **kwargs)[0]
-                return round(corr, 12)
+                return round(corr, 12)  # todo: remove all roundings
 
             gen = (R[:, i] for i in range(len(X)))
             res = np.array(list(pmap(thread, gen)), dtype=float)
