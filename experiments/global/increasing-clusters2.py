@@ -3,15 +3,13 @@ import numpy as np
 import pandas as pd
 from lange import gp
 from numpy import mean, vstack
-from scipy.stats import kendalltau
 from sklearn.datasets import make_blobs
 from sklearn.manifold import trustworthiness
 
-from sortedness import sortedness
-from sortedness.local import gaussian
+from sortedness.probabilistic import locglo
 
 k = 5
-limit = 400
+limit = 2_000_000
 distance, std = 100000, 1
 
 
@@ -22,19 +20,18 @@ def tw(X, X_):
 
 
 measures = {
-    "$\\lambda_{\\tau_1}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_, f=kendalltau)),
-    "$\\lambda_{\\tau_w}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_)),
+    # "$\\lambda_{\\tau_1}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_, f=kendalltau)),
+    "$\\lambda_{\\tau_LG}$~~~~~~sortedness": lambda X, X_, n: mean(locglo(X, X_)),
+    # "$\\lambda_{\\tau_w}$~~~~~~sortedness": lambda X, X_, n: mean(sortedness(X, X_)),
+    # "$\\lambda_{\\tau_w\\%}$~~~~~~sortedness": lambda X, X_, n: mean(sortedness(X, X_, 1, weigher=lambda r: (1+r) / (1 + r) / n)),
     # "$\\lambda_{\\tau_G}$~~~~~~sortedness": lambda X, X_: mean(sortedness(X, X_, weigher=gaussian)),
     # "$\\lambda_{\\tau_w+G}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_) + sortedness(X, X_, weigher=gaussian)) / 2),
-    "$\\lambda_{\\tau_1+G}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_, f=kendalltau) + sortedness(X, X_, weigher=gaussian)) / 2),
-    "$\\lambda_{\\tau_1+r²}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_, f=kendalltau) + sortedness(X, X_, weigher=f1)) / 2),
-    "$\\lambda_{\\tau_1+2r}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_, f=kendalltau) + sortedness(X, X_, weigher=f2)) / 2),
     # "$\\lambda_{\\tau_1+G}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_, f=kendalltau) + sortedness(X, X_, weigher=gaussian)) / 2),
     # "$\\lambda_{\\tau_1+w}$~~~~~~sortedness": lambda X, X_: mean((sortedness(X, X_, f=kendalltau) + sortedness(X, X_)) / 2),
 }
 
 xlabel = "Cluster Size"
-d = {xlabel: [int(x) for x in gp[2, 2.35, ..., limit]]}
+d = {xlabel: [int(x) for x in gp[10, 30, ..., limit]]}
 a, b, c = (-distance, 0), (0, 0), (distance, 0)
 xlst = []
 for center in [a, b, c]:
@@ -44,13 +41,14 @@ for m, f in measures.items():
     print(m)
     d[m] = []
     for n in d[xlabel]:
-        print("cluster size:", n)
         X = np.empty((3 * n, 2), dtype=float)
         for i in range(3):
             X[i * n:i * n + n] = xlst[i][:n]
         dx = np.array([[distance, 0]])
         X_ = vstack((X[:n], X[n:2 * n] + dx, X[2 * n:] - dx))
-        d[m].append(f(X, X_))
+        s=f(X, X_, len(X) - 1)
+        d[m].append(s)
+        print("cluster size:", n, s)
 
 print("---------------------_")
 _, ax = plt.subplots(figsize=(14, 9))

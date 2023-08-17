@@ -26,14 +26,17 @@ from math import dist
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backend_bases import MouseButton
+from numpy import mean
 from pandas import DataFrame
 
 from sortedness.local import sortedness
+from sortedness.probabilistic import locglo
+from sortedness.probabilistic import sortedness as prob
 
 np.random.seed(86)
 ax = [0]
 fig, ax[0] = plt.subplots()
-n = 2000
+n = 20
 x, y = np.random.uniform(0, 10, size=n).tolist(), np.random.uniform(0, 10, size=n).tolist()
 red = (1, 0, 0, 0.9)
 blue = (0, 0, 1, 0.9)
@@ -55,10 +58,15 @@ n -= 1
 def f():
     idx = selected["idx"]
     plt.title(
-        f"      λτw: {np.round(sortedness(o, p, idx), 5)}"
-        f"      λτw\\%: {np.round(sortedness(o, p, idx, weigher=lambda r: (n - r) / (1 + r) / n), 5)}"
-        # f"      Λτw: {round(pwsortedness(o, p, i=idx), 5)}"
+        f"      λτw: {np.round(mean(sortedness(o, p)), 5)}"
+        f"      λτps: {np.round(mean(prob(o, p)), 5)}"
+        f"      λτlg: {np.round(mean(locglo(o, p)), 5)}"
         , fontsize=26)
+    # plt.title(
+    #     f"      λτw: {np.round(sortedness(o, p, idx), 5)}"
+    #     f"      λτw\\%: {np.round(sortedness(o, p, idx, weigher=lambda r: (n - r) / (1 + r) / n), 5)}"
+    #     # f"      Λτw: {round(pwsortedness(o, p, i=idx), 5)}"
+    #     , fontsize=26)
 
 
 def onmove(event, keepstill=False):
@@ -125,7 +133,7 @@ fig.canvas.mpl_connect('button_release_event', onrelease)
 fig.canvas.mpl_connect('key_release_event', onkeyrelease)
 
 mng = plt.get_current_fig_manager()
-mng.resize(*mng.window.maxsize())
+# mng.resize(*mng.window.maxsize())
 ax[0].cla()
 sc[0] = ax[0].scatter(p[0], p[1], s=200, c=colors)
 pp = p.to_numpy()
