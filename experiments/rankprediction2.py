@@ -21,18 +21,17 @@
 #  time spent here.
 #
 
-import json
-
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.optim as optim
 from matplotlib import animation
-from numpy import array
+from numpy import array, arange, pi, cos, sin
 from numpy import random
 from scipy.spatial.distance import cdist
 from scipy.stats import weightedtau
-from torch import from_numpy, float32
-from torch import tensor
+from sklearn.preprocessing import StandardScaler
+from torch import from_numpy
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
 
@@ -40,11 +39,11 @@ from sortedness.local import remove_diagonal
 
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
 
-seed = 0
+seed = 210
 n_epochs = 2000
 gpu = not True
-n = 300
-lines = not True
+n = 62
+lines = False
 letters = True
 fs = 16
 rad = 120
@@ -52,23 +51,42 @@ alpha = 0.5
 delta = 0
 alph = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 ax = [0, 0]
-# Read data, convert to NumPy arrays
-with open("/home/davi/git/sortedness/mam.json") as fd:
-    R = array(json.load(fd))
+
+
+def spiral(n):
+    a = .11
+    phi = arange(0, 100 * pi, 0.39)
+    x = a * phi * cos(phi)
+    y = a * phi * sin(phi)
+    # theta = np.radians(np.linspace(0, 360 * 2, n))
+    # r = theta ** 2 / 150
+    # x = r * np.cos(theta)
+    # y = r * np.sin(theta)
+    return array(list(zip(x, y)))[:n]
+
+
+# with open("/home/davi/git/sortedness/mam.json") as fd:
+#     X = array(json.load(fd))
+X = spiral(n)
+# X = fetch_covtype(return_X_y=True)[0]
+
+
 rnd = random.default_rng(seed)
-rnd.shuffle(R)
-R = R[:n]
-v_min, v_max = R.min(axis=0), R.max(axis=0)
-new_min, new_max = array([-1.] * 3), array([1.] * 3)
-R = (R - v_min) / (v_max - v_min) * (new_max - new_min) + new_min
-gpu = not True
+torch.manual_seed(seed)
+rnd.shuffle(X)
+X = X[:n]
+# v_min, v_max = X.min(axis=0), X.max(axis=0)
+# new_min, new_max = array([-1.] * X.shape[1]), array([1.] * X.shape[1])
+# X = (X - v_min) / (v_max - v_min) * (new_max - new_min) + new_min
+X = StandardScaler().fit_transform(X).astype(np.float32)
+gpu = True
 
 
 class Dt(Dataset):
     def __init__(self, X, y):
         # convert into PyTorch tensors and remember them
-        self.X = torch.tensor(X, dtype=torch.float32)
-        self.y = torch.tensor(y, dtype=torch.float32)
+        self.X = torch.tensor(X, dtype=torch.float32, requires_grad=True)
+        self.y = torch.tensor(y, dtype=torch.float32, requires_grad=True)
 
     def __len__(self):
         # this should return the size of the dataset
@@ -78,24 +96,28 @@ class Dt(Dataset):
         # this should return one sample from the dataset
         features = self.X[idx]
         target = self.y[idx]
-        return features, target
+        return features.cuda(), target.cuda(), idx
 
-l=20
+
+a, b = 5, 2
+
+
 class M(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = torch.nn.Sequential(
-            torch.nn.Linear(3, l), torch.nn.Sigmoid(),
-            # torch.nn.Linear(16, 16), torch.nn.Sigmoid(),
-            torch.nn.Linear(l, 2),
+            torch.nn.Linear(X.shape[1], a), torch.nn.Sigmoid(),
+            torch.nn.Linear(a, b), torch.nn.Sigmoid(),
+            torch.nn.Linear(b, 2),
         )
         self.decoder = torch.nn.Sequential(
-            torch.nn.Linear(2, l), torch.nn.Sigmoid(),
-            # torch.nn.Linear(16, 16), torch.nn.Sigmoid(),
-            torch.nn.Linear(l, n - 1)
+            torch.nn.Linear(2, b), torch.nn.Sigmoid(),
+            torch.nn.Linear(b, a), torch.nn.Sigmoid(),
+            torch.nn.Linear(a, n - 1)
         )
 
     def forward(self, x):
+        # x *=2
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded
@@ -104,38 +126,50 @@ class M(torch.nn.Module):
 model = M()
 if gpu:
     model.cuda()
-D = from_numpy(remove_diagonal(cdist(R, R))).cuda() if gpu else torch.from_numpy(remove_diagonal(cdist(R, R)))
-print(R.shape, D.shape)
-dataset = Dt(R, D)
+D = from_numpy(remove_diagonal(cdist(X, X))).cuda() if gpu else torch.from_numpy(remove_diagonal(cdist(X, X)))
+# T = tensor(X, dtype=float32).cuda()
+T = from_numpy(X).cuda()
+print(X.dtype, D.dtype, T.dtype)
+dataset = Dt(X, D)
 trainset = dataset
 # trainset, testset = random_split(dataset, [0.7, 0.3])
-loader = DataLoader(trainset, shuffle=True, batch_size=5)
+loader = DataLoader(trainset, shuffle=True, batch_size=15)
 
 optimizer = optim.RMSprop(model.parameters())
 model.train()
 fig, axs = plt.subplots(1, 2, figsize=(12, 9))
 ax[0], ax[1] = axs
 idxs = list(range(n))
-ax[0].scatter(R[:, 0], R[:, 1], s=rad, c=2 * array(idxs), alpha=alpha)
+ax[0].scatter(X[:, 0], X[:, 1], s=rad, c=2 * array(idxs), alpha=alpha)
 if lines:
-    ax[0].plot(R[:, 0], R[:, 1], alpha=alpha)
+    ax[0].plot(X[:, 0], X[:, 1], alpha=alpha)
 if letters:
-    for i in range(min(62, R.shape[0])):
-        ax[0].text(R[i, 0] + delta, R[i, 1] + delta, alph[i], size=fs)
+    for i in range(min(62, X.shape[0])):
+        ax[0].text(X[i, 0] + delta, X[i, 1] + delta, alph[i], size=fs)
 xlim = list(ax[0].get_xlim())
 ylim = list(ax[0].get_ylim())
 
-loss_fn = MSELoss()
+loss_fn = MSELoss().cuda()
 
 
 # for epoch in range(n_epochs):
 def animate(i):
-    for X_batch, y_batch in loader:
+    for X_batch, y_batch, _ in loader:
         enc, dec = model(X_batch)
         loss = loss_fn(dec, y_batch)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+    # for X_batch, y_batch, i_batch in loader:
+    #     enc, dec = model(X_batch)
+    #     ds = pdist(enc.unsqueeze(1), tensor(X, requires_grad=True).cuda().unsqueeze(0))
+    #     print(ds.shape)
+    #     ds = ds.flatten()[1:].view(n - 1, n + 1)[:, :-1].reshape(n, n - 1)
+    #     loss = lossf(ds, D)
+    #     optimizer.zero_grad()
+    #     loss.backward()
+    #     optimizer.step()
 
     # encs = vstack([model(X_batch)[0] for X_batch, _ in loader])
     # ds = pdist(encs.unsqueeze(1), encs.unsqueeze(0))
@@ -145,19 +179,18 @@ def animate(i):
     # loss.backward()
     # optimizer.step()
 
-    enc, _ = model(tensor(R, dtype=float32))
+    Z, _ = model(T)
     ax[1].cla()
-    xcp = enc.detach().numpy()
+    xcp = Z.detach().cpu().numpy()
     ax[1].scatter(xcp[:, 0], xcp[:, 1], s=rad, c=idxs, alpha=alpha)
     if lines:
         ax[1].plot(xcp[:, 0], xcp[:, 1], alpha=alpha)
     if letters:
-        for i in range(min(62, xcp.shape[0])):
-            ax[1].text(xcp[i, 0] + delta, xcp[i, 1] + delta, alph[i], size=fs)
+        for j in range(min(62, xcp.shape[0])):
+            ax[1].text(xcp[j, 0] + delta, xcp[j, 1] + delta, alph[j], size=fs)
 
     wtau = 0
-    enc, _ = model(tensor(R, dtype=float32))
-    ds = remove_diagonal(pdist(enc.unsqueeze(1), enc.unsqueeze(0)).detach().cpu().numpy())
+    ds = remove_diagonal(pdist(Z.unsqueeze(1), Z.unsqueeze(0)).detach().cpu().numpy())
     for pred, target in zip(ds, D.detach().cpu().numpy()):
         wtau += weightedtau(pred, target)[0]
     plt.title(f"{i}:    {wtau / n:.8f}   ", fontsize=20)

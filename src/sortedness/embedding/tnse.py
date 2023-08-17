@@ -39,12 +39,13 @@ def surrogate_tau(a, b):
 
 
 def lossf(predicted_D, expected_D, i=None, running=None):
-    n = predicted_D.shape[0] - 1
+    n = predicted_D.shape[0]
+    m = predicted_D.shape[1]
     r = []
     mu = wtau = 0
     for pred, target in zip(predicted_D, expected_D):  #tODO: same size? ver diagonal
-        surr = surrogate_tau(pred.view(n), target.view(n))
+        surr = surrogate_tau(pred.view(m), target.view(m))
         wtau += weightedtau(pred.detach().cpu().numpy(), target.detach().cpu().numpy())[0]
         mu += surr
     plt.title(f"{i}:    {wtau / predicted_D.shape[0]:.8f}    {float(mu):.8f}   {running=}", fontsize=20)
-    return -mu / (n + 1)
+    return -mu / n

@@ -20,7 +20,6 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import json
 from time import sleep
 
 import matplotlib.pyplot as plt
@@ -36,7 +35,7 @@ from sortedness.embedding.tnse import lossf
 from sortedness.local import remove_diagonal
 
 gpu = not True
-n = 400
+n = 40
 lines = not True
 letters = True
 fs = 16
@@ -67,15 +66,15 @@ def spiral(n):
     return array(list(zip(x, y)))[:n]
 
 
-# R = spiral(n)
+R = spiral(n)
 
-with open("/home/davi/git/sortedness/mam.json") as fd:
-    R = array(json.load(fd))
-rnd.shuffle(R)
-R = R[:n]
-v_min, v_max = R.min(axis=0), R.max(axis=0)
-new_min, new_max = array([-1.] * 3), array([1.] * 3)
-R = (R - v_min) / (v_max - v_min) * (new_max - new_min) + new_min
+# with open("/home/davi/git/sortedness/mam.json") as fd:
+#     R = array(json.load(fd))
+# rnd.shuffle(R)
+# R = R[:n]
+# v_min, v_max = R.min(axis=0), R.max(axis=0)
+# new_min, new_max = array([-1.] * 3), array([1.] * 3)
+# R = (R - v_min) / (v_max - v_min) * (new_max - new_min) + new_min
 
 # Y = torch.from_numpy(rankdata(D, axis=1))
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
