@@ -42,7 +42,7 @@ def lossf(predicted_D, expected_D, i=None, running=None):
     n = predicted_D.shape[0] - 1
     r = []
     mu = wtau = 0
-    for pred, target in zip(predicted_D, expected_D):
+    for pred, target in zip(predicted_D, expected_D):  #tODO: same size? ver diagonal
         surr = surrogate_tau(pred.view(n), target.view(n))
         wtau += weightedtau(pred.detach().cpu().numpy(), target.detach().cpu().numpy())[0]
         mu += surr
