@@ -27,15 +27,25 @@ from scipy.stats import weightedtau
 from torch import sigmoid, sum
 
 
-def pd(x):
+def pdiffs(x):
     dis = x.unsqueeze(1) - x
+    indices = torch.triu_indices(*dis.shape, offset=1)
+    return dis[indices[0], indices[1]]
+
+def psums(x):
+    dis = x.unsqueeze(1) + x
     indices = torch.triu_indices(*dis.shape, offset=1)
     return dis[indices[0], indices[1]]
 
 
 def surrogate_tau(a, b):
-    da, db = pd(a), pd(b)
+    da, db = pdiffs(a), pdiffs(b)
     return sum(sigmoid(da * db))
+
+
+def surrogate_wtau(a, b, w):
+    da, db, sw = pdiffs(a), pdiffs(b), psums(w)
+    return sum(sigmoid(da * db) * sw)
 
 
 def lossf(predicted_D, expected_D, i=None, running=None):
@@ -43,9 +53,29 @@ def lossf(predicted_D, expected_D, i=None, running=None):
     m = predicted_D.shape[1]
     r = []
     mu = wtau = 0
-    for pred, target in zip(predicted_D, expected_D):  #tODO: same size? ver diagonal
+    for pred, target in zip(predicted_D, expected_D):  # tODO: same size? ver diagonal
         surr = surrogate_tau(pred.view(m), target.view(m))
         wtau += weightedtau(pred.detach().cpu().numpy(), target.detach().cpu().numpy())[0]
         mu += surr
     plt.title(f"{i}:    {wtau / predicted_D.shape[0]:.8f}    {float(mu):.8f}   {running=}", fontsize=20)
+    return -mu / n
+
+
+def wlossf(predicted_D, expected_D, i=None, running=None):
+    raise Exception(f"")
+
+
+def lossf2(predicted_ranks, expected_ranks, i=None, running=None):
+    n, o = predicted_ranks.shape
+    mu = 0
+    for pred, target in zip(predicted_ranks, expected_ranks):
+        mu += surrogate_tau(pred, target)
+    return -mu / n
+
+
+def wlossf2(predicted_ranks, expected_ranks, w):
+    n, o = predicted_ranks.shape
+    mu = 0
+    for pred, target in zip(predicted_ranks, expected_ranks):
+        mu += surrogate_wtau(pred, target, w)
     return -mu / n
