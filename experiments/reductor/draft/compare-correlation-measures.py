@@ -20,6 +20,25 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+#
+#  sortedness is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  sortedness is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with sortedness.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  (*) Removing authorship by any means, e.g. by distribution of derived
+#  works or verbatim, obfuscated, compiled or rewritten versions of any
+#  part of this work is illegal and it is unethical regarding the effort and
+#  time spent here.
+#
 
 import numpy as np
 import torch
@@ -39,41 +58,6 @@ from sortedness.embedding.wcorr import spearman
 from sortedness.embedding.wcorrtorch import spearmangpt, spearman as softrho
 
 n = 1_007
-
-
-# def wsrank(x, w):
-#     r = rankdata(x)
-#     d = hstack([r[0], diff(r)])
-#     s = cumsum((d * w) / 1, axis=0)
-#     return s
-#
-# def wrho(x, y):
-#     w = array([1/(1+r) for r in range(len(x))])
-#     w/=  sum(w)
-#     x=wsrank(x,w)
-#     y=wsrank(y,w)
-#     nom = 6 * sum(w * (x - y) ** 2)
-#     den = len(x) * (len(x)** 2 - 1)
-#     return 1 - nom / den
-#
-#
-# # w = tensor([[1 / (1 + (r / 3) ** 2) for r in range(n - 1)]])
-# # wl = [1 / (1 + (r / 3) ** 2) for r in range(n - 1)]
-#
-# # w = tensor([[1 for r in range(n - 1)]])
-# # wl = [1 for r in range(n - 1)]
-#
-# lst = []
-# rnd = np.random.default_rng(seed=2346575)
-# l = rnd.uniform(0, 1, 100)
-# for i in range(100):
-#     rnd.shuffle(l)
-#     g = l.copy()
-#     rnd.shuffle(g)
-#     lst.append(wrho(l, g))
-#     # lst.append(weightedtau(l, g, rank=False)[0])
-# print(mean(lst))
-# exit()
 
 
 def get(n):

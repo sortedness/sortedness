@@ -20,6 +20,25 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+#
+#  sortedness is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  sortedness is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with sortedness.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  (*) Removing authorship by any means, e.g. by distribution of derived
+#  works or verbatim, obfuscated, compiled or rewritten versions of any
+#  part of this work is illegal and it is unethical regarding the effort and
+#  time spent here.
+#
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +60,7 @@ pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
 
 seed = 210
 n_epochs = 2000
-gpu = not True
+gpu = True
 n = 62
 lines = False
 letters = True
@@ -58,28 +77,16 @@ def spiral(n):
     phi = arange(0, 100 * pi, 0.39)
     x = a * phi * cos(phi)
     y = a * phi * sin(phi)
-    # theta = np.radians(np.linspace(0, 360 * 2, n))
-    # r = theta ** 2 / 150
-    # x = r * np.cos(theta)
-    # y = r * np.sin(theta)
     return array(list(zip(x, y)))[:n]
 
 
-# with open("/home/davi/git/sortedness/mam.json") as fd:
-#     X = array(json.load(fd))
 X = spiral(n)
-# X = fetch_covtype(return_X_y=True)[0]
-
 
 rnd = random.default_rng(seed)
 torch.manual_seed(seed)
 rnd.shuffle(X)
 X = X[:n]
-# v_min, v_max = X.min(axis=0), X.max(axis=0)
-# new_min, new_max = array([-1.] * X.shape[1]), array([1.] * X.shape[1])
-# X = (X - v_min) / (v_max - v_min) * (new_max - new_min) + new_min
 X = StandardScaler().fit_transform(X).astype(np.float32)
-gpu = True
 
 
 class Dt(Dataset):
@@ -99,7 +106,7 @@ class Dt(Dataset):
         return features.cuda(), target.cuda(), idx
 
 
-a, b = 5, 2
+a, b = 5, 5
 
 
 class M(torch.nn.Module):
@@ -107,12 +114,10 @@ class M(torch.nn.Module):
         super().__init__()
         self.encoder = torch.nn.Sequential(
             torch.nn.Linear(X.shape[1], a), torch.nn.Sigmoid(),
-            torch.nn.Linear(a, b), torch.nn.Sigmoid(),
-            torch.nn.Linear(b, 2),
+            torch.nn.Linear(a, 2),
         )
         self.decoder = torch.nn.Sequential(
-            torch.nn.Linear(2, b), torch.nn.Sigmoid(),
-            torch.nn.Linear(b, a), torch.nn.Sigmoid(),
+            torch.nn.Linear(2, a), torch.nn.Sigmoid(),
             torch.nn.Linear(a, n - 1)
         )
 
@@ -127,12 +132,10 @@ model = M()
 if gpu:
     model.cuda()
 D = from_numpy(remove_diagonal(cdist(X, X))).cuda() if gpu else torch.from_numpy(remove_diagonal(cdist(X, X)))
-# T = tensor(X, dtype=float32).cuda()
 T = from_numpy(X).cuda()
 print(X.dtype, D.dtype, T.dtype)
 dataset = Dt(X, D)
 trainset = dataset
-# trainset, testset = random_split(dataset, [0.7, 0.3])
 loader = DataLoader(trainset, shuffle=True, batch_size=15)
 
 optimizer = optim.RMSprop(model.parameters())
@@ -152,7 +155,6 @@ ylim = list(ax[0].get_ylim())
 loss_fn = MSELoss().cuda()
 
 
-# for epoch in range(n_epochs):
 def animate(i):
     for X_batch, y_batch, _ in loader:
         enc, dec = model(X_batch)
@@ -160,24 +162,6 @@ def animate(i):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
-    # for X_batch, y_batch, i_batch in loader:
-    #     enc, dec = model(X_batch)
-    #     ds = pdist(enc.unsqueeze(1), tensor(X, requires_grad=True).cuda().unsqueeze(0))
-    #     print(ds.shape)
-    #     ds = ds.flatten()[1:].view(n - 1, n + 1)[:, :-1].reshape(n, n - 1)
-    #     loss = lossf(ds, D)
-    #     optimizer.zero_grad()
-    #     loss.backward()
-    #     optimizer.step()
-
-    # encs = vstack([model(X_batch)[0] for X_batch, _ in loader])
-    # ds = pdist(encs.unsqueeze(1), encs.unsqueeze(0))
-    # ds = ds.flatten()[1:].view(n - 1, n + 1)[:, :-1].reshape(n, n - 1)
-    # loss = lossf(ds, D)
-    # optimizer.zero_grad()
-    # loss.backward()
-    # optimizer.step()
 
     Z, _ = model(T)
     ax[1].cla()
