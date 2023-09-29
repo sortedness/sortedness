@@ -6,7 +6,6 @@ from numpy.random import normal, default_rng
 from sklearn.manifold import trustworthiness
 
 from sortedness import rsortedness, sortedness, pwsortedness, global_pwsortedness
-from sortedness.gtau import global_gtau
 from sortedness.local import stress
 
 # from sortedness.trustworthiness import trustworthiness
@@ -32,7 +31,6 @@ measures = {
     "$\\Lambda_{\\tau_w}$~~~~~pairwise": lambda X, X_: mean(pwsortedness(X, X_)),
     "$\\Lambda_{\\tau_1}$~~~~~~pairwise (global)": lambda X, X_: global_pwsortedness(X, X_)[0],
     "$1-\\sigma_1$~~metric stress": lambda X, X_: 1 - mean(stress(X, X_)),
-    "gtau": lambda X, X_: mean(global_gtau(X, X_)),
 }
 
 xlabel = "Shuffling Level (\\%)"

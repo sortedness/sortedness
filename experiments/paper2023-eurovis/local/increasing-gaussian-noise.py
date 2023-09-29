@@ -81,10 +81,10 @@ plt.grid()
 plt.legend(loc=3)
 plt.ylabel("")
 plt.subplots_adjust(left=0.07, bottom=0.14, right=0.995, top=0.99)
-arq = '/home/davi/git/articles/sortedness/images/gaussian-noise.pgf'
-plt.savefig(arq, bbox_inches='tight')
-with open(arq, "r") as f:
-    txt = f.read().replace("sffamily", "rmfamily")
-with open(arq, "w") as f:
-    f.write(txt)
-# plt.show()
+# arq = '/home/davi/git/articles/sortedness/images/gaussian-noise.pgf'
+# plt.savefig(arq, bbox_inches='tight')
+# with open(arq, "r") as f:
+#     txt = f.read().replace("sffamily", "rmfamily")
+# with open(arq, "w") as f:
+#     f.write(txt)
+plt.show()

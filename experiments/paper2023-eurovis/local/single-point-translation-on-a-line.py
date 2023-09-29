@@ -1,11 +1,8 @@
-from pprint import pprint
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from lange import ap
 from numpy import vstack
-from sklearn.manifold import trustworthiness
 
 from sortedness import rsortedness, sortedness, pwsortedness, global_pwsortedness
 from sortedness.local import stress
@@ -39,17 +36,17 @@ x[0] = 0
 y = np.zeros(n)
 X = vstack((x, y)).T
 X.sort(axis=0)
-pprint(X)
+# pprint(X)
 X_ = X.copy()
 d = {xlabel: [int(x) for x in ap[1, 2, ..., l]]}
 for m, f in measures.items():
     print(m)
     d[m] = []
     for e in d[xlabel]:
-        print(e, sep=" ")
+        print(e, end=" ")
         X_[0, 0] = e
         d[m].append(f(X, X_))
-        pprint(X_)
+        # pprint(X_)
     print(d)
 
 print("---------------------_")
@@ -79,10 +76,10 @@ plt.grid()
 plt.legend(loc=3)
 plt.ylabel("")
 plt.subplots_adjust(left=0.07, bottom=0.14, right=0.995, top=0.99)
-arq = '/home/davi/git/articles/sortedness/images/translation.pgf'
-plt.savefig(arq, bbox_inches='tight')
-with open(arq, "r") as f:
-    txt = f.read().replace("sffamily", "rmfamily")
-with open(arq, "w") as f:
-    f.write(txt)
-# plt.show()
+# arq = '/home/davi/git/articles/sortedness/images/boxplot.pgf'
+# plt.savefig(arq, bbox_inches='tight')
+# with open(arq, "r") as f:
+#     txt = f.read().replace("sffamily", "rmfamily")
+# with open(arq, "w") as f:
+#     f.write(txt)
+plt.show()

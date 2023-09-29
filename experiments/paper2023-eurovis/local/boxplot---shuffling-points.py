@@ -6,7 +6,6 @@ from numpy.random import normal, default_rng
 from pandas import DataFrame
 
 from sortedness import rsortedness, sortedness, pwsortedness
-from sortedness.gtau import global_gtau
 from sortedness.local import stress
 from sortedness.trustworthiness import trustworthiness
 
@@ -30,7 +29,6 @@ measures = {
     "$\\lambda_{\\tau_w}$~~~~~~sortedness": lambda X, X_: sortedness(X, X_),
     "$\\Lambda_{\\tau_w}$~~~~~pairwise": lambda X, X_: pwsortedness(X, X_),
     "$1-\\sigma_1$~~metric stress": lambda X, X_: 1 - stress(X, X_),
-    "$1-\\sigma_1$~~gtau": lambda X, X_: global_gtau(X, X_),
 }
 
 xlabel = "Shuffling Level (\\%)"
