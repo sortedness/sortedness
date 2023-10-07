@@ -464,11 +464,11 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
         n = len(D)
         if symmetric:
             M, M_ = pmap(makeM, [D, D_])
-            R_ = rank_alongrow(M_, step=n // batches, parallel=parallel, **parallel_kwargs).T  # todo: see rounding problem of asint inside rank_alongcol() for ties
+            R_ = rank_alongrow(M_, step=n // batches, parallel=parallel, **parallel_kwargs).T
             del M_
         else:
             M = makeM(D)
-        R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T  # todo: see rounding problem of asint inside rank_alongcol() for ties
+        R = rank_alongrow(M, step=n // batches, parallel=parallel, **parallel_kwargs).T
         del M
         gc.collect()
         if cython:
@@ -691,7 +691,7 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     tmap = mp.ThreadingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     pmap = mp.ProcessingPool(**parallel_kwargs).imap if parallel and npoints > parallel_n_trigger else map
     D, D_ = tmap(lambda M: cdist(M, M, metric="sqeuclidean"), [X, X_])
-    R, R_ = (rank_alongcol(M, parallel=parallel) for M in [D, D_])  # todo: see rounding problem of asint inside rank_alongcol()  for ties
+    R, R_ = (rank_alongcol(M, parallel=parallel) for M in [D, D_])
     scores_X, scores_X_ = tmap(lambda M: remove_diagonal(M), [R, R_])
     if isweightedtau:
         scores_X, scores_X_ = -scores_X, -scores_X_
