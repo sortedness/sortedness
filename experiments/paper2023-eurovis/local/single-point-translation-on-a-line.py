@@ -6,7 +6,7 @@ from numpy import vstack
 
 from sortedness import rsortedness, sortedness, pwsortedness, global_pwsortedness
 from sortedness.local import stress
-from sortedness.trustworthiness import trustworthiness
+from sortedness.misc.trustworthiness import trustworthiness
 
 print("Intended to show sensitivity (which measures is triggered earlier) and discontinuities for a monotonically increasing distortion.")
 k = 5

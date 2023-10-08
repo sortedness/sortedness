@@ -1,3 +1,26 @@
+#  Copyright (c) 2023. Davi Pereira dos Santos
+#  This file is part of the sortedness project.
+#  Please respect the license - more about this in the section (*) below.
+#
+#  sortedness is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  sortedness is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with sortedness.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  (*) Removing authorship by any means, e.g. by distribution of derived
+#  works or verbatim, obfuscated, compiled or rewritten versions of any
+#  part of this work is illegal and it is unethical regarding the effort and
+#  time spent here.
+#
+
 # Based on https://pypi.org/project/wcorr/
 
 import numpy as np
@@ -13,16 +36,18 @@ def wcov(x, y, w, mx, my):
 def pearson(x, y, w):
     """
     >>> pearson(np.array([1,2,3]), np.array([1,2,3]), np.array([1,2,3]))
+    1.0
     """
     ws = w.sum()
     mx = (x * w).sum() / ws
     my = (y * w).sum() / ws
-    return wcov(x, y, w, mx, my) / (wcov(x, x, w, mx, mx) * wcov(y, y, w, my, my)).sqrt()
+    return wcov(x, y, w, mx, my) / np.sqrt(wcov(x, x, w, mx, mx) * wcov(y, y, w, my, my))
 
 
 def spearman(x, y, w, regularization="l2", regularization_strength=1.):
     """
     >>> spearman(tensor([[1,2,3,4,5]]), tensor([[1,2,3,4,5]]), tensor([[1,2,3,4,5]]))
+    tensor(1.)
     """
     return pearson(wsrank(x, w, regularization=regularization, regularization_strength=regularization_strength),
                    wsrank(y, w, regularization=regularization, regularization_strength=regularization_strength), w)

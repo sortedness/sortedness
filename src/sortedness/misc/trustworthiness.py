@@ -21,14 +21,26 @@
 #  time spent here.
 #
 
+"""
+This module is needed because sklearn implementation calculates trustworthiness only for the entire dataset.
+"""
 from math import nan
 
 import numpy as np
 from numpy import eye, where, setdiff1d
+from numpy.linalg import norm
 from numpy.random import shuffle
+from scipy.stats import rankdata
 from sklearn.decomposition import PCA
 
-from sortedness.rank import rank_by_distances
+
+def rank_by_distances(X, instance, method="average"):
+    distances = euclidean__n_vs_1(X, instance)
+    return rankdata(distances, method=method) - 1
+
+
+def euclidean__n_vs_1(X, instance):
+    return norm(X - instance, axis=1, keepdims=True)
 
 
 def continuity(X, X_, k=5, return_pvalues=False):

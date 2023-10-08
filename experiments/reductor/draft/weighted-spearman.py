@@ -19,6 +19,7 @@ def pearson(x, y, w):
 def spearman(x, y, w):
     return pearson(wrank(x, w), wrank(y, w), w)
 
+
 def wrank(x, w):
     """
     >>> wrank([1, 2, 2, 3], [1, 1, 1, 1])

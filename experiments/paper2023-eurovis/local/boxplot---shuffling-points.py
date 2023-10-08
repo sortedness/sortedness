@@ -7,7 +7,7 @@ from pandas import DataFrame
 
 from sortedness import rsortedness, sortedness, pwsortedness
 from sortedness.local import stress
-from sortedness.trustworthiness import trustworthiness
+from sortedness.misc.trustworthiness import trustworthiness
 
 print("Intended to show how measures behave with increasing shuffling.")
 rng = default_rng(seed=0)

@@ -20,36 +20,3 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import autograd.numpy as np
-from autograd import elementwise_grad as egrad
-
-
-def sigm(x):
-    return 0.5 * (np.tanh(x / 2.) + 1)
-
-
-def pd(x):
-    n = x.shape[0]
-    dis = x.reshape(n, -1) - x
-    indices = np.triu_indices(n, k=1)
-    r= dis[indices[0], indices[1]]
-    r.compute_gradients()
-    return r
-
-
-def surrogate_tau(a, b):
-    da, db = pd(a), pd(b)
-    return np.sum(sigm(da * db))
-
-
-def lossf(predicted_D, expected_D, i=None, running=None):
-    n = predicted_D.shape[0]
-    r = np.array([0.])
-    for pred, target in zip(predicted_D, expected_D):
-        r += surrogate_tau(pred, target)
-    return r / n
-
-
-print(lossf(np.array([[5, 4, 3, 2, 1, 0]]), np.array([[0, 1, 2, 3, 4, 5]])))
-print()
-print(egrad(lossf)(np.array([[5, 40, 30, -2, 1, 0]]), np.array([[0, 1, 2, 3, 4, 5]])))

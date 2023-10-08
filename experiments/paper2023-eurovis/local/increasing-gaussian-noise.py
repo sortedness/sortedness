@@ -10,7 +10,7 @@ from sklearn.manifold import trustworthiness
 
 from sortedness import rsortedness, sortedness, pwsortedness, global_pwsortedness
 from sortedness.local import stress
-from sortedness.trustworthiness import trustworthiness
+from sortedness.misc.trustworthiness import trustworthiness
 
 print("Intended to show sensitivity from irrelevant distortion to changing order.")
 n = 17

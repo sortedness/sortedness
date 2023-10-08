@@ -52,10 +52,9 @@ from scipy.stats import spearmanr, kendalltau, weightedtau
 from shelchemy import sopen
 from sklearn.datasets import fetch_covtype
 from sklearn.decomposition import PCA
+from sortedness.attempts.wcorr import spearman
+from sortedness.attempts.wcorrtorch import spearmangpt, spearman as softrho
 from torch import tensor
-
-from sortedness.embedding.wcorr import spearman
-from sortedness.embedding.wcorrtorch import spearmangpt, spearman as softrho
 
 n = 1_007
 

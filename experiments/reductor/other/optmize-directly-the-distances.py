@@ -50,9 +50,9 @@ from scipy.spatial.distance import cdist
 from scipy.stats import cauchy
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
+from sortedness.attempts import lossf
 from torch.utils.data import Dataset
 
-from sortedness.embedding.tnse import lossf
 from sortedness.local import remove_diagonal
 
 digits = datasets.load_digits()

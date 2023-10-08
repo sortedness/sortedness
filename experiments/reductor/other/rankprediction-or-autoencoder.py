@@ -69,11 +69,11 @@ from scipy.spatial.distance import cdist
 from scipy.stats import weightedtau, rankdata
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
+from sortedness.attempts import wlossf4, cau, wlossf5
 from torch import from_numpy, tensor
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
 
-from sortedness.embedding.tnse import wlossf4, cau, wlossf5
 from sortedness.local import remove_diagonal
 
 n = 30

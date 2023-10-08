@@ -49,7 +49,7 @@ from scipy.stats import rankdata
 from sklearn.datasets import fetch_california_housing as dataset
 from sklearn.decomposition import PCA
 
-from sortedness.probabilistic import locglo, locgloth
+from experiments.approximate.probabilistic import locglo, locgloth
 
 print(argv)
 n = int(argv[1])

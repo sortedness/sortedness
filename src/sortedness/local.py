@@ -32,7 +32,7 @@ from numpy.random import permutation
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata, kendalltau, weightedtau
 
-from sortedness.parallel import rank_alongrow, rank_alongcol
+from sortedness.misc.parallel import rank_alongrow, rank_alongcol
 
 
 def common(S, S_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs):
