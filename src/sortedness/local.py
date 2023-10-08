@@ -109,7 +109,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
         `int`:  index of the instance of interest
     symmetric
         True: Take the mean between extrusion and intrusion emphasis
-            Equivalent to `(sortedness(a, b) + sortedness(b, a)) / 2` at a slightly lower cost.
+            Equivalent to `(sortedness(a, b, symmetric=False) + sortedness(b, a, symmetric=False)) / 2` at a slightly lower cost.
             Might increase memory usage.
         False: Weight by original distances (extrusion emphasis), not the projected distances.
     f
@@ -145,8 +145,8 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> b.ravel()
     array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
     >>> r = sortedness(a, b)
-    >>> min(r), max(r)
-    (-1.0, 0.998638259786)
+    >>> min(r), max(r), median(r)
+    (-1.0, 0.998638259786, 0.937548981983)
 
     >>> rnd = np.random.default_rng(0)
     >>> rnd.shuffle(ll)
@@ -301,8 +301,9 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
         scores_X, scores_X_ = (-D, -D_) if isweightedtau else (D, D_)
     else:
         pmap = None
-        x = X[i] if isinstance(X, (ndarray, list)) else X.iloc[i].to_numpy()
-        x_ = X_[i] if isinstance(X_, (ndarray, list)) else X_.iloc[i].to_numpy()
+        if not isinstance(X, ndarray):
+            X, X_ = array(X), array(X_)
+        x, x_ = X[i], X_[i]
         X = np.delete(X, i, axis=0)
         X_ = np.delete(X_, i, axis=0)
         d_ = np.sum((X_ - x_) ** 2, axis=1)

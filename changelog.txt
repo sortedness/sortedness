@@ -1,4 +1,7 @@
-Update doc
+First usable embedding
+Major refactor
+Fix rounding of ranks inside rank_along*()
+Reorganize experiments
 Remove unneeded dev deps
 Make sortedness and rsortedness implementation more uniform
 Fix inverted `symmetric` check
