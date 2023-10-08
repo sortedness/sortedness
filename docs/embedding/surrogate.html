@@ -85,10 +85,15 @@ def surrogate_wtau(a, b, w, smooothness):
     # return sum(r) / sum(torch.abs(r))
 
 
-def geomean(lo, gl, alpha):
+def geomean(lo, gl, alpha=0.5):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; geomean(tensor([0.6]), tensor([0.64]))
+    tensor([0.6199])
+    &#34;&#34;&#34;
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g))
+    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
 def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
@@ -129,18 +134,26 @@ def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, r
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.geomean"><code class="name flex">
-<span>def <span class="ident">geomean</span></span>(<span>lo, gl, alpha)</span>
+<span>def <span class="ident">geomean</span></span>(<span>lo, gl, alpha=0.5)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; from torch import tensor
+&gt;&gt;&gt; geomean(tensor([0.6]), tensor([0.64]))
+tensor([0.6199])
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def geomean(lo, gl, alpha):
+<pre><code class="python">def geomean(lo, gl, alpha=0.5):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; geomean(tensor([0.6]), tensor([0.64]))
+    tensor([0.6199])
+    &#34;&#34;&#34;
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g))</code></pre>
+    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1</code></pre>
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.har"><code class="name flex">
