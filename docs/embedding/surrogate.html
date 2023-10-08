@@ -70,16 +70,19 @@ def psums(x):
     return dis[indices[0], indices[1]]
 
 
-def surrogate_tau(a, b, smooothness, den):
+def surrogate_tau(a, b, smooothness):
     da, db = pdiffs(a), pdiffs(b)
-    # todo: somar random residual para nunca ser zero? p/ otimizar tanto faz?
-    return sum(tanh(da / smooothness) * tanh(db / smooothness)) / den
+    s = tanh(da / smooothness) * tanh(db / smooothness)
+    # return sum(s) / den  # den = (o ** 2 - o) * 2
+    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result
 
 
 def surrogate_wtau(a, b, w, smooothness):
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
     s = tanh(da / smooothness) * tanh(db / smooothness)
-    return sum(s * sw) / sum(sw)
+    r = s * sw
+    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
+    # return sum(r) / sum(torch.abs(r))
 
 
 def geomean(lo, gl, alpha):
@@ -90,18 +93,12 @@ def geomean(lo, gl, alpha):
 
 def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
     n, o = predicted_D.shape
-    den = (o ** 2 - o) * 2
     mu = mu_local = mu_global = tau_local = tau_global = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        # pmn, tmn = torch.min(pred_d), torch.min(target_r)
-        # pmx, tmx = torch.max(pred_d), torch.max(target_r)
-        # pred_d = (pred_d - pmn) / (pmx - pmn)
-        # target_r = (target_r - tmn) / (tmx - tmn)
-
         a, idxs = topk(pred_d, k, largest=False)
         b = target_r[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau, den))
+        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
         mu += geomean(mu_local0, mu_global0, alpha)
 
         if ref:
@@ -169,18 +166,12 @@ def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, r
 </summary>
 <pre><code class="python">def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
     n, o = predicted_D.shape
-    den = (o ** 2 - o) * 2
     mu = mu_local = mu_global = tau_local = tau_global = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        # pmn, tmn = torch.min(pred_d), torch.min(target_r)
-        # pmx, tmx = torch.max(pred_d), torch.max(target_r)
-        # pred_d = (pred_d - pmn) / (pmx - pmn)
-        # target_r = (target_r - tmn) / (tmx - tmn)
-
         a, idxs = topk(pred_d, k, largest=False)
         b = target_r[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau, den))
+        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
         mu += geomean(mu_local0, mu_global0, alpha)
 
         if ref:
@@ -222,7 +213,7 @@ def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, r
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.surrogate_tau"><code class="name flex">
-<span>def <span class="ident">surrogate_tau</span></span>(<span>a, b, smooothness, den)</span>
+<span>def <span class="ident">surrogate_tau</span></span>(<span>a, b, smooothness)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -230,10 +221,11 @@ def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, r
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def surrogate_tau(a, b, smooothness, den):
+<pre><code class="python">def surrogate_tau(a, b, smooothness):
     da, db = pdiffs(a), pdiffs(b)
-    # todo: somar random residual para nunca ser zero? p/ otimizar tanto faz?
-    return sum(tanh(da / smooothness) * tanh(db / smooothness)) / den</code></pre>
+    s = tanh(da / smooothness) * tanh(db / smooothness)
+    # return sum(s) / den  # den = (o ** 2 - o) * 2
+    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result</code></pre>
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.surrogate_wtau"><code class="name flex">
@@ -248,7 +240,9 @@ def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, r
 <pre><code class="python">def surrogate_wtau(a, b, w, smooothness):
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
     s = tanh(da / smooothness) * tanh(db / smooothness)
-    return sum(s * sw) / sum(sw)</code></pre>
+    r = s * sw
+    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
+    # return sum(r) / sum(torch.abs(r))</code></pre>
 </details>
 </dd>
 </dl>

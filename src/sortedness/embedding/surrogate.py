@@ -42,38 +42,40 @@ def psums(x):
     return dis[indices[0], indices[1]]
 
 
-def surrogate_tau(a, b, smooothness, den):
+def surrogate_tau(a, b, smooothness):
     da, db = pdiffs(a), pdiffs(b)
-    # todo: somar random residual para nunca ser zero? p/ otimizar tanto faz?
-    return sum(tanh(da / smooothness) * tanh(db / smooothness)) / den
+    s = tanh(da / smooothness) * tanh(db / smooothness)
+    # return sum(s) / den  # den = (o ** 2 - o) * 2
+    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result
 
 
 def surrogate_wtau(a, b, w, smooothness):
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
     s = tanh(da / smooothness) * tanh(db / smooothness)
-    return sum(s * sw) / sum(sw)
+    r = s * sw
+    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
+    # return sum(r) / sum(torch.abs(r))
 
 
-def geomean(lo, gl, alpha):
+def geomean(lo, gl, alpha=0.5):
+    """
+    >>> from torch import tensor
+    >>> geomean(tensor([0.6]), tensor([0.64]))
+    tensor([0.6199])
+    """
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g))
+    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
 def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
     n, o = predicted_D.shape
-    den = (o ** 2 - o) * 2
     mu = mu_local = mu_global = tau_local = tau_global = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        # pmn, tmn = torch.min(pred_d), torch.min(target_r)
-        # pmx, tmx = torch.max(pred_d), torch.max(target_r)
-        # pred_d = (pred_d - pmn) / (pmx - pmn)
-        # target_r = (target_r - tmn) / (tmx - tmn)
-
         a, idxs = topk(pred_d, k, largest=False)
         b = target_r[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau, den))
+        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
         mu += geomean(mu_local0, mu_global0, alpha)
 
         if ref:
