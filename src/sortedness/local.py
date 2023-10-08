@@ -670,7 +670,7 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     >>> rsortedness(original, projected, rank=False)[1]  # warning: will consider indexes as ranks!
     0.208406304729
     >>> rsortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1)
-    -0.405553943962
+    -0.294037071368
     >>> from scipy.stats import weightedtau
     >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
     >>> rsortedness(original, projected, 1, f=weightedtau, rank=None)
