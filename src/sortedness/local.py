@@ -145,6 +145,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> b.ravel()
     array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
     >>> r = sortedness(a, b)
+    >>> from statistics import median
     >>> min(r), max(r), median(r)
     (-1.0, 0.998638259786, 0.937548981983)
 
@@ -302,7 +303,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     else:
         pmap = None
         if not isinstance(X, ndarray):
-            X, X_ = array(X), array(X_)
+            X, X_ = np.array(X), np.array(X_)
         x, x_ = X[i], X_[i]
         X = np.delete(X, i, axis=0)
         X_ = np.delete(X_, i, axis=0)
