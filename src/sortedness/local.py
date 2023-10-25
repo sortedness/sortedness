@@ -56,8 +56,8 @@ def common(S, S_, i, symmetric, f, isweightedtau, return_pvalues, pmap, kwargs):
         pvalues = (pvalues + pvalues_) / 2
 
     if return_pvalues:
-        return np.round(np.array(list(zip(result, pvalues))), 12)  # todo: remove all roundings
-    return np.round(result, 12)  # todo: remove all roundings
+        return np.array(list(zip(result, pvalues)))
+    return result
 
 
 # todo: see if speed can benefit from:
@@ -479,16 +479,16 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
             del R
             if not symmetric:
                 gc.collect()
-                return np.round(res, 12)  # todo: remove all roundings
+                return res
 
             res_ = parwtau(scores_X, scores_X_, npoints, R_, parallel=parallel, **parallel_kwargs)
             del R_
             gc.collect()
-            return np.round((res + res_) / 2, 12)  # todo: remove all roundings
+            return (res + res_) / 2
         else:
             def thread(r):
                 corr = f(scores_X, scores_X_, rank=r, **kwargs)[0]
-                return round(corr, 12)  # todo: remove all roundings
+                return corr
 
             gen = (R[:, i] for i in range(len(X)))
             res = np.array(list(pmap(thread, gen)), dtype=float)
