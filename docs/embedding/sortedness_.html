@@ -72,7 +72,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, seed=0, gpu=False, **kwargs):
+def balanced(X, symmetric, gamma=4, k=17, global_k=&#34;sqrt&#34;, alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, max_global_k=1000, seed=0, gpu=False, **kwargs):
     &#34;&#34;&#34;
     &gt;&gt;&gt; from sklearn import datasets
     &gt;&gt;&gt; from sklearn.preprocessing import StandardScaler
@@ -93,8 +93,13 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
     symmetric
     gamma
     k
+        number of nearest neighbors to consider for local order optimization
+    global_k
+        number of &#34;neighbors&#34; to sample for global order optimization
     alpha
+        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
     smooothness_tau
+        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smooothness_tau tends to 0.
     neurons
     epochs
     batch_size
@@ -144,7 +149,7 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
                 encoded = model(T)
                 expected_ranking_batch = R[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, w, alpha, smooothness_tau)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, alpha, smooothness_tau, max_global_k)
                 optimizer.zero_grad()
                 (-loss).backward()
                 optimizer.step()
@@ -159,7 +164,7 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="sortedness.embedding.sortedness_.balanced"><code class="name flex">
-<span>def <span class="ident">balanced</span></span>(<span>X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, seed=0, gpu=False, **kwargs)</span>
+<span>def <span class="ident">balanced</span></span>(<span>X, symmetric, gamma=4, k=17, global_k='sqrt', alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, max_global_k=1000, seed=0, gpu=False, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; from sklearn import datasets
@@ -183,11 +188,13 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
 <dt><strong><code>gamma</code></strong></dt>
 <dd>&nbsp;</dd>
 <dt><strong><code>k</code></strong></dt>
-<dd>&nbsp;</dd>
+<dd>number of nearest neighbors to consider for local order optimization</dd>
+<dt><strong><code>global_k</code></strong></dt>
+<dd>number of "neighbors" to sample for global order optimization</dd>
 <dt><strong><code>alpha</code></strong></dt>
-<dd>&nbsp;</dd>
+<dd>Parameter to balance between local and global. 0 is totally local. 1 is totally global.</dd>
 <dt><strong><code>smooothness_tau</code></strong></dt>
-<dd>&nbsp;</dd>
+<dd>Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smooothness_tau tends to 0.</dd>
 <dt><strong><code>neurons</code></strong></dt>
 <dd>&nbsp;</dd>
 <dt><strong><code>epochs</code></strong></dt>
@@ -206,7 +213,7 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, seed=0, gpu=False, **kwargs):
+<pre><code class="python">def balanced(X, symmetric, gamma=4, k=17, global_k=&#34;sqrt&#34;, alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, max_global_k=1000, seed=0, gpu=False, **kwargs):
     &#34;&#34;&#34;
     &gt;&gt;&gt; from sklearn import datasets
     &gt;&gt;&gt; from sklearn.preprocessing import StandardScaler
@@ -227,8 +234,13 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
     symmetric
     gamma
     k
+        number of nearest neighbors to consider for local order optimization
+    global_k
+        number of &#34;neighbors&#34; to sample for global order optimization
     alpha
+        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
     smooothness_tau
+        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smooothness_tau tends to 0.
     neurons
     epochs
     batch_size
@@ -278,7 +290,7 @@ def balanced(X, symmetric, gamma=4, k=17, alpha=0.5, smooothness_tau=1, neurons=
                 encoded = model(T)
                 expected_ranking_batch = R[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, w, alpha, smooothness_tau)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, alpha, smooothness_tau, max_global_k)
                 optimizer.zero_grad()
                 (-loss).backward()
                 optimizer.step()

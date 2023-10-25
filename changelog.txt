@@ -1,3 +1,3 @@
-Fix geomean
-Fix reductor experiment to match embedding implementation
-Fix surrogate() denominator
+Implement global sampling
+Remove round()
+Fix surrogate for ties; add doctest

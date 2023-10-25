@@ -146,7 +146,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
     >>> r = sortedness(a, b)
     >>> from statistics import median
-    >>> min(r), max(r), median(r)
+    >>> round(min(r), 12), round(max(r), 12), round(median(r),12)
     (-1.0, 0.998638259786, 0.937548981983)
 
     >>> rnd = np.random.default_rng(0)
@@ -160,7 +160,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
             0.27992254,  0.04121859,  0.16249574, -0.03506842,  0.27856259,
             0.40866965, -0.07617887,  0.12184064,  0.24762942, -0.05049511,
            -0.46277399,  0.12193493])
-    >>> min(r), max(r)
+    >>> round(min(r), 12), round(max(r), 12)
     (-0.462773990559, 0.408669653064)
     >>> round(mean(r), 12)
     0.070104521222
@@ -179,26 +179,26 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> projectedrnd = permutation(original)
 
     >>> s = sortedness(original, original)
-    >>> min(s), max(s), s
+    >>> round(min(s), 12), round(max(s), 12), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
 
     # Measure sortedness between two points in the same space.
     >>> M = original.copy()
     >>> M[0], M[1] = original[1], original[0]
-    >>> sortedness(M, original, 0)
+    >>> round(sortedness(M, original, 0), 12)
     0.547929184934
 
     >>> s = sortedness(original, projected2)
-    >>> min(s), max(s), s
+    >>> round(min(s), 12), round(max(s), 12), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
     >>> s = sortedness(original, projected1)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (0.393463224666, 0.944810120534)
     >>> s = sortedness(original, projectedrnd)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.648305479567, 0.397019507592)
 
-    >>> sortedness(original, original, f=kendalltau, return_pvalues=True)
+    >>> np.round(sortedness(original, original, f=kendalltau, return_pvalues=True), 12)
     array([[1.0000e+00, 5.0104e-08],
            [1.0000e+00, 5.0104e-08],
            [1.0000e+00, 5.0104e-08],
@@ -264,21 +264,21 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> sortedness(original, projected)
     array([-1.        ,  0.51956213,  0.81695345,  0.98180162,  0.98180162,
             0.81695345,  0.51956213])
-    >>> sortedness(original, projected, 1)
+    >>> round(sortedness(original, projected, 1), 12)
     0.519562134793
-    >>> sortedness(original, projected, 1, symmetric=False)
+    >>> round(sortedness(original, projected, 1, symmetric=False), 12)
     0.422638894922
-    >>> sortedness(projected, original, 1, symmetric=False)
+    >>> round(sortedness(projected, original, 1, symmetric=False), 12)
     0.616485374665
-    >>> sortedness(original, projected, rank=True)[1]
+    >>> round(sortedness(original, projected, rank=True)[1], 12)
     0.519562134793
-    >>> sortedness(original, projected, rank=False)[1]  # warning: will consider indexes as ranks!
+    >>> round(sortedness(original, projected, rank=False)[1], 12)  # warning: will consider indexes as ranks!
     0.074070734162
-    >>> sortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1)
+    >>> round(sortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1), 12)
     -1.0
     >>> from scipy.stats import weightedtau
     >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
-    >>> sortedness(original, projected, 1, f=weightedtau, rank=None)
+    >>> round(sortedness(original, projected, 1, f=weightedtau, rank=None), 12)
     0.275652884819
     >>> weightedtau.isweightedtau = True
     """
@@ -401,29 +401,29 @@ def pwsortedness(X, X_, i=None, symmetric=True, f=weightedtau, parallel=True, pa
     >>> r = pwsortedness(original, projectedrnd)
     >>> min(r), round(mean(r), 12), max(r)
     (-0.168611098044, -0.079882538998, 0.14442446342)
-    >>> pwsortedness(original, projected1)[1]
+    >>> round(pwsortedness(original, projected1)[1], 12)
     0.649315577592
-    >>> pwsortedness(original, projected1, cython=True)[1]
+    >>> round(pwsortedness(original, projected1, cython=True)[1], 12)
     0.649315577592
-    >>> pwsortedness(original, projected1, i=1)
+    >>> round(pwsortedness(original, projected1, i=1), 12)
     0.649315577592
-    >>> pwsortedness(original, projected1, symmetric=False, cython=True)[1]
+    >>> round(pwsortedness(original, projected1, symmetric=False, cython=True)[1], 12)
     0.730078995423
-    >>> pwsortedness(original, projected1, symmetric=False, i=1)
+    >>> round(pwsortedness(original, projected1, symmetric=False, i=1), 12)
     0.730078995423
-    >>> pwsortedness(original, projected1, symmetric=False)
+    >>> np.round(pwsortedness(original, projected1, symmetric=False), 12)
     array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
            0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
            0.74425225, 0.83731035])
-    >>> pwsortedness(original, projected1, f=weightedtau, symmetric=False)
+    >>> np.round(pwsortedness(original, projected1, f=weightedtau, symmetric=False), 12)
     array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
            0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
            0.74425225, 0.83731035])
-    >>> pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=hyperbolic)
+    >>> np.round(pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=hyperbolic), 12)
     array([0.75892647, 0.730079  , 0.83496865, 0.73161226, 0.75376525,
            0.83301104, 0.76695755, 0.74759156, 0.81434161, 0.74067221,
            0.74425225, 0.83731035])
-    >>> pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=gaussian)
+    >>> np.round(pwsortedness(original, projected1, f=weightedtau, symmetric=False, weigher=gaussian), 12)
     array([0.74141933, 0.71595198, 0.94457495, 0.72528033, 0.78637383,
            0.92562531, 0.77600408, 0.74811014, 0.87241023, 0.8485321 ,
            0.82264118, 0.95322218])
@@ -575,7 +575,7 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     >>> b.ravel()
     array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
     >>> r = rsortedness(a, b)
-    >>> min(r), max(r)
+    >>> round(min(r), 12), round(max(r), 12)
     (-0.707870893072, 0.961986592073)
 
     >>> rnd = np.random.default_rng(1)
@@ -584,12 +584,12 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     >>> b.ravel()
     array([ 1, 10, 14, 15,  7, 12,  3,  4,  5,  8,  0,  9,  2, 16, 13, 11,  6])
     >>> r = rsortedness(a, b)
-    >>> r
+    >>> np.round(r, 12)
     array([-0.38455603, -0.28634813,  0.23902905,  0.19345863, -0.43727482,
            -0.3498781 ,  0.29240532,  0.52016504,  0.51878015,  0.07744892,
            -0.03664284, -0.17163371, -0.16346701, -0.07260407, -0.03677776,
             0.00183332, -0.25692691])
-    >>> min(r), max(r)
+    >>> round(min(r), 12), round(max(r), 12)
     (-0.437274823593, 0.520165040078)
     >>> round(mean(r), 12)
     -0.020764055466
@@ -608,74 +608,74 @@ def rsortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fal
     >>> projectedrnd = permutation(original)
 
     >>> s = rsortedness(original, original)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (1.0, 1.0)
     >>> s = rsortedness(original, projected2)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (1.0, 1.0)
     >>> s = rsortedness(original, projected1)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (0.160980548632, 0.967351026423)
     >>> s = rsortedness(original, projectedrnd)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.406104443754, 0.427134084097)
     >>> s = rsortedness(original, original, f=kendalltau, return_pvalues=True)
-    >>> s.min(axis=0), s.max(axis=0)
+    >>> np.round(s.min(axis=0), 12), np.round(s.max(axis=0), 12)
     (array([1., 0.]), array([1.00e+00, 3.58e-10]))
     >>> s = rsortedness(original, projected2, f=kendalltau)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (1.0, 1.0)
     >>> s = rsortedness(original, projected1, f=kendalltau)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (0.045545155427, 0.920252656485)
     >>> s = rsortedness(original, projectedrnd, f=kendalltau)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.302063337022, 0.306710199121)
     >>> wf = partial(weightedtau, weigher=lambda x: 1 / (x**2 + 1))
     >>> s = rsortedness(original, original, f=wf, return_pvalues=True)
-    >>> s.min(axis=0), s.max(axis=0)
+    >>> np.round(s.min(axis=0), 12), np.round(s.max(axis=0), 12)
     (array([ 1., nan]), array([ 1., nan]))
     >>> s = rsortedness(original, projected2, f=wf)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (1.0, 1.0)
     >>> s = rsortedness(original, projected1, f=wf)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.119320940022, 0.914184310816)
     >>> s = rsortedness(original, projectedrnd, f=wf)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.418929560486, 0.710828808816)
     >>> np.random.seed(14980)
     >>> projectedrnd = permutation(original)
     >>> s = rsortedness(original, projectedrnd)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.415049518972, 0.465004321022)
     >>> s = rsortedness(original, np.flipud(original))
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.258519523874, 0.454184518962)
     >>> original = np.array([[0],[1],[2],[3],[4],[5],[6]])
     >>> projected = np.array([[6],[5],[4],[3],[2],[1],[0]])
     >>> s = rsortedness(original, projected)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (1.0, 1.0)
     >>> projected = np.array([[0],[6],[5],[4],[3],[2],[1]])
     >>> s = rsortedness(original, projected)
-    >>> min(s), max(s)
+    >>> round(min(s), 12), round(max(s), 12)
     (-0.755847611802, 0.872258373962)
-    >>> rsortedness(original, projected, 1)
+    >>> round(rsortedness(original, projected, 1), 12)
     0.544020048033
-    >>> rsortedness(original, projected, 1, symmetric=False)
+    >>> round(rsortedness(original, projected, 1, symmetric=False), 12)
     0.498125132865
-    >>> rsortedness(projected, original, 1, symmetric=False)
+    >>> round(rsortedness(projected, original, 1, symmetric=False), 12)
     0.589914963202
-    >>> rsortedness(original, projected, rank=True)[1]
+    >>> round(rsortedness(original, projected, rank=True)[1], 12)
     0.544020048033
-    >>> rsortedness(original, projected, rank=False)[1]  # warning: will consider indexes as ranks!
+    >>> round(rsortedness(original, projected, rank=False)[1], 12) # warning: will consider indexes as ranks!
     0.208406304729
-    >>> rsortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1)
+    >>> round(rsortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1), 12)
     -0.294037071368
     >>> from scipy.stats import weightedtau
     >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
-    >>> rsortedness(original, projected, 1, f=weightedtau, rank=None)
+    >>> round(rsortedness(original, projected, 1, f=weightedtau, rank=None), 12)
     0.483816220002
     >>> weightedtau.isweightedtau = True
 
@@ -753,16 +753,16 @@ def stress(X, X_, i=None, metric=True, parallel=True, parallel_n_trigger=10000, 
            [ 0.87146534, 13.36646347],
            [ 0.33480533, 12.35151007]])
     >>> s = stress(original, original*5)
-    >>> min(s), max(s), s
+    >>> round(min(s), 12), round(max(s), 12), s
     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
     >>> from sklearn.decomposition import PCA
     >>> projected = PCA(n_components=2).fit_transform(original)
     >>> s = stress(original, projected)
-    >>> min(s), max(s), s
+    >>> round(min(s), 12), round(max(s), 12), s
     (0.0, 0.0, array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
     >>> projected = PCA(n_components=1).fit_transform(original)
     >>> s = stress(original, projected)
-    >>> min(s), max(s), s
+    >>> round(min(s), 12), round(max(s), 12), s
     (0.073383317103, 0.440609121637, array([0.26748441, 0.31603101, 0.24636389, 0.07338332, 0.34571508,
            0.19548442, 0.1800883 , 0.16544039, 0.2282494 , 0.16405274,
            0.44060912, 0.27058614]))

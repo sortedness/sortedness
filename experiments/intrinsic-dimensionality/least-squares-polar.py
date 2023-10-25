@@ -23,6 +23,7 @@
 from math import sqrt
 
 import numpy as np
+from matplotlib import pyplot as plt
 from numpy import vstack, arange, array, argsort, ndarray
 from numpy.linalg import norm
 from scipy.optimize import least_squares
@@ -32,10 +33,10 @@ from sklearn.preprocessing import StandardScaler
 from sortedness.local import remove_diagonal
 
 seed, xmax, ymax = 13, 1, 1
-n=1000
-spira = True
-sample_size = 8
-original_dims=10
+n, maxdims, spira = 1000, 8, True
+points = 3
+if spira:
+    maxdims = 3
 
 
 def spiral(n):
@@ -47,64 +48,64 @@ def spiral(n):
     return array(list(zip(x, y, z)))[:n]
 
 
-rnd = np.random.default_rng(seed)
-xs = [rnd.uniform(0, xmax, n) for i in range(original_dims + 1)]
-X = vstack(xs).T
+for dims in [2]:  # range(1, maxdims + 1):
+    print(f"{dims}-d")
+    rnd = np.random.default_rng(seed)
+    xs = [rnd.uniform(0, xmax, n) for i in range(maxdims + 1)]
+    X = vstack(xs).T
 
-if spira:
-    X = spiral(n)
+    if spira:
+        X = spiral(n)
 
-X = StandardScaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
 
-# rnd.shuffle(X)
-D2 = cdist(X, X, 'sqeuclidean')
-
-for idx in range(0, X.shape[0], n // sample_size):
-    idxs = argsort(D2[idx])
-    X = X[idxs]
+    rnd.shuffle(X)
     D2 = cdist(X, X, 'sqeuclidean')
 
-    D = remove_diagonal(np.sqrt(D2))
-    U2 = D2[0, 1]
-    U = sqrt(U2)
-    Z = np.zeros((X.shape[0], 2))
-    Z[0] = np.array([0,0])
-    Z[1] = np.array([U, 0])
+    # plt.scatter(X[:, 0], X[:, 1])
+    # plt.show()
+
+    for idx in range(0, X.shape[0], n // points):
+        idxs = argsort(D2[idx])
+        X = X[idxs]
+        D = remove_diagonal(cdist(X, X))
+        Z = np.zeros((X.shape[0], 2))
+        Z[0] = np.array([0, 0])
+        # Z[1] = np.array([D[0, 0], 0])
 
 
-    def f(alpha, rad, ps, ds):
-        p_ = array([rad * np.cos(alpha), rad * np.sin(alpha)])
-        lst = [norm(p_ - p) - d for p, d in zip(ps, ds)]
-        return lst
+        def f(alpha, r, ps, ds):
+            p_ = array([r * np.cos(alpha), r * np.sin(alpha)])
+            lst = [norm(p_ - p) - d for p, d in zip(ps, ds)]
+            return lst
 
 
-    z_i = olderr = None
-    for z_i in range(2, X.shape[0]):
-        rad = D[0, z_i - 1]
-        r = least_squares(f, 0, args=[rad, Z[:z_i], D[z_i, :z_i]], verbose=0)
-        DD: ndarray = D[z_i, :z_i]
-        # mn = np.unique(np.sort(DD))
-        # mn = mn[int(len(mn) * pct)]
+        z_i = olderr = None
+        for z_i in range(1, X.shape[0]):
+            d_i = z_i - 1
+            r = D[0, d_i]
+            res = least_squares(f, rnd.uniform(0,6.28, 1), args=[r, Z[:z_i], D[z_i, :z_i]], verbose=0)
+            DD: ndarray = D[z_i, :z_i]
 
-        th = np.mean(DD)
-        err = np.mean(abs(r.fun))
+            th = np.min(DD)
+            err = np.max(abs(array(res.fun)))
 
-        if err >= th:
-            break
-        Z[z_i] = r.x
-        olderr = err
+            if 0 and err >= th:
+                break
+            alpha = res.x[0]
+            Z[z_i] = array([r * np.cos(alpha), r * np.sin(alpha)])
+            olderr = err
 
-        # if dims == 3:
-        #     ax = plt.figure().add_subplot(projection='3d')
-        #     ax.scatter(Z[:, 0], Z[:, 1], Z[:, 2])
-        #     ax.scatter(Z[:1, 0], Z[:1, 1], Z[:1, 2], c=[1])
-        #     plt.show()
+        _, ax = plt.subplots()
+        ax.scatter(Z[1:, 0], Z[1:, 1], c="gray", s=100)
+        ax.scatter(Z[:1, 0], Z[:1, 1], c="red", s=200)
+        plt.show()
 
-    if z_i == X.shape[0] - 1 or olderr is None:
-        if olderr is None:
-            z_i -= 1
-        print(f"{z_i} neighbors can be plotted with error {err:.3f} < {th:.3f} for point x_{idx}")
-    else:
-        print(f"{z_i - 1} neighbors can be plotted with error {olderr:.3f} < {th:.3f} for point x_{idx}")
+        if z_i == X.shape[0] - 1 or olderr is None:
+            if olderr is None:
+                z_i -= 1
+            print(f"{z_i} neighbors can be represented in {dims}-d with error {err:.3f} < {th:.3f} for point x_{idx}")
+        else:
+            print(f"{z_i - 1} neighbors can be represented in {dims}-d with error {olderr:.3f} < {th:.3f} for point x_{idx}")
 
-print()
+    print()

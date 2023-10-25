@@ -48,11 +48,12 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+import math
 from math import pi
 
 import torch
 from scipy.stats import weightedtau, kendalltau
-from torch import tanh, sum, topk
+from torch import tanh, sum, topk, sqrt, abs
 
 cau = lambda r, gamma=1: 1 / pi * gamma / (gamma ** 2 + r ** 2)
 har = lambda r: 1 / (r + 1)
@@ -71,18 +72,41 @@ def psums(x):
 
 
 def surrogate_tau(a, b, smooothness):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; from scipy.stats import kendalltau
+    &gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    &gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .01)
+    tensor(-1.)
+    &gt;&gt;&gt; round(float(surrogate_tau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .01)), 6)
+    0.948683
+    &gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    &#34;&#34;&#34;
     da, db = pdiffs(a), pdiffs(b)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    # return sum(s) / den  # den = (o ** 2 - o) * 2
-    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb
+    return sum(r) / sqrt(sum(abs(ta)) * sum(abs(tb)))
 
 
 def surrogate_wtau(a, b, w, smooothness):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; from scipy.stats import kendalltau
+    &gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    &gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
+    tensor(-1.)
+    &gt;&gt;&gt; round(float(surrogate_wtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+    0.948683
+    &gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    &#34;&#34;&#34;
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    r = s * sw
-    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
-    # return sum(r) / sum(torch.abs(r))
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb * sw
+    return sum(r) / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))
 
 
 def geomean(lo, gl, alpha=0.5):
@@ -96,19 +120,40 @@ def geomean(lo, gl, alpha=0.5):
     return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
-    n, o = predicted_D.shape
-    mu = mu_local = mu_global = tau_local = tau_global = 0
-    for pred_d, target_r in zip(predicted_D, expected_R):
-        a, idxs = topk(pred_d, k, largest=False)
-        b = target_r[idxs]
-        mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
-        mu += geomean(mu_local0, mu_global0, alpha)
+def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, max_global_k=1000, ref=False):
+    n, v = predicted_D.shape
+    if global_k is &#34;sqrt&#34;:
+        global_k = min(max_global_k, int(math.sqrt(v)))
 
+    mu = mu_local = mu_global = tau_local = tau_global = 0
+    rnd_idxs = torch.randperm(v)
+    start = 0
+    for pred_d, target_d in zip(predicted_D, expected_D):
+        # local
+        a, idxs = topk(pred_d, k, largest=False)
+        b = target_d[idxs]
+        mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
+
+        # global
+        # REMINDER: o próprio ponto vai ser amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
+        # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista, mas não impacta otimização.
+        end = start + global_k
+        if end &gt; v:
+            start = 0
+            end = global_k
+            rnd_idxs = torch.randperm(v)
+        gidxs = rnd_idxs[start:end]
+        ga = pred_d[gidxs]
+        gb = target_d[gidxs]
+        # ga = pred_d
+        # gb = target_d
+        mu_global += (mu_global0 := surrogate_tau(ga, gb, smooothness_tau))
+        start += global_k
+
+        mu += geomean(mu_local0, mu_global0, alpha)
         if ref:
-            p, t = pred_d.cpu().detach().numpy(), target_r.cpu().detach().numpy()
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+            p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()
             tau_global += kendalltau(p, t)[0]
 
     return mu / n, mu_local / n, mu_global / n, tau_local / n, tau_global / n</code></pre>
@@ -169,7 +214,7 @@ tensor([0.6199])
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.loss_function"><code class="name flex">
-<span>def <span class="ident">loss_function</span></span>(<span>predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False)</span>
+<span>def <span class="ident">loss_function</span></span>(<span>predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, max_global_k=1000, ref=False)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -177,19 +222,40 @@ tensor([0.6199])
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
-    n, o = predicted_D.shape
-    mu = mu_local = mu_global = tau_local = tau_global = 0
-    for pred_d, target_r in zip(predicted_D, expected_R):
-        a, idxs = topk(pred_d, k, largest=False)
-        b = target_r[idxs]
-        mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
-        mu += geomean(mu_local0, mu_global0, alpha)
+<pre><code class="python">def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, max_global_k=1000, ref=False):
+    n, v = predicted_D.shape
+    if global_k is &#34;sqrt&#34;:
+        global_k = min(max_global_k, int(math.sqrt(v)))
 
+    mu = mu_local = mu_global = tau_local = tau_global = 0
+    rnd_idxs = torch.randperm(v)
+    start = 0
+    for pred_d, target_d in zip(predicted_D, expected_D):
+        # local
+        a, idxs = topk(pred_d, k, largest=False)
+        b = target_d[idxs]
+        mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
+
+        # global
+        # REMINDER: o próprio ponto vai ser amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
+        # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista, mas não impacta otimização.
+        end = start + global_k
+        if end &gt; v:
+            start = 0
+            end = global_k
+            rnd_idxs = torch.randperm(v)
+        gidxs = rnd_idxs[start:end]
+        ga = pred_d[gidxs]
+        gb = target_d[gidxs]
+        # ga = pred_d
+        # gb = target_d
+        mu_global += (mu_global0 := surrogate_tau(ga, gb, smooothness_tau))
+        start += global_k
+
+        mu += geomean(mu_local0, mu_global0, alpha)
         if ref:
-            p, t = pred_d.cpu().detach().numpy(), target_r.cpu().detach().numpy()
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+            p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()
             tau_global += kendalltau(p, t)[0]
 
     return mu / n, mu_local / n, mu_global / n, tau_local / n, tau_global / n</code></pre>
@@ -229,33 +295,76 @@ tensor([0.6199])
 <span>def <span class="ident">surrogate_tau</span></span>(<span>a, b, smooothness)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; from torch import tensor
+&gt;&gt;&gt; from scipy.stats import kendalltau
+&gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .01)
+tensor(1.)
+&gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .01)
+tensor(-1.)
+&gt;&gt;&gt; round(float(surrogate_tau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .01)), 6)
+0.948683
+&gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+0.948683
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def surrogate_tau(a, b, smooothness):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; from scipy.stats import kendalltau
+    &gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    &gt;&gt;&gt; surrogate_tau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .01)
+    tensor(-1.)
+    &gt;&gt;&gt; round(float(surrogate_tau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .01)), 6)
+    0.948683
+    &gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    &#34;&#34;&#34;
     da, db = pdiffs(a), pdiffs(b)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    # return sum(s) / den  # den = (o ** 2 - o) * 2
-    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result</code></pre>
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb
+    return sum(r) / sqrt(sum(abs(ta)) * sum(abs(tb)))</code></pre>
 </details>
 </dd>
 <dt id="sortedness.embedding.surrogate.surrogate_wtau"><code class="name flex">
 <span>def <span class="ident">surrogate_wtau</span></span>(<span>a, b, w, smooothness)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; from torch import tensor
+&gt;&gt;&gt; from scipy.stats import kendalltau
+&gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
+tensor(1.)
+&gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
+tensor(-1.)
+&gt;&gt;&gt; round(float(surrogate_wtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+0.948683
+&gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+0.948683
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def surrogate_wtau(a, b, w, smooothness):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; from torch import tensor
+    &gt;&gt;&gt; from scipy.stats import kendalltau
+    &gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    &gt;&gt;&gt; surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
+    tensor(-1.)
+    &gt;&gt;&gt; round(float(surrogate_wtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+    0.948683
+    &gt;&gt;&gt; round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    &#34;&#34;&#34;
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    r = s * sw
-    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
-    # return sum(r) / sum(torch.abs(r))</code></pre>
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb * sw
+    return sum(r) / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))</code></pre>
 </details>
 </dd>
 </dl>

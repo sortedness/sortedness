@@ -93,7 +93,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projected1)
 print(min(s), sum(s) / len(s), max(s))
 """
-0.393463224666 0.7565797804351666 0.944810120534
+0.3934632246658146 0.7565797804350681 0.944810120533741
 """
 ```
 
@@ -102,7 +102,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 """
--0.648305479567 -0.09539895194975 0.397019507592
+-0.6483054795666044 -0.09539895194976367 0.3970195075915949
 """
 ```
 
@@ -112,7 +112,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = sortedness(original, projectedrnd, 2)
 print(s)
 """
-0.231079547491
+0.23107954749077175
 """
 ```
 
@@ -164,7 +164,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = pwsortedness(original, projected1)
 print(min(s), sum(s) / len(s), max(s))
 """
-0.649315577592 0.7534291438323333 0.834601601062
+0.649315577592 0.7534291438324999 0.834601601062
 """
 ```
 
@@ -173,7 +173,7 @@ print(min(s), sum(s) / len(s), max(s))
 s = pwsortedness(original, projectedrnd)
 print(min(s), sum(s) / len(s), max(s))
 """
--0.168611098044 -0.07988253899799999 0.14442446342
+-0.168611098044 -0.07988253899783333 0.14442446342
 """
 ```
 

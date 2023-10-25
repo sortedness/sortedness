@@ -33,8 +33,8 @@ from sklearn.preprocessing import StandardScaler
 from sortedness.local import remove_diagonal
 
 seed, xmax, ymax = 13, 1, 1
-n, maxdims, spira = 100, 8, True
-points = 1
+n, maxdims, spira = 100, 8, not True
+points = 3
 if spira:
     maxdims = 3
 
@@ -48,7 +48,7 @@ def spiral(n):
     return array(list(zip(x, y, z)))[:n]
 
 
-for dims in [2]: #range(1, maxdims + 1):
+for dims in range(1, maxdims + 1):
     print(f"{dims}-d")
     rnd = np.random.default_rng(seed)
     xs = [rnd.uniform(0, xmax, n) for i in range(maxdims + 1)]
@@ -79,6 +79,10 @@ for dims in [2]: #range(1, maxdims + 1):
         Z[1] = np.array([U] + [0] * (dims - 1))
 
 
+        def f(alpha, rad, ps, ds):
+            p_ = array([rad * np.cos(alpha), rad * np.sin(alpha)])
+            lst = [norm(p_ - p) - d for p, d in zip(ps, ds)]
+            return lst
         def f(p_, ps, ds):
             lst = [norm(p_ - p) - d for p, d in zip(ps, ds)]
             return lst
@@ -95,15 +99,10 @@ for dims in [2]: #range(1, maxdims + 1):
             th = np.min(DD)
             err = np.max(abs(array(r.fun)))
 
-            if 0 and err >= th:
+            if err >= th:
                 break
             Z[i] = r.x
             olderr = err
-
-        _, ax = plt.subplots()
-        ax.scatter(Z[1:, 0], Z[1:, 1], c="gray", s=100)
-        ax.scatter(Z[:1, 0], Z[:1, 1], c="red", s=200)
-        plt.show()
 
         if i == X.shape[0] - 1 or olderr is None:
             if olderr is None:
