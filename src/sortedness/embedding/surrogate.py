@@ -24,7 +24,7 @@ from math import pi
 
 import torch
 from scipy.stats import weightedtau, kendalltau
-from torch import tanh, sum, topk
+from torch import tanh, sum, topk, sqrt, abs
 
 cau = lambda r, gamma=1: 1 / pi * gamma / (gamma ** 2 + r ** 2)
 har = lambda r: 1 / (r + 1)
@@ -43,18 +43,41 @@ def psums(x):
 
 
 def surrogate_tau(a, b, smooothness):
+    """
+    >>> from torch import tensor
+    >>> from scipy.stats import kendalltau
+    >>> surrogate_tau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    >>> surrogate_tau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .01)
+    tensor(-1.)
+    >>> round(float(surrogate_tau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .01)), 6)
+    0.948683
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    """
     da, db = pdiffs(a), pdiffs(b)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    # return sum(s) / den  # den = (o ** 2 - o) * 2
-    return sum(s) / sum(torch.abs(s))  # trimm ties; for some reason the value is closer to the target function result
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb
+    return sum(r) / sqrt(sum(abs(ta)) * sum(abs(tb)))
 
 
 def surrogate_wtau(a, b, w, smooothness):
+    """
+    >>> from torch import tensor
+    >>> from scipy.stats import kendalltau
+    >>> surrogate_wtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
+    tensor(1.)
+    >>> surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
+    tensor(-1.)
+    >>> round(float(surrogate_wtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+    0.948683
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    """
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
-    r = s * sw
-    return sum(r) / sum(sw)  # do not trimm ties; for some reason the value is closer to the target function result
-    # return sum(r) / sum(torch.abs(r))
+    ta, tb = tanh(da / smooothness), tanh(db / smooothness)
+    r = ta * tb * sw
+    return sum(r) / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))
 
 
 def geomean(lo, gl, alpha=0.5):
@@ -68,18 +91,22 @@ def geomean(lo, gl, alpha=0.5):
     return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_R, k, w, alpha=0.5, smooothness_tau=1, ref=False):
+def loss_function(predicted_D, expected_D, k, w, alpha=0.5, smooothness_tau=1, ref=False):
     n, o = predicted_D.shape
     mu = mu_local = mu_global = tau_local = tau_global = 0
-    for pred_d, target_r in zip(predicted_D, expected_R):
+    for pred_d, target_d in zip(predicted_D, expected_D):
         a, idxs = topk(pred_d, k, largest=False)
-        b = target_r[idxs]
+        b = target_d[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_r, smooothness_tau))
+        mu_global += (mu_global0 := surrogate_tau(pred_d, target_d, smooothness_tau))
+        # REMINDER: o próprio ponto está sendo considerado como vizinho de si mesmo no calculo global: Impacta significado da medida, deixando ela mais otimista, mas não impacta otimização.
+        # todo: implementar amostragem p/ global, pegando diferentes vizinhos pra cada ponto da vez.
+        #       Manter único sorteio durante toda a otimização pode ser necessário para o gradiente funcionar;
+        #       caso não seja, é melhor reamostrar a cada nova época (ou a cada novo ciclo do FOR) para evitar que a amostragem única enviese a projeção, como se alguns vizinhos fossem mais especiais que outros.
         mu += geomean(mu_local0, mu_global0, alpha)
 
         if ref:
-            p, t = pred_d.cpu().detach().numpy(), target_r.cpu().detach().numpy()
+            p, t = pred_d.cpu().detach().numpy(), target_d.cpu().detach().numpy()
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
             tau_global += kendalltau(p, t)[0]
 
