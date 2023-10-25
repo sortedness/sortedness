@@ -20,6 +20,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+import math
 from math import pi
 
 import torch
@@ -91,23 +92,40 @@ def geomean(lo, gl, alpha=0.5):
     return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_D, k, w, alpha=0.5, smooothness_tau=1, ref=False):
-    n, o = predicted_D.shape
+def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, max_global_k=1000, ref=False):
+    n, v = predicted_D.shape
+    if global_k is "sqrt":
+        global_k = min(max_global_k, int(math.sqrt(v)))
+
     mu = mu_local = mu_global = tau_local = tau_global = 0
+    rnd_idxs = torch.randperm(v)
+    start = 0
     for pred_d, target_d in zip(predicted_D, expected_D):
+        # local
         a, idxs = topk(pred_d, k, largest=False)
         b = target_d[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
-        mu_global += (mu_global0 := surrogate_tau(pred_d, target_d, smooothness_tau))
-        # REMINDER: o próprio ponto está sendo considerado como vizinho de si mesmo no calculo global: Impacta significado da medida, deixando ela mais otimista, mas não impacta otimização.
-        # todo: implementar amostragem p/ global, pegando diferentes vizinhos pra cada ponto da vez.
-        #       Manter único sorteio durante toda a otimização pode ser necessário para o gradiente funcionar;
-        #       caso não seja, é melhor reamostrar a cada nova época (ou a cada novo ciclo do FOR) para evitar que a amostragem única enviese a projeção, como se alguns vizinhos fossem mais especiais que outros.
-        mu += geomean(mu_local0, mu_global0, alpha)
 
+        # global
+        # REMINDER: o próprio ponto vai ser amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
+        # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista, mas não impacta otimização.
+        end = start + global_k
+        if end > v:
+            start = 0
+            end = global_k
+            rnd_idxs = torch.randperm(v)
+        gidxs = rnd_idxs[start:end]
+        ga = pred_d[gidxs]
+        gb = target_d[gidxs]
+        # ga = pred_d
+        # gb = target_d
+        mu_global += (mu_global0 := surrogate_tau(ga, gb, smooothness_tau))
+        start += global_k
+
+        mu += geomean(mu_local0, mu_global0, alpha)
         if ref:
-            p, t = pred_d.cpu().detach().numpy(), target_d.cpu().detach().numpy()
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+            p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()
             tau_global += kendalltau(p, t)[0]
 
     return mu / n, mu_local / n, mu_global / n, tau_local / n, tau_global / n
