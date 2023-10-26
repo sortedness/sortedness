@@ -92,10 +92,10 @@ def geomean(lo, gl, alpha=0.5):
     return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, max_global_k=1000, ref=False):
+def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
     n, v = predicted_D.shape
     if global_k is "sqrt":
-        global_k = min(max_global_k, int(math.sqrt(v)))
+        global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
 
     mu = mu_local = mu_global = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
