@@ -1,3 +1,2 @@
-Implement global sampling
-Remove round()
-Fix surrogate for ties; add doctest
+Add lower bound for global_k
+Remove center point from being its own neighbor at local measure

@@ -81,7 +81,7 @@ def surrogate_wtau(a, b, w, smooothness):
     return sum(r) / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))
 
 
-def geomean(lo, gl, alpha=0.5):
+def geomean(lo, gl, beta=0.5):
     """
     >>> from torch import tensor
     >>> geomean(tensor([0.6]), tensor([0.64]))
@@ -89,26 +89,31 @@ def geomean(lo, gl, alpha=0.5):
     """
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - alpha) * torch.log(l) + alpha * torch.log(g)) * 2 - 1
+    return torch.exp((1 - beta) * torch.log(l) + beta * torch.log(g)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
+def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
     n, v = predicted_D.shape
-    if global_k is "sqrt":
+    if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
+    if global_k > v:
+        global_k = v
 
     mu = mu_local = mu_global = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
     start = 0
     for pred_d, target_d in zip(predicted_D, expected_D):
+        # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
+        # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
+        # Pra global não impacta otimização, pra local fiz k+1 e slicing abaixo pra não perder o primeiro peso de w.
+
         # local
-        a, idxs = topk(pred_d, k, largest=False)
+        a, idxs = topk(pred_d, k + 1, largest=False)
+        a, idxs = a[1:], idxs[1:]
         b = target_d[idxs]
         mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
 
         # global
-        # REMINDER: o próprio ponto vai ser amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
-        # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista, mas não impacta otimização.
         end = start + global_k
         if end > v:
             start = 0
@@ -122,7 +127,7 @@ def loss_function(predicted_D, expected_D, k, global_k, w, alpha=0.5, smooothnes
         mu_global += (mu_global0 := surrogate_tau(ga, gb, smooothness_tau))
         start += global_k
 
-        mu += geomean(mu_local0, mu_global0, alpha)
+        mu += geomean(mu_local0, mu_global0, beta)
         if ref:
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
             p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()

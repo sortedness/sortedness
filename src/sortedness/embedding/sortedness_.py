@@ -44,7 +44,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, min_global_k=10, max_global_k=1000, seed=0, gpu=False):
+def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, min_global_k=100, max_global_k=1000, seed=0, gpu=False):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -76,7 +76,7 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5
     global_k
         int:    Number of "neighbors" to sample for global optimization.
         "sqrt": Take the square root of the number of points limited by `max_global_k`.
-    alpha
+    beta
         Parameter to balance between local and global. 0 is totally local. 1 is totally global.
     smooothness_tau
         Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smooothness_tau tends to 0.
@@ -134,7 +134,7 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5
                 encoded = model(T)
                 expected_ranking_batch = R[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, alpha, smooothness_tau, min_global_k, max_global_k)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, beta, smooothness_tau, min_global_k, max_global_k)
                 optimizer.zero_grad()
                 (-loss).backward()
                 optimizer.step()
