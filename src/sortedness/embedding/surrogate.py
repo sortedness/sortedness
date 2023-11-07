@@ -92,12 +92,24 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l) + beta * torch.log(g)) * 2 - 1
 
 
+def geomean_np(lo, gl, beta=0.5):
+    """
+    >>> round(geomean_np(0.6, 0.64), 4)
+    0.6199
+    """
+    l = (lo + 1) / 2
+    g = (gl + 1) / 2
+    return math.exp((1 - beta) * math.log(l) + beta * math.log(g)) * 2 - 1
+
+
 def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
-    n, v = predicted_D.shape
+    n, v = predicted_D.shape  # REMINDER: n can be the size of the batch
     if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
     if global_k > v:
         global_k = v
+    if k + 1 > v:
+        k = v - 1
 
     mu = mu_local = mu_global = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
