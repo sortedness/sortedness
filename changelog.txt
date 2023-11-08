@@ -1,2 +1,4 @@
-Add lower bound for global_k
-Remove center point from being its own neighbor at local measure
+Implement first attempt of hyperparameter optimization
+Implement check for k neighbors
+Implement geomean_np
+Add experiment for direct optimizing coordinates

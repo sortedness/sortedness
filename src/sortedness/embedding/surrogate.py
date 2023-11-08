@@ -118,6 +118,7 @@ def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness
         # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
         # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
         # Pra global não impacta otimização, pra local fiz k+1 e slicing abaixo pra não perder o primeiro peso de w.
+        pass
 
         # local
         a, idxs = topk(pred_d, k + 1, largest=False)
