@@ -120,12 +120,24 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l) + beta * torch.log(g)) * 2 - 1
 
 
+def geomean_np(lo, gl, beta=0.5):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; round(geomean_np(0.6, 0.64), 4)
+    0.6199
+    &#34;&#34;&#34;
+    l = (lo + 1) / 2
+    g = (gl + 1) / 2
+    return math.exp((1 - beta) * math.log(l) + beta * math.log(g)) * 2 - 1
+
+
 def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
-    n, v = predicted_D.shape
+    n, v = predicted_D.shape  # REMINDER: n can be the size of the batch
     if global_k == &#34;sqrt&#34;:
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
     if global_k &gt; v:
         global_k = v
+    if k + 1 &gt; v:
+        k = v - 1
 
     mu = mu_local = mu_global = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
@@ -134,6 +146,7 @@ def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness
         # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
         # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
         # Pra global não impacta otimização, pra local fiz k+1 e slicing abaixo pra não perder o primeiro peso de w.
+        pass
 
         # local
         a, idxs = topk(pred_d, k + 1, largest=False)
@@ -206,6 +219,27 @@ tensor([0.6199])
     return torch.exp((1 - beta) * torch.log(l) + beta * torch.log(g)) * 2 - 1</code></pre>
 </details>
 </dd>
+<dt id="sortedness.embedding.surrogate.geomean_np"><code class="name flex">
+<span>def <span class="ident">geomean_np</span></span>(<span>lo, gl, beta=0.5)</span>
+</code></dt>
+<dd>
+<div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; round(geomean_np(0.6, 0.64), 4)
+0.6199
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def geomean_np(lo, gl, beta=0.5):
+    &#34;&#34;&#34;
+    &gt;&gt;&gt; round(geomean_np(0.6, 0.64), 4)
+    0.6199
+    &#34;&#34;&#34;
+    l = (lo + 1) / 2
+    g = (gl + 1) / 2
+    return math.exp((1 - beta) * math.log(l) + beta * math.log(g)) * 2 - 1</code></pre>
+</details>
+</dd>
 <dt id="sortedness.embedding.surrogate.har"><code class="name flex">
 <span>def <span class="ident">har</span></span>(<span>r)</span>
 </code></dt>
@@ -228,11 +262,13 @@ tensor([0.6199])
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
-    n, v = predicted_D.shape
+    n, v = predicted_D.shape  # REMINDER: n can be the size of the batch
     if global_k == &#34;sqrt&#34;:
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
     if global_k &gt; v:
         global_k = v
+    if k + 1 &gt; v:
+        k = v - 1
 
     mu = mu_local = mu_global = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
@@ -241,6 +277,7 @@ tensor([0.6199])
         # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
         # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
         # Pra global não impacta otimização, pra local fiz k+1 e slicing abaixo pra não perder o primeiro peso de w.
+        pass
 
         # local
         a, idxs = topk(pred_d, k + 1, largest=False)
@@ -397,6 +434,7 @@ tensor(-1.)
 <ul class="two-column">
 <li><code><a title="sortedness.embedding.surrogate.cau" href="#sortedness.embedding.surrogate.cau">cau</a></code></li>
 <li><code><a title="sortedness.embedding.surrogate.geomean" href="#sortedness.embedding.surrogate.geomean">geomean</a></code></li>
+<li><code><a title="sortedness.embedding.surrogate.geomean_np" href="#sortedness.embedding.surrogate.geomean_np">geomean_np</a></code></li>
 <li><code><a title="sortedness.embedding.surrogate.har" href="#sortedness.embedding.surrogate.har">har</a></code></li>
 <li><code><a title="sortedness.embedding.surrogate.loss_function" href="#sortedness.embedding.surrogate.loss_function">loss_function</a></code></li>
 <li><code><a title="sortedness.embedding.surrogate.pdiffs" href="#sortedness.embedding.surrogate.pdiffs">pdiffs</a></code></li>

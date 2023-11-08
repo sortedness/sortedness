@@ -50,10 +50,10 @@
 #
 import numpy as np
 import torch
-import torch.optim as optim
 from scipy.spatial.distance import cdist
 from scipy.stats import rankdata
 from torch import from_numpy, tensor
+from torch.optim import RMSprop
 from torch.utils.data import Dataset, DataLoader
 
 from sortedness.embedding.surrogate import cau, loss_function
@@ -72,7 +72,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, min_global_k=100, max_global_k=1000, seed=0, gpu=False):
+def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs):
     &#34;&#34;&#34;
     &gt;&gt;&gt; from sklearn import datasets
     &gt;&gt;&gt; from sklearn.preprocessing import StandardScaler
@@ -111,6 +111,9 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, b
     neurons
     epochs
     batch_size
+    learning_optimizer
+        Callable to perform gradient descent. See learner_parameters below.
+        Default = RMSProp
     min_global_k
         Lower bound for the number of &#34;neighbors&#34; to sample when `global_k` is dynamic.
     max_global_k
@@ -118,7 +121,11 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, b
     seed
     gpu
         Whether to use GPU.
-
+    learning_optimizer_kwargs
+        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+        Default arguments for RMSprop: 
+            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
+            
     Returns
     -------
     Transformed `d`-dimensional data as a numpy float array.
@@ -153,7 +160,7 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, b
     T = from_numpy(X).cuda() if gpu else from_numpy(X)
     w = cau(tensor(range(n)), gamma=gamma)
 
-    optimizer = optim.RMSprop(model.parameters())
+    learning_optimizer = learning_optimizer(model.parameters(), **learning_optimizer_kwargs)
     model.train()
     loader = DataLoader(Dt(T), shuffle=True, batch_size=batch_size, pin_memory=gpu)
     with torch.enable_grad():
@@ -163,9 +170,9 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, b
                 expected_ranking_batch = R[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
                 loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, beta, smooothness_tau, min_global_k, max_global_k)
-                optimizer.zero_grad()
+                learning_optimizer.zero_grad()
                 (-loss).backward()
-                optimizer.step()
+                learning_optimizer.step()
     return model(T).detach().cpu().numpy().astype(float)</code></pre>
 </details>
 </section>
@@ -177,7 +184,7 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, b
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="sortedness.embedding.sortedness_.balanced"><code class="name flex">
-<span>def <span class="ident">balanced</span></span>(<span>X, symmetric, d=2, gamma=4, k=17, global_k: int = 'sqrt', beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, min_global_k=100, max_global_k=1000, seed=0, gpu=False)</span>
+<span>def <span class="ident">balanced</span></span>(<span>X, symmetric, d=2, gamma=4, k=17, global_k: int = 'sqrt', beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=torch.optim.rmsprop.RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><pre><code class="language-python-repl">&gt;&gt;&gt; from sklearn import datasets
@@ -222,6 +229,9 @@ Number of "neighbors" to sample for global optimization.
 <dd>&nbsp;</dd>
 <dt><strong><code>batch_size</code></strong></dt>
 <dd>&nbsp;</dd>
+<dt><strong><code>learning_optimizer</code></strong></dt>
+<dd>Callable to perform gradient descent. See learner_parameters below.
+Default = RMSProp</dd>
 <dt><strong><code>min_global_k</code></strong></dt>
 <dd>Lower bound for the number of "neighbors" to sample when <code>global_k</code> is dynamic.</dd>
 <dt><strong><code>max_global_k</code></strong></dt>
@@ -230,6 +240,10 @@ Number of "neighbors" to sample for global optimization.
 <dd>&nbsp;</dd>
 <dt><strong><code>gpu</code></strong></dt>
 <dd>Whether to use GPU.</dd>
+<dt><strong><code>learning_optimizer_kwargs</code></strong></dt>
+<dd>Arguments for <code>learner</code>. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+Default arguments for RMSprop:
+lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Transformed <code>d</code>-dimensional data as a numpy float array.</p></div>
@@ -237,7 +251,7 @@ Number of "neighbors" to sample for global optimization.
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, min_global_k=100, max_global_k=1000, seed=0, gpu=False):
+<pre><code class="python">def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = &#34;sqrt&#34;, beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs):
     &#34;&#34;&#34;
     &gt;&gt;&gt; from sklearn import datasets
     &gt;&gt;&gt; from sklearn.preprocessing import StandardScaler
@@ -276,6 +290,9 @@ Number of "neighbors" to sample for global optimization.
     neurons
     epochs
     batch_size
+    learning_optimizer
+        Callable to perform gradient descent. See learner_parameters below.
+        Default = RMSProp
     min_global_k
         Lower bound for the number of &#34;neighbors&#34; to sample when `global_k` is dynamic.
     max_global_k
@@ -283,7 +300,11 @@ Number of "neighbors" to sample for global optimization.
     seed
     gpu
         Whether to use GPU.
-
+    learning_optimizer_kwargs
+        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+        Default arguments for RMSprop: 
+            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
+            
     Returns
     -------
     Transformed `d`-dimensional data as a numpy float array.
@@ -318,7 +339,7 @@ Number of "neighbors" to sample for global optimization.
     T = from_numpy(X).cuda() if gpu else from_numpy(X)
     w = cau(tensor(range(n)), gamma=gamma)
 
-    optimizer = optim.RMSprop(model.parameters())
+    learning_optimizer = learning_optimizer(model.parameters(), **learning_optimizer_kwargs)
     model.train()
     loader = DataLoader(Dt(T), shuffle=True, batch_size=batch_size, pin_memory=gpu)
     with torch.enable_grad():
@@ -328,9 +349,9 @@ Number of "neighbors" to sample for global optimization.
                 expected_ranking_batch = R[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
                 loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, beta, smooothness_tau, min_global_k, max_global_k)
-                optimizer.zero_grad()
+                learning_optimizer.zero_grad()
                 (-loss).backward()
-                optimizer.step()
+                learning_optimizer.step()
     return model(T).detach().cpu().numpy().astype(float)</code></pre>
 </details>
 </dd>
