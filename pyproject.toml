@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sortedness"
-version = "2.231107.1"
+version = "2.231109.0"
 description = "Measures of projection quality"
 authors = ["davips <dpsabc@gmail.com>", "tacito <tacito.neves@gmail.com>"]
 license = "GPLv3"
@@ -42,6 +42,7 @@ tsne-torch = "^1.0.1"
 torch = {version = "^2.1.0+cpu", source = "torchcpu1130"}
 sympy = "^1.12"
 hyperopt = "^0.2.7"
+pymysql = "^1.1.0"
 
 [[tool.poetry.source]]
 name = "torchcpu1130"

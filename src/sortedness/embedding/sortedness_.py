@@ -44,7 +44,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs):
+def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -54,7 +54,7 @@ def balanced(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
     >>> rnd = random.default_rng(0)
     >>> rnd.shuffle(X)
     >>> X = StandardScaler().fit_transform(X)
-    >>> X_ = balanced(X, False, epochs=2)
+    >>> X_ = balanced_embedding(X, False, epochs=2)
     >>> X_.shape
     (20, 2)
 

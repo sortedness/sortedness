@@ -22,6 +22,7 @@
 #
 from functools import partial
 
+import numpy as np
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 from numpy import mean
 from numpy.random import default_rng
@@ -29,7 +30,7 @@ from scipy.stats import weightedtau, kendalltau
 from torch.optim import RMSprop
 
 from sortedness import sortedness
-from sortedness.embedding.sortedness_ import balanced as balanced_reductor
+from sortedness.embedding.sortedness_ import balanced_embedding
 from sortedness.embedding.surrogate import cau, geomean_np
 
 
@@ -41,7 +42,7 @@ def dist(key, v):
     return hp.choice(key, v)
 
 
-def balanced(
+def balanced_embedding__opt(
         X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
         learning_optimizer=RMSprop, learning_optimizer__param_space=None,
         hyperoptimizer_algorithm=tpe.suggest, max_evals=10, progressbar=False,
@@ -79,7 +80,7 @@ def balanced(
     def objective(space):
         reductor__kwargs = {key: (v if key == "smooothness_tau" else int(v)) for key, v in space.items() if key in ["smooothness_tau", "neurons", "epochs", "batch_size"]}
         learning_optimizer__kwargs = {key: v for key, v in space.items() if key not in reductor__kwargs}
-        X_ = balanced_reductor(
+        X_ = balanced_embedding(
             X, symmetric, d, gamma, k, global_k, beta, **reductor__kwargs,
             learning_optimizer=learning_optimizer, min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **learning_optimizer__kwargs
         )

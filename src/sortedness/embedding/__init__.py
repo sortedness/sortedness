@@ -20,4 +20,4 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-from sortedness.embedding.sortedness_ import balanced
+from sortedness.embedding.sortedness_ import balanced_embedding

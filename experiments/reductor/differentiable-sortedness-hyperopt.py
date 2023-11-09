@@ -35,7 +35,7 @@ from torch import from_numpy, set_num_threads, tensor
 
 from sortedness import sortedness
 from sortedness.embedding.surrogate import cau, loss_function, geomean_np
-from sortedness.embedding.tunning import balanced
+from sortedness.embedding.tunning import balanced_embedding__opt
 
 bal = 0.5
 gamma = 4
@@ -72,7 +72,7 @@ X = datax[:n]
 idxs = list(range(n))
 X = X.astype(np.float32)
 
-X_ = balanced(X, symmetric=False, k=20, global_k=20, max_evals=1000, progressbar=True)
+X_ = balanced_embedding__opt(X, symmetric=False, k=20, global_k=20, max_evals=2, progressbar=True)
 Dtarget = cdist(X, X)
 Dtarget = from_numpy(Dtarget / np.max(Dtarget))
 # Dtarget = from_numpy(Dtarget)
