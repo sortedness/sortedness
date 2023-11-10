@@ -37,7 +37,7 @@ datasets = [
     "svhn"
 ]
 with sopen(schedule_uri) as db:
-    for d in Scheduler(db, timeout=120) << datasets:
+    for d in Scheduler(db) << datasets:
         dataset_name = d
         X, y = load_dataset(dataset_name)
         X_ = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 20)}, max_evals=30, progressbar=True)
