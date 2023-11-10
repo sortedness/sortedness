@@ -47,7 +47,7 @@ def balanced_embedding__opt(
         embedding__param_space=None,
         embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
         hyperoptimizer_algorithm=tpe.suggest, max_evals=10, progressbar=False,
-        min_global_k=100, max_global_k=1000, seed=0, gpu=False, **hyperoptimizer_kwargs
+        min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs
 ):
     if embedding__param_space is None:
         embedding__param_space = {}
@@ -97,6 +97,11 @@ def balanced_embedding__opt(
         if quality > bestval[0]:
             best_X_[0] = X_
             bestval[0] = quality
+        if show_parameters:
+            print()
+            print(quality, embedding__kwargs)
+            print(embedding_optimizer__kwargs)
+            print()
         return {'loss': -quality, 'status': STATUS_OK}
 
     rnd = default_rng(seed)
