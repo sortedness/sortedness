@@ -55,10 +55,10 @@ def balanced_embedding__opt(
         embedding_optimizer__param_space = {}
 
     for key, v in {"smooothness_tau": (0.001, 2), "neurons": (d, 100), "epochs": (20, 60), "batch_size": (1, min(80, len(X)))}.items():
-        if key not in embedding__param_space.items():
+        if key not in embedding__param_space:
             embedding__param_space[key] = v
     for key, v in {"lr": (0.001, 0.05), "alpha": (0.95, 0.99), "weight_decay": (0.0, 0.01), "momentum": (0.0, 0.01), "centered": [True, False]}.items():
-        if key not in embedding_optimizer__param_space.items():
+        if key not in embedding_optimizer__param_space:
             embedding_optimizer__param_space[key] = v
 
     space = {}
