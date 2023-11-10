@@ -5,7 +5,7 @@ import numpy as np
 from shelchemy import sopen
 from shelchemy.scheduler import Scheduler
 
-from sortedness.config import schedule_uri
+from sortedness.config import schedule_uri, remote_cache_uri
 from sortedness.embedding.tunning import balanced_embedding__opt
 
 
@@ -36,11 +36,13 @@ datasets = [
     "sms",
     "svhn"
 ]
-with sopen(schedule_uri) as db:
+with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
     for d in Scheduler(db) << datasets:
         dataset_name = d
         X, y = load_dataset(dataset_name)
-        X_ = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 20)}, max_evals=30, progressbar=True, show_parameters=True)
+        kwargs = {"trials": remote[key]} if (key := f"{d}-trials") in remote else {}
+        X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 30)}, max_evals=30, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+        remote[key] = trials
 
         if X_.shape[0] != X.shape[0]:
             print('----------------------------------------------------')
