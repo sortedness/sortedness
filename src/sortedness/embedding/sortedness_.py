@@ -44,7 +44,9 @@ class Dt(Dataset):
         return idx
 
 
-def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1, neurons=30, epochs=100, batch_size=20, learning_optimizer=RMSprop, min_global_k=100, max_global_k=1000, seed=0, gpu=False, **learning_optimizer_kwargs):
+def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
+                       neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
+                       min_global_k=100, max_global_k=1000, seed=0, gpu=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -83,7 +85,7 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
     neurons
     epochs
     batch_size
-    learning_optimizer
+    embedding_optimizer
         Callable to perform gradient descent. See learner_parameters below.
         Default = RMSProp
     min_global_k
@@ -93,7 +95,7 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
     seed
     gpu
         Whether to use GPU.
-    learning_optimizer_kwargs
+    embedding_optimizer__kwargs
         Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
         Default arguments for RMSprop: 
             lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
@@ -132,7 +134,7 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
     T = from_numpy(X).cuda() if gpu else from_numpy(X)
     w = cau(tensor(range(n)), gamma=gamma)
 
-    learning_optimizer = learning_optimizer(model.parameters(), **learning_optimizer_kwargs)
+    learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
     loader = DataLoader(Dt(T), shuffle=True, batch_size=batch_size, pin_memory=gpu)
     with torch.enable_grad():

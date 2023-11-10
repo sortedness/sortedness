@@ -21,8 +21,8 @@
 #  time spent here.
 #
 from functools import partial
+from itertools import chain
 
-import numpy as np
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 from numpy import mean
 from numpy.random import default_rng
@@ -34,7 +34,7 @@ from sortedness.embedding.sortedness_ import balanced_embedding
 from sortedness.embedding.surrogate import cau, geomean_np
 
 
-def dist(key, v):
+def tuple2hyperopt(key, v):
     if type(v) is tuple and type(v[0]) is int:
         return hp.quniform(key, *v, 1)
     if type(v) is tuple and type(v[0]) is float:
@@ -44,18 +44,26 @@ def dist(key, v):
 
 def balanced_embedding__opt(
         X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
-        learning_optimizer=RMSprop, learning_optimizer__param_space=None,
+        embedding__param_space=None,
+        embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
         hyperoptimizer_algorithm=tpe.suggest, max_evals=10, progressbar=False,
         min_global_k=100, max_global_k=1000, seed=0, gpu=False, **hyperoptimizer_kwargs
 ):
+    if embedding__param_space is None:
+        embedding__param_space = {}
+    if embedding_optimizer__param_space is None:
+        embedding_optimizer__param_space = {}
+
+    for key, v in {"smooothness_tau": (0.001, 2), "neurons": (d, 100), "epochs": (20, 60), "batch_size": (1, min(80, len(X)))}.items():
+        if key not in embedding__param_space.items():
+            embedding__param_space[key] = v
+    for key, v in {"lr": (0.001, 0.05), "alpha": (0.95, 0.99), "weight_decay": (0.0, 0.01), "momentum": (0.0, 0.01), "centered": [True, False]}.items():
+        if key not in embedding_optimizer__param_space.items():
+            embedding_optimizer__param_space[key] = v
+
     space = {}
-    reductor_space = {"smooothness_tau": (0.001, 2), "neurons": (d, 100), "epochs": (20, 60), "batch_size": (1, min(80, len(X))), }
-    for key, v in reductor_space.items():
-        space[key] = dist(key, v)
-    if learning_optimizer__param_space is None:
-        learning_optimizer__param_space = {"lr": (0.001, 0.05), "alpha": (0.95, 0.99), "weight_decay": (0.0, 0.01), "momentum": (0.0, 0.01), "centered": [True, False]}
-        for key, v in learning_optimizer__param_space.items():
-            space[key] = dist(key, v)
+    for key, v in chain(embedding__param_space.items(), embedding_optimizer__param_space.items()):
+        space[key] = tuple2hyperopt(key, v)
 
     if "algo" not in hyperoptimizer_kwargs:
         hyperoptimizer_kwargs["algo"] = hyperoptimizer_algorithm
@@ -78,12 +86,13 @@ def balanced_embedding__opt(
     best_X_ = [0]
 
     def objective(space):
-        reductor__kwargs = {key: (v if key == "smooothness_tau" else int(v)) for key, v in space.items() if key in ["smooothness_tau", "neurons", "epochs", "batch_size"]}
-        learning_optimizer__kwargs = {key: v for key, v in space.items() if key not in reductor__kwargs}
-        X_ = balanced_embedding(
-            X, symmetric, d, gamma, k, global_k, beta, **reductor__kwargs,
-            learning_optimizer=learning_optimizer, min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **learning_optimizer__kwargs
-        )
+        embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
+                             for key, v in space.items()
+                             if key in ["smooothness_tau", "neurons", "epochs", "batch_size"]}
+        embedding_optimizer__kwargs = {key: v for key, v in space.items() if key not in embedding__kwargs}
+        X_ = balanced_embedding(X, symmetric, d, gamma, k, global_k, beta, **embedding__kwargs,
+                                embedding_optimizer=embedding_optimizer,
+                                min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
         quality = mean(sortedness(X, X_, symmetric=symmetric, f=taus))
         if quality > bestval[0]:
             best_X_[0] = X_

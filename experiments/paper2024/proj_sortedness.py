@@ -37,19 +37,11 @@ datasets = [
     "svhn"
 ]
 with sopen(schedule_uri) as db:
-    for d in Scheduler(db, timeout=50) << datasets:
+    for d in Scheduler(db, timeout=120) << datasets:
         dataset_name = d
-
-        print(d)
-
         X, y = load_dataset(dataset_name)
+        X_ = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 20)}, max_evals=30, progressbar=True)
 
-        learning_optimizer__param_space = {"epochs": (1, 30), "lr": (0.001, 0.050), "alpha": (0.95, 0.99), "weight_decay": (0.0, 0.01), "momentum": (0.0, 0.01), "centered": [True, False]}
-
-        # X_ = balanced0(X, False, epochs=1)
-        X_ = balanced_embedding__opt(X, symmetric=False, k=15, global_k=15, max_evals=30, progressbar=True, learning_optimizer__param_space=learning_optimizer__param_space)
-
-        # Verify
         if X_.shape[0] != X.shape[0]:
             print('----------------------------------------------------')
             print("Error running: Projection returned %d rows when %d rows were expected" % (X_.shape[0], X.shape[0]))

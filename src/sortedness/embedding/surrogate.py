@@ -58,8 +58,10 @@ def surrogate_tau(a, b, smooothness):
     """
     da, db = pdiffs(a), pdiffs(b)
     ta, tb = tanh(da / smooothness), tanh(db / smooothness)
-    r = ta * tb
-    return sum(r) / sqrt(sum(abs(ta)) * sum(abs(tb)))
+    r = sum(ta * tb)
+    if r == 0:
+        return r
+    return r / sqrt(sum(abs(ta)) * sum(abs(tb)))
 
 
 def surrogate_wtau(a, b, w, smooothness):
@@ -77,8 +79,10 @@ def surrogate_wtau(a, b, w, smooothness):
     """
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
     ta, tb = tanh(da / smooothness), tanh(db / smooothness)
-    r = ta * tb * sw
-    return sum(r) / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))
+    r = sum(ta * tb * sw)
+    if r == 0:
+        return r
+    return r / sqrt(sum(abs(ta * sw)) * sum(abs(tb * sw)))
 
 
 def geomean(lo, gl, beta=0.5):
