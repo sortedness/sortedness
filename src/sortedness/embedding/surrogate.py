@@ -72,6 +72,10 @@ def surrogate_wtau(a, b, w, smooothness):
     tensor(1.)
     >>> surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
     tensor(-1.)
+    >>> surrogate_wtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 2)
+    tensor(0.7473)
+    >>> surrogate_wtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 2)
+    tensor(-0.7473)
     >>> round(float(surrogate_wtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
     0.948683
     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)

@@ -109,13 +109,13 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
         def __init__(self):
             super().__init__()
             self.encoder = torch.nn.Sequential(
-                torch.nn.Linear(X.shape[1], neurons), torch.nn.ReLU(),
+                torch.nn.Linear(X.shape[1], neurons), torch.nn.Tanh(),
                 torch.nn.Linear(neurons, d)
             )
-            self.decoder = torch.nn.Sequential(
-                torch.nn.Linear(d, neurons), torch.nn.ReLU(),
-                torch.nn.Linear(neurons, X.shape[1])
-            )
+            # self.decoder = torch.nn.Sequential(
+            #     torch.nn.Linear(d, neurons), torch.nn.ReLU(),
+            #     torch.nn.Linear(neurons, X.shape[1])
+            # )
 
         def forward(self, x):
             return self.encoder(x)

@@ -78,13 +78,13 @@ class M(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = torch.nn.Sequential(
-            torch.nn.Linear(X.shape[1], neurons), torch.nn.ReLU(),
+            torch.nn.Linear(X.shape[1], neurons), torch.nn.Tanh(),
             torch.nn.Linear(neurons, 2)
         )
-        self.decoder = torch.nn.Sequential(
-            torch.nn.Linear(2, neurons), torch.nn.ReLU(),
-            torch.nn.Linear(neurons, X.shape[1])
-        )
+        # self.decoder = torch.nn.Sequential(
+        #     torch.nn.Linear(2, neurons), torch.nn.Tanh(),
+        #     torch.nn.Linear(neurons, X.shape[1])
+        # )
 
     def forward(self, x):
         return self.encoder(x)
@@ -95,13 +95,14 @@ if gpu:
     model.cuda()
 print(X.shape)
 Dtarget = cdist(X, X)
-Dtarget = from_numpy(Dtarget / np.max(Dtarget))
-# Dtarget = from_numpy(Dtarget)
+Dtarget = from_numpy(Dtarget / np.max(Dtarget, axis=1))
 if gpu:
     Dtarget = Dtarget.cuda()
 # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
 T = from_numpy(X).cuda() if gpu else from_numpy(X)
-w = cau(tensor(range(n)), gamma=gamma).cuda() if gpu else cau(tensor(range(n)), gamma=gamma)
+ca = cau(tensor(range(n)), gamma=gamma) / 0.54
+print(sum(ca))
+w = ca.cuda() if gpu else ca
 # wharmonic = har(tensor(range(n)))
 
 fig, axs = plt.subplots(1, 2, figsize=(12, 9))

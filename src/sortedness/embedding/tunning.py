@@ -48,7 +48,6 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
                             min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
-
     if hyperoptimizer_algorithm is None:
         hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
     if embedding__param_space is None:
@@ -91,6 +90,10 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
                              for key, v in space.items()
                              if key in ["smooothness_tau", "neurons", "epochs", "batch_size"]}
         embedding_optimizer__kwargs = {key: v for key, v in space.items() if key not in embedding__kwargs}
+        if show_parameters:
+            print("___________________________________")
+            print(embedding__kwargs, flush=True)
+            print(embedding_optimizer__kwargs, flush=True)
         X_ = balanced_embedding(X, symmetric, d, gamma, k, global_k, beta, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
@@ -102,13 +105,12 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
             X_ = None
 
         if show_parameters:
-            print("\n", quality, embedding__kwargs, flush=True)
-            print(embedding_optimizer__kwargs, flush=True)
+            print("\n", quality, flush=True)
         return {"loss": -quality, "status": STATUS_OK, "X_": X_}
 
     rnd = default_rng(seed)
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
-    best_trial = trials.results[np.argmin([r['loss'] for r in trials.results])]
+    best_trial = trials.results[np.argmin([r['loss'] for r in trials.results if str(r['loss']) != "nan"])]
     X_ = best_trial["X_"]
     # if show_parameters:
     #     print("Best trial:", best_trial)
