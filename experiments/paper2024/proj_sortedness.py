@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from sys import argv
 
 import numpy as np
 from shelchemy import sopen
@@ -36,20 +37,15 @@ datasets = [
     "sms",
     "svhn"
 ]
+datasets = [f"{d}{argv[1]}" for d in datasets]
 with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
-
     for d in Scheduler(db) << datasets:
         print(d, "---------------------------------------------------------------------------")
         kwargs = {"trials": remote[key]} if (key := f"{d}-trials") in remote else {}
 
-    # for d in datasets:
-    #     kwargs = {}
-
-        dataset_name = d
+        dataset_name = d[:-1]
         X, y = load_dataset(dataset_name)
         X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 100)}, max_evals=3, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
-        # if X_ is None:
-        #     X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 100)}, max_evals=len(trials.results) + 1, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
 
         remote[key] = trials
 
