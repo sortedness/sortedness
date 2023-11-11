@@ -43,15 +43,14 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
-def balanced_embedding__opt(
-        X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
-        embedding__param_space=None,
-        embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
-        hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
-        min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs
-):
+def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
+                            embedding__param_space=None,
+                            embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
+                            hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
+                            min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
+
     if hyperoptimizer_algorithm is None:
-        hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=10, n_EI_candidates=5)
+        hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
     if embedding__param_space is None:
         embedding__param_space = {}
     if embedding_optimizer__param_space is None:
@@ -103,13 +102,16 @@ def balanced_embedding__opt(
             X_ = None
 
         if show_parameters:
-            print()
-            print(quality, embedding__kwargs)
-            print(embedding_optimizer__kwargs)
-            print()
+            print("\n", quality, embedding__kwargs, flush=True)
+            print(embedding_optimizer__kwargs, flush=True)
         return {"loss": -quality, "status": STATUS_OK, "X_": X_}
 
     rnd = default_rng(seed)
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
-    X_ = trials.results[np.argmin([r['loss'] for r in trials.results])]["X_"]
+    best_trial = trials.results[np.argmin([r['loss'] for r in trials.results])]
+    X_ = best_trial["X_"]
+    # if show_parameters:
+    #     print("Best trial:", best_trial)
+    #     print("All trials:", trials.results)
+    #     print(f"{len(trials.results)} trials. Best: {X_.shape}")
     return (X_, trials) if return_trials else X_

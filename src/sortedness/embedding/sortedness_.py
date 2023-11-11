@@ -23,7 +23,6 @@
 import numpy as np
 import torch
 from scipy.spatial.distance import cdist
-from scipy.stats import rankdata
 from torch import from_numpy, tensor
 from torch.optim import RMSprop
 from torch.utils.data import Dataset, DataLoader
@@ -130,7 +129,10 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
 
     X = X.astype(np.float32)
     n = X.shape[0]
-    R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
+    # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
+    D = cdist(X, X)
+    D /= np.max(D, axis=1)
+    Dtarget = from_numpy(D).cuda() if gpu else from_numpy(D)
     T = from_numpy(X).cuda() if gpu else from_numpy(X)
     w = cau(tensor(range(n)), gamma=gamma)
 
@@ -141,10 +143,11 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
         for i in range(epochs):
             for idx in loader:
                 encoded = model(T)
-                expected_ranking_batch = R[idx]
+                expected_ranking_batch = Dtarget[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
                 loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, beta, smooothness_tau, min_global_k, max_global_k)
                 learning_optimizer.zero_grad()
                 (-loss).backward()
                 learning_optimizer.step()
+
     return model(T).detach().cpu().numpy().astype(float)
