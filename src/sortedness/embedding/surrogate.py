@@ -89,6 +89,60 @@ def surrogate_wtau(a, b, w, smooothness):
     return num / den
 
 
+# def surrogate_tau_rel(a, b, smooothness):
+#     """
+#     >>> from torch import tensor
+#     >>> from scipy.stats import kendalltau
+#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .00001)
+#     tensor(1.0000)
+#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .00001)
+#     tensor(-1.0000)
+#     >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([5,4,3,2,1]), .00001)), 4)
+#     -0.9487
+#     >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .00001)), 4)
+#     0.9487
+#     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 4)
+#     0.9487
+#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), 0.9)
+#     tensor(0.4734)
+#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), 0.9)
+#     tensor(-0.4357)
+#     """
+#     # reminder: relative is more optimistic here due to integer ties
+#     da, db, sa, sb = pdiffs(a), pdiffs(b), psums(a), psums(b)
+#     ta = torch.sign(da) * (abs(da + 0.0000000001) / (sa + 0.0000000001)) ** smooothness
+#     tb = torch.sign(db) * (abs(db + 0.0000000001) / (sb + 0.0000000001)) ** smooothness
+#     num = sum(ta * tb)
+#     den = sqrt(sum(abs(ta)) * sum(abs(tb)) + 0.000000000001)
+#     return num / den
+#
+#
+# def surrogate_wtau_rel(a, b, w, smooothness):
+#     """
+#     >>> from torch import tensor
+#     >>> from scipy.stats import kendalltau
+#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .00001)
+#     tensor(1.0000)
+#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .00001)
+#     tensor(-1.0000)
+#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 4)
+#     tensor(0.1387)
+#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 4)
+#     tensor(-0.1071)
+#     >>> round(float(surrogate_wtau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+#     0.948682
+#     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+#     0.948683
+#     """
+#     da, db, sa, sb, sw = pdiffs(a), pdiffs(b), psums(a), psums(b), psums(w)
+#     ta = torch.sign(da) * (abs(da + 0.0000000001) / (sa + 0.0000000001)) ** smooothness
+#     tb = torch.sign(db) * (abs(db + 0.0000000001) / (sb + 0.0000000001)) ** smooothness
+#     num = sum(ta * tb * sw)
+#     v = sum(abs(ta * sw)) * sum(abs(tb * sw))
+#     den = sqrt(v + 0.000000000001)
+#     return num / den
+
+
 def geomean(lo, gl, beta=0.5):
     """
     >>> from torch import tensor

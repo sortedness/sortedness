@@ -38,6 +38,7 @@ from torch.utils.data import DataLoader
 from sortedness.embedding.sortedness_ import Dt
 from sortedness.embedding.surrogate import cau, loss_function
 
+# relative_diff = False
 bal = 0.5
 gamma = 4
 k, gk = 17, "sqrt"

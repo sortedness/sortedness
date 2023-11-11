@@ -45,7 +45,7 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
         kwargs = {"trials": remote[key]} if (key := f"{dataset_name}a-trials") in remote else {}
 
         X, y = load_dataset(dataset_name)
-        X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 100)}, max_evals=30, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+        X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 50)}, max_evals=15, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
 
         remote[key] = trials
 

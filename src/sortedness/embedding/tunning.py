@@ -23,7 +23,6 @@
 from functools import partial
 from itertools import chain
 
-import numpy as np
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
 from numpy import mean
 from numpy.random import default_rng
@@ -76,7 +75,7 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
         trials = Trials()
         hyperoptimizer_kwargs["trials"] = trials
     else:
-        trials = hyperoptimizer_kwargs["trials"]
+        trials: Trials = hyperoptimizer_kwargs["trials"]
 
     def taus(r, r_):
         tau_local = weightedtau(r, r_, weigher=partial(cau, gamma), rank=False)[0]
@@ -110,10 +109,8 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
 
     rnd = default_rng(seed)
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
-    best_trial = trials.results[np.argmin([r['loss'] for r in trials.results if str(r['loss']) != "nan"])]
-    X_ = best_trial["X_"]
-    # if show_parameters:
-    #     print("Best trial:", best_trial)
-    #     print("All trials:", trials.results)
-    #     print(f"{len(trials.results)} trials. Best: {X_.shape}")
+    X_ = trials.best_trial["result"]["X_"]
+    if show_parameters:
+        dct = {k: round(v[0], 3) for k, v in trials.best_trial["misc"]["vals"].items()}
+        print("Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
     return (X_, trials) if return_trials else X_
