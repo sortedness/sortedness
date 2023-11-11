@@ -29,7 +29,7 @@ scikit-learn = "^1.2.2"
 numpy = "^1.24.2"  #=1.24.2
 matplotlib = "^3.7.2"
 pandas = "^2.0.3"
-shelchemy = "^2.230727.3"
+shelchemy = "^2.231111.1"
 hdict = "^2.230721.3"
 safeserializer = "^0.230202.1"
 lz4 = "^4.3.2"

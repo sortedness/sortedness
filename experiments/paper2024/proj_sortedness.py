@@ -41,7 +41,7 @@ datasets = [f"{d}{argv[1]}" for d in datasets]
 onlyshowbest = "best" in argv
 max_evals = int(argv[2])
 with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
-    tasks = datasets if onlyshowbest else (Scheduler(db) << datasets)
+    tasks = datasets if onlyshowbest else (Scheduler(db, mark_as_done=False) << datasets)
     for d in tasks:
         dataset_name = d[:-1]
         key = f"{dataset_name}a-trials"
