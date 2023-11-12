@@ -42,7 +42,7 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
-def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5,
+def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
@@ -54,7 +54,7 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
     if embedding_optimizer__param_space is None:
         embedding_optimizer__param_space = {}
 
-    for key, v in {"smooothness_tau": (0.001, 2), "neurons": (d, 100), "epochs": (20, 60), "batch_size": (1, min(80, len(X)))}.items():
+    for key, v in {"smooothness_tau": (0.001, 2), "neurons": (d, 100), "batch_size": (1, min(80, len(X)))}.items():
         if key not in embedding__param_space:
             embedding__param_space[key] = v
     for key, v in {"lr": (0.001, 0.05), "alpha": (0.95, 0.99), "weight_decay": (0.0, 0.01), "momentum": (0.0, 0.01), "centered": [True, False]}.items():
@@ -87,7 +87,7 @@ def balanced_embedding__opt(X, symmetric, d=2, gamma=4, k=17, global_k: int = "s
     def objective(space):
         embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
                              for key, v in space.items()
-                             if key in ["smooothness_tau", "neurons", "epochs", "batch_size"]}
+                             if key in ["smooothness_tau", "neurons", "batch_size"]}
         embedding_optimizer__kwargs = {key: v for key, v in space.items() if key not in embedding__kwargs}
         if show_parameters:
             print("___________________________________")

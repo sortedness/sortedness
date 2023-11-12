@@ -37,11 +37,12 @@ datasets = [
     "sms",
     "svhn"
 ]
-datasets = [f"{d}{argv[1]}" for d in datasets]
+datasets = [f"{d}3" for d in datasets]
 onlyshowbest = "best" in argv
+epochs = int(argv[1])
 max_evals = int(argv[2])
 with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
-    tasks = datasets if onlyshowbest else (Scheduler(db, mark_as_done=False) << datasets)
+    tasks = datasets if onlyshowbest else (Scheduler(db, timeout=60, mark_as_done=False) << datasets)
     for d in tasks:
         dataset_name = d[:-1]
         key = f"{dataset_name}a-trials"
@@ -53,14 +54,14 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
                 continue
             dct = {k: round(v[0], 3) if round(v[0]) - v[0] != 0 else int(v[0])
                    for k, v in trials.best_trial["misc"]["vals"].items()}
-            print(f"{dataset_name[:8]:8} best:", dct, f"λ: {-trials.best_trial['result']['loss']:2.3f}", flush=True)
+            print(f"{dataset_name[:8]:8} best:", dct, f"λ: {-trials.best_trial['result']['loss']:2.3f}", len(trials.results), flush=True)
             continue
 
         print(d, "---------------------------------------------------------------------------")
-        kwargs = {} if trials is None else {"trials": remote[key]}
+        kwargs = {} if trials is None else {"trials": trials}
 
         X, y = load_dataset(dataset_name)
-        X_, trials = balanced_embedding__opt(X, symmetric=False, embedding__param_space={"epochs": (1, 40)}, max_evals=max_evals, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+        X_, trials = balanced_embedding__opt(X, symmetric=False, epochs=epochs, max_evals=max_evals, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
 
         remote[key] = trials
 
