@@ -94,7 +94,7 @@ def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: in
             print("___________________________________")
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
-        X_ = balanced_embedding(X, d, weightby, gamma, k, global_k, beta, **embedding__kwargs,
+        X_ = balanced_embedding(X, d, weightby, gamma, k, global_k, beta, epochs=epochs, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
         if weightby == "both":
