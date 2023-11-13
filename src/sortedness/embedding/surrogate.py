@@ -151,17 +151,7 @@ def geomean(lo, gl, beta=0.5):
     """
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - beta) * torch.log(l) + beta * torch.log(g)) * 2 - 1
-
-
-def geomean_np(lo, gl, beta=0.5):
-    """
-    >>> round(geomean_np(0.6, 0.64), 4)
-    0.6199
-    """
-    l = (lo + 1) / 2
-    g = (gl + 1) / 2
-    return math.exp((1 - beta) * math.log(l) + beta * math.log(g)) * 2 - 1
+    return torch.exp((1 - beta) * torch.log(l + 0.000000000001) + beta * torch.log(g + 0.000000000001)) * 2 - 1
 
 
 def loss_function(predicted_D, expected_D, k, global_k, w, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):

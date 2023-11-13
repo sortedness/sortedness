@@ -1,4 +1,9 @@
-Implement first attempt of hyperparameter optimization
-Implement check for k neighbors
-Implement geomean_np
-Add experiment for direct optimizing coordinates
+Add flag `swapXX_` to optimizer to allow focus on trustworthiness instead of continuity
+Change sortedness to have balanced_kendalltau as default
+Adopt wider ranges for optimization
+Take epochs out of optimization
+Show best config for hyperopt
+Adopt Tanh neural layer
+Fix sqrt'(0) / Fix div by 0 when all ties
+Add show_parameters flag to optimization
+Change name of balanced to balanced_embedding

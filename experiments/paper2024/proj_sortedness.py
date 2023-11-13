@@ -37,6 +37,7 @@ datasets = [
     "sms",
     "svhn"
 ]
+swap = "swap" in argv
 datasets = [f"{d}3" for d in datasets]
 onlyshowbest = "best" in argv
 epochs = int(argv[1])
@@ -54,16 +55,19 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
                 continue
             dct = {k: round(v[0], 3) if round(v[0]) - v[0] != 0 else int(v[0])
                    for k, v in trials.best_trial["misc"]["vals"].items()}
-            print(f"{dataset_name[:8]:8} best:", dct, f"λ: {-trials.best_trial['result']['loss']:2.3f}", len(trials.results), flush=True)
+            print(f"{dataset_name[:8]:8} best:", dct, f"\tλ: {-trials.best_trial['result']['loss']:2.3f}\t", len(trials.results), flush=True)
             continue
 
         print(d, "---------------------------------------------------------------------------")
         kwargs = {} if trials is None else {"trials": trials}
 
         X, y = load_dataset(dataset_name)
-        X_, trials = balanced_embedding__opt(X, symmetric=False, epochs=epochs, max_evals=max_evals, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
-
-        remote[key] = trials
+        if len(trials.results) >= max_evals:
+            print(f"Trials {len(trials.results)} >= {max_evals}")
+            continue
+        for max_evals_ in range(len(trials.results), max_evals + 1):
+            X_, trials = balanced_embedding__opt(X, symmetric=False, swapXX_=swap, epochs=epochs, max_evals=max_evals_, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+            remote[key] = trials
 
         if X_.shape[0] != X.shape[0]:
             print('----------------------------------------------------')

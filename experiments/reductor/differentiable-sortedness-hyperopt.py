@@ -34,8 +34,9 @@ from sklearn.preprocessing import StandardScaler
 from torch import from_numpy, set_num_threads, tensor
 
 from sortedness import sortedness
-from sortedness.embedding.surrogate import cau, loss_function, geomean_np
+from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.embedding.tunning import balanced_embedding__opt
+from sortedness.local import geomean_np
 
 bal = 0.5
 gamma = 4

@@ -22,15 +22,18 @@
 #
 
 import gc
+import math
 from functools import partial
 from math import exp
+from math import pi
 
 import numpy as np
 import pathos.multiprocessing as mp
 from numpy import eye, mean, sqrt, ndarray, nan
 from numpy.random import permutation
 from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.stats import rankdata, kendalltau, weightedtau
+from scipy.stats import rankdata
+from scipy.stats import weightedtau, kendalltau
 
 from sortedness.misc.parallel import rank_alongrow, rank_alongcol
 
@@ -80,19 +83,39 @@ def remove_diagonal(X):
 weightedtau.isweightedtau = True
 
 
-def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
+def geomean_np(lo, gl, beta=0.5):
     """
-     Calculate the sortedness (stress-like correlation-based measure that focuses on ordering of points) value for each point
+    >>> round(geomean_np(0.6, 0.64), 4)
+    0.6199
+    """
+    l = (lo + 1) / 2
+    g = (gl + 1) / 2
+    return math.exp((1 - beta) * math.log(l + 0.000000000001) + beta * math.log(g + 0.000000000001)) * 2 - 1
+
+
+def balanced_kendalltau(r, r_, beta=0.5, gamma=4):
+    tau_local = weightedtau(r, r_, weigher=lambda r: 1 / pi * gamma / (gamma ** 2 + r ** 2), rank=False)[0]
+    tau_global = kendalltau(r, r_)[0]
+    return geomean_np(tau_local, tau_global, beta)
+
+
+def sortedness(X, X_, i=None, symmetric=True, f=balanced_kendalltau, return_pvalues=False, parallel=True, parallel_n_trigger=500, parallel_kwargs=None, **kwargs):
+    """
+     Calculate the sortedness (correlation-based measure that focuses on ordering of points) value for each point
      Functions available as scipy correlation coefficients:
-         ρ-sortedness (Spearman),
-         𝜏-sortedness (Kendall's 𝜏),
-         w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏)  ← default
+         ρ-sortedness (Spearman): f=spearmanr
+         𝜏-sortedness (Kendall's 𝜏): f=kendalltau
+         w𝜏-sortedness (Sebastiano Vigna weighted Kendall's 𝜏): f=weightedtau
+         balanced sortedness  ← default
 
     Note:
-        Categorical, or pathological data might present values lower than one due to the presence of ties even with a perfect projection.
-        Depending on the chosen correlation coefficient, ties are penalized, as they do not contribute to establishing any order.
+        Depending on the chosen correlation coefficient:
+            Categorical, or pathological data might present values lower than one due to the presence of ties even with a perfect projection.
+            Ties might be penalized, as they do not contribute to establishing any order.
 
-    Hint:
+    Hints:
+        Swap X and X_ to focus trustworthiness instead of continuity.
+
         Swap two points A and B at X_ to be able to calculate sortedness between A and B in the same space (i.e., originally, `X = X_`):
             `X = [A, B, C, ..., Z]`
             `X_ = [B, A, C, ..., Z]`
@@ -144,7 +167,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> a, b = np.array(ll), np.array(ll[0:1] + list(reversed(ll[1:])))
     >>> b.ravel()
     array([ 0, 16, 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1])
-    >>> r = sortedness(a, b)
+    >>> r = sortedness(a, b, f=weightedtau)
     >>> from statistics import median
     >>> round(min(r), 12), round(max(r), 12), round(median(r),12)
     (-1.0, 0.998638259786, 0.937548981983)
@@ -154,7 +177,7 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> b = np.array(ll)
     >>> b.ravel()
     array([ 2, 10,  3, 11,  0,  4,  7,  5, 16, 12, 13,  6,  9, 14,  8,  1, 15])
-    >>> r = sortedness(a, b)
+    >>> r = sortedness(a, b, f=weightedtau)
     >>> r
     array([ 0.24691868, -0.17456491,  0.19184376, -0.18193532,  0.07175694,
             0.27992254,  0.04121859,  0.16249574, -0.03506842,  0.27856259,
@@ -178,23 +201,23 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
     >>> np.random.seed(0)
     >>> projectedrnd = permutation(original)
 
-    >>> s = sortedness(original, original)
+    >>> s = sortedness(original, original, f=weightedtau)
     >>> round(min(s), 12), round(max(s), 12), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
 
     # Measure sortedness between two points in the same space.
     >>> M = original.copy()
     >>> M[0], M[1] = original[1], original[0]
-    >>> round(sortedness(M, original, 0), 12)
+    >>> round(sortedness(M, original, 0, f=weightedtau), 12)
     0.547929184934
 
-    >>> s = sortedness(original, projected2)
+    >>> s = sortedness(original, projected2, f=weightedtau)
     >>> round(min(s), 12), round(max(s), 12), s
     (1.0, 1.0, array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]))
-    >>> s = sortedness(original, projected1)
+    >>> s = sortedness(original, projected1, f=weightedtau)
     >>> round(min(s), 12), round(max(s), 12)
     (0.393463224666, 0.944810120534)
-    >>> s = sortedness(original, projectedrnd)
+    >>> s = sortedness(original, projectedrnd, f=weightedtau)
     >>> round(min(s), 12), round(max(s), 12)
     (-0.648305479567, 0.397019507592)
 
@@ -248,33 +271,33 @@ def sortedness(X, X_, i=None, symmetric=True, f=weightedtau, return_pvalues=Fals
            -0.39125007,  0.12131153])
     >>> np.random.seed(14980)
     >>> projectedrnd = permutation(original)
-    >>> sortedness(original, projectedrnd)
+    >>> sortedness(original, projectedrnd, f=weightedtau)
     array([ 0.24432153, -0.19634576, -0.00238081, -0.4999116 , -0.01625951,
             0.22478766,  0.07176118, -0.48092843,  0.19345964, -0.44895295,
            -0.42044773,  0.06942218])
-    >>> sortedness(original, np.flipud(original))
+    >>> sortedness(original, np.flipud(original), f=weightedtau)
     array([-0.28741742,  0.36769361,  0.06926091,  0.02550202,  0.21424544,
            -0.3244699 , -0.3244699 ,  0.21424544,  0.02550202,  0.06926091,
             0.36769361, -0.28741742])
     >>> original = np.array([[0],[1],[2],[3],[4],[5],[6]])
     >>> projected = np.array([[6],[5],[4],[3],[2],[1],[0]])
-    >>> sortedness(original, projected)
+    >>> sortedness(original, projected, f=weightedtau)
     array([1., 1., 1., 1., 1., 1., 1.])
     >>> projected = np.array([[0],[6],[5],[4],[3],[2],[1]])
-    >>> sortedness(original, projected)
+    >>> sortedness(original, projected, f=weightedtau)
     array([-1.        ,  0.51956213,  0.81695345,  0.98180162,  0.98180162,
             0.81695345,  0.51956213])
-    >>> round(sortedness(original, projected, 1), 12)
+    >>> round(sortedness(original, projected, 1, f=weightedtau), 12)
     0.519562134793
-    >>> round(sortedness(original, projected, 1, symmetric=False), 12)
+    >>> round(sortedness(original, projected, 1, symmetric=False, f=weightedtau), 12)
     0.422638894922
-    >>> round(sortedness(projected, original, 1, symmetric=False), 12)
+    >>> round(sortedness(projected, original, 1, symmetric=False, f=weightedtau), 12)
     0.616485374665
-    >>> round(sortedness(original, projected, rank=True)[1], 12)
+    >>> round(sortedness(original, projected, f=weightedtau, rank=True)[1], 12)
     0.519562134793
-    >>> round(sortedness(original, projected, rank=False)[1], 12)  # warning: will consider indexes as ranks!
+    >>> round(sortedness(original, projected, f=weightedtau, rank=False)[1], 12)  # warning: will consider indexes as ranks!
     0.074070734162
-    >>> round(sortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1), 12)
+    >>> round(sortedness([[1,2,3,3],[1,2,7,3],[3,4,7,8],[5,2,6,3],[3,5,4,8],[2,7,7,5]], [[7,1,2,3],[3,7,7,3],[5,4,5,6],[9,7,6,3],[2,3,5,1],[1,2,6,3]], 1, f=weightedtau), 12)
     -1.0
     >>> from scipy.stats import weightedtau
     >>> weightedtau.isweightedtau = False  # warning: will deactivate wau's auto-negativation of scores!
