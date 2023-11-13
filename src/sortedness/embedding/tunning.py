@@ -43,13 +43,11 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
-def balanced_embedding__opt(X, symmetric, swapXX_=False, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
+def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
                             min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
-    if symmetric and swapXX_:
-        raise Exception(f"Conflicting flags: {symmetric=} and {swapXX_=}")
     if hyperoptimizer_algorithm is None:
         hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
     if embedding__param_space is None:
@@ -96,10 +94,17 @@ def balanced_embedding__opt(X, symmetric, swapXX_=False, d=2, gamma=4, k=17, glo
             print("___________________________________")
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
-        X_ = balanced_embedding(X, symmetric, d, gamma, k, global_k, beta, **embedding__kwargs,
+        X_ = balanced_embedding(X, d, weightby, gamma, k, global_k, beta, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
-        quality = mean(sortedness(X_, X, symmetric=symmetric, f=taus)) if swapXX_ else mean(sortedness(X, X_, symmetric=symmetric, f=taus))
+        if weightby == "both":
+            quality = mean(sortedness(X, X_, symmetric=True, f=taus))
+        elif weightby == "X":
+            quality = mean(sortedness(X, X_, symmetric=False, f=taus))
+        elif weightby == "X_":
+            quality = mean(sortedness(X_, X, symmetric=False, f=taus))
+        else:
+            raise Exception(f"Unknown: {weightby=}")
 
         if quality > bestval[0]:
             bestval[0] = quality

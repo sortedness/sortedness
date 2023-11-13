@@ -43,7 +43,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
+def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
                        neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
                        min_global_k=100, max_global_k=1000, seed=0, gpu=False, **embedding_optimizer__kwargs):
     """
@@ -55,7 +55,7 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
     >>> rnd = random.default_rng(0)
     >>> rnd.shuffle(X)
     >>> X = StandardScaler().fit_transform(X)
-    >>> X_ = balanced_embedding(X, False, epochs=2)
+    >>> X_ = balanced_embedding(X, weightby="X", epochs=2)
     >>> X_.shape
     (20, 2)
 
@@ -64,12 +64,12 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
     ----------
     X
         Matrix with an instance per row in a given space (often high-dimensional data).
-    symmetric
-        True:   Take the mean between extrusion and intrusion emphasis.
-                See sortedness() documentation for details.
-        False:  Weight by original distances (extrusion emphasis), not the projected distances.
     d
         Target dimensionality.
+    weightby
+        "both":     Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
+        "X":        Focus on continuity.
+        "X_":       Focus on trustworthiness.
     gamma
         Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
     k
@@ -121,8 +121,6 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
             return self.encoder(x)
 
     torch.manual_seed(seed)
-    if symmetric:
-        print("warning: 'symmetric=True' not implemented")
     model = M()
     if gpu:
         model.cuda()
@@ -145,7 +143,7 @@ def balanced_embedding(X, symmetric, d=2, gamma=4, k=17, global_k: int = "sqrt",
                 encoded = model(T)
                 expected_ranking_batch = Dtarget[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, beta, smooothness_tau, min_global_k, max_global_k)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, weightby, beta, smooothness_tau, min_global_k, max_global_k)
                 learning_optimizer.zero_grad()
                 (-loss).backward()
                 learning_optimizer.step()

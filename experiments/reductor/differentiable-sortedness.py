@@ -50,6 +50,7 @@ batch_size = 20
 seed = 0
 gpu = False
 
+weightby = "both"
 n = 1797 // 6
 threads = 1
 # cuda.is_available = lambda: False
@@ -112,7 +113,7 @@ ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, bal, smooothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, weightby, bal, smooothness_tau, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
 for j in range(min(n, 50)):  # xcp.shape[0]):
@@ -141,7 +142,7 @@ def animate(i):
         encoded = model(T)
         expected_ranking_batch = Dtarget[idx]
         D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(D_batch, expected_ranking_batch, k, gk, w, bal, smooothness_tau, ref=i % update == 0)
+        loss, loss_local, loss_global, ref_local, ref_global = loss_function(D_batch, expected_ranking_batch, k, gk, w, weightby, bal, smooothness_tau, ref=i % update == 0)
         optimizer.zero_grad()
         (-loss).backward()
         optimizer.step()
