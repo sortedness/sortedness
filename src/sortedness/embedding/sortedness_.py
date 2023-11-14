@@ -43,7 +43,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
+def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
                        neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
                        min_global_k=100, max_global_k=1000, seed=0, gpu=False, **embedding_optimizer__kwargs):
     """
@@ -55,7 +55,7 @@ def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "
     >>> rnd = random.default_rng(0)
     >>> rnd.shuffle(X)
     >>> X = StandardScaler().fit_transform(X)
-    >>> X_ = balanced_embedding(X, weightby="X", epochs=2)
+    >>> X_ = balanced_embedding(X, orderby="X", epochs=2)
     >>> X_.shape
     (20, 2)
 
@@ -66,7 +66,7 @@ def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "
         Matrix with an instance per row in a given space (often high-dimensional data).
     d
         Target dimensionality.
-    weightby
+    orderby
         "both":     Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
         "X":        Focus on continuity.
         "X_":       Focus on trustworthiness.
@@ -133,7 +133,9 @@ def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "
     Dtarget = from_numpy(D).cuda() if gpu else from_numpy(D)
     T = from_numpy(X).cuda() if gpu else from_numpy(X)
     w = cau(tensor(range(n)), gamma=gamma)
-
+    # todo: presort Dtarget (in a memory-friendly way) when orderby="X". Consequences:
+    #   Need to reindex each row of D_batch after every dist matrix recalculation.
+    #   Need to remove topk from loss_function.
     learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
     loader = DataLoader(Dt(T), shuffle=True, batch_size=batch_size, pin_memory=gpu)
@@ -143,7 +145,7 @@ def balanced_embedding(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "
                 encoded = model(T)
                 expected_ranking_batch = Dtarget[idx]
                 D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, weightby, beta, smooothness_tau, min_global_k, max_global_k)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, orderby, beta, smooothness_tau, min_global_k, max_global_k)
                 learning_optimizer.zero_grad()
                 (-loss).backward()
                 learning_optimizer.step()

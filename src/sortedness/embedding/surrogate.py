@@ -154,7 +154,7 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.000000000001) + beta * torch.log(g + 0.000000000001)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_D, k, global_k, w, weightby="both", beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
+def loss_function(predicted_D, expected_D, k, global_k, w, orderby="both", beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
     n, v = predicted_D.shape  # REMINDER: n can be the size of the batch
     if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
@@ -173,8 +173,8 @@ def loss_function(predicted_D, expected_D, k, global_k, w, weightby="both", beta
         pass
 
         # local
-        if weightby == "both":
-            a, idxs = topk(target_d, k + 1, largest=False)
+        if orderby == "both":
+            a, idxs = topk(target_d, k + 1, largest=False)  # todo: see  balanced_embedding()
             a, idxs = a[1:], idxs[1:]
             b = pred_d[idxs]
             mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau)) / 2
@@ -184,16 +184,16 @@ def loss_function(predicted_D, expected_D, k, global_k, w, weightby="both", beta
             b = target_d[idxs]
             mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau)) / 2
         else:
-            if weightby == "X":
-                a, idxs = topk(target_d, k + 1, largest=False)
+            if orderby == "X":
+                a, idxs = topk(target_d, k + 1, largest=False)  # todo: see  balanced_embedding()
                 a, idxs = a[1:], idxs[1:]
                 b = pred_d[idxs]
-            elif weightby == "X_":
+            elif orderby == "X_":
                 a, idxs = topk(pred_d, k + 1, largest=False)
                 a, idxs = a[1:], idxs[1:]
                 b = target_d[idxs]
             else:
-                raise Exception(f"Unknown: {weightby=}")
+                raise Exception(f"Unknown: {orderby=}")
             mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
 
         # global

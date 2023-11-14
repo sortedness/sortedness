@@ -68,7 +68,7 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
             print(f"Trials {len(trials.results)} >= {max_evals}")
             continue
         for max_evals_ in range(len(trials.results), max_evals + 1):
-            X_, trials = balanced_embedding__opt(X, weightby=swap, epochs=epochs, max_evals=max_evals_, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+            X_, trials = balanced_embedding__opt(X, orderby=swap, epochs=epochs, max_evals=max_evals_, max_neurons=1000, recyclable=False, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
             remote[key] = trials
 
         if X_.shape[0] != X.shape[0]:

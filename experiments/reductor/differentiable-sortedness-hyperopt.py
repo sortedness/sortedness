@@ -38,7 +38,7 @@ from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.embedding.tunning import balanced_embedding__opt
 from sortedness.local import geomean_np
 
-weightby = "both"
+orderby = "both"
 bal = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
@@ -74,7 +74,7 @@ X = datax[:n]
 idxs = list(range(n))
 X = X.astype(np.float32)
 
-X_ = balanced_embedding__opt(X, weightby=weightby, k=20, global_k=20, max_evals=2, progressbar=True)
+X_ = balanced_embedding__opt(X, orderby=orderby, k=20, global_k=20, max_evals=2, progressbar=True)
 Dtarget = cdist(X, X)
 Dtarget = from_numpy(Dtarget / np.max(Dtarget))
 # Dtarget = from_numpy(Dtarget)
@@ -91,7 +91,7 @@ ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, weightby, bal, smooothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, orderby, bal, smooothness_tau, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
 for j in range(min(n, 50)):  # xcp.shape[0]):

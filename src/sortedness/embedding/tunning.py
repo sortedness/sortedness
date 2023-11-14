@@ -20,6 +20,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from datetime import datetime
 from functools import partial
 from itertools import chain
 
@@ -43,10 +44,11 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
-def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
+def balanced_embedding__opt(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
+                            max_neurons=100, max_smooth=2, max_batch=200,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
-                            hyperoptimizer_algorithm=None, max_evals=10, progressbar=False, return_trials=False,
+                            hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False, return_trials=False,
                             min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
     if hyperoptimizer_algorithm is None:
         hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
@@ -55,14 +57,24 @@ def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: in
     if embedding_optimizer__param_space is None:
         embedding_optimizer__param_space = {}
 
-    for key, v in {"smooothness_tau": (0.0001, 20), "neurons": (d, 200), "batch_size": (1, min(200, len(X)))}.items():
+    for key, v in {"smooothness_tau": (0.0001, max_smooth), "neurons": (d, max_neurons), "batch_size": (1, min(max_batch, len(X)))}.items():
         if key not in embedding__param_space:
             embedding__param_space[key] = v
     for key, v in {"lr": (0.0001, 0.1), "alpha": (0.90, 0.99), "weight_decay": (0.0, 0.1), "momentum": (0.0, 0.1), "centered": [True, False]}.items():
         if key not in embedding_optimizer__param_space:
             embedding_optimizer__param_space[key] = v
 
-    space = {}
+    # Useful for recycling trials. Different settings should be reflected in the search space.
+    if recyclable:
+        fixed_space = dict(d=(float(d), d + 0.000001), orderby=[orderby],
+                           gamma=(float(gamma), gamma + 0.000001), k=(float(k), k + 0.000001), beta=(float(beta), beta + 0.000001),
+                           epochs=(float(epochs), epochs + 0.000001))
+        if isinstance(global_k, int):
+            fixed_space["global_k"] = (float(global_k), global_k + 0.000001)
+        space = {k: tuple2hyperopt(k, v) for k, v in fixed_space.items()}
+    else:
+        space = {}
+
     for key, v in chain(embedding__param_space.items(), embedding_optimizer__param_space.items()):
         space[key] = tuple2hyperopt(key, v)
 
@@ -89,22 +101,24 @@ def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: in
         embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
                              for key, v in space.items()
                              if key in ["smooothness_tau", "neurons", "batch_size"]}
-        embedding_optimizer__kwargs = {key: v for key, v in space.items() if key not in embedding__kwargs}
+        embedding_optimizer__kwargs = {key: v
+                                       for key, v in space.items()
+                                       if key not in chain(embedding__kwargs, fixed_space)}
         if show_parameters:
             print("___________________________________")
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
-        X_ = balanced_embedding(X, d, weightby, gamma, k, global_k, beta, epochs=epochs, **embedding__kwargs,
+        X_ = balanced_embedding(X, d, orderby, gamma, k, global_k, beta, epochs=epochs, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
-        if weightby == "both":
+        if orderby == "both":
             quality = mean(sortedness(X, X_, symmetric=True, f=taus))
-        elif weightby == "X":
+        elif orderby == "X":
             quality = mean(sortedness(X, X_, symmetric=False, f=taus))
-        elif weightby == "X_":
+        elif orderby == "X_":
             quality = mean(sortedness(X_, X, symmetric=False, f=taus))
         else:
-            raise Exception(f"Unknown: {weightby=}")
+            raise Exception(f"Unknown: {orderby=}")
 
         if quality > bestval[0]:
             bestval[0] = quality
@@ -120,5 +134,5 @@ def balanced_embedding__opt(X, d=2, weightby="both", gamma=4, k=17, global_k: in
     X_ = trials.best_trial["result"]["X_"]
     if show_parameters:
         dct = {k: round(v[0], 3) for k, v in trials.best_trial["misc"]["vals"].items()}
-        print("Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
+        print(f"{datetime.now()}  Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
     return (X_, trials) if return_trials else X_
