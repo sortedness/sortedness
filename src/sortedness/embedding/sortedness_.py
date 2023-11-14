@@ -23,11 +23,12 @@
 import numpy as np
 import torch
 from scipy.spatial.distance import cdist
-from torch import from_numpy, tensor
+from torch import from_numpy, tensor, topk
 from torch.optim import RMSprop
 from torch.utils.data import Dataset, DataLoader
 
 from sortedness.embedding.surrogate import cau, loss_function
+from sortedness.local import remove_diagonal
 
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
 
@@ -127,27 +128,35 @@ def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "s
 
     X = X.astype(np.float32)
     n = X.shape[0]
-    # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
-    D = cdist(X, X)
-    D /= np.max(D, axis=1)
-    Dtarget = from_numpy(D).cuda() if gpu else from_numpy(D)
-    T = from_numpy(X).cuda() if gpu else from_numpy(X)
+
+    D = remove_diagonal(cdist(X, X))  # todo: distance by batches in a more memory-friendly way
+    D /= np.max(D, axis=1, keepdims=True)
+
+    X = from_numpy(X).cuda() if gpu else from_numpy(X)
+    D = from_numpy(D).cuda() if gpu else from_numpy(D)
+
+    Dsorted, idxs_by_D = (None, None) if orderby == "X_" else topk(D, k, largest=False, dim=1)
     w = cau(tensor(range(n)), gamma=gamma)
-    # todo: presort Dtarget (in a memory-friendly way) when orderby="X". Consequences:
-    #   Need to reindex each row of D_batch after every dist matrix recalculation.
-    #   Need to remove topk from loss_function.
+
     learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
-    loader = DataLoader(Dt(T), shuffle=True, batch_size=batch_size, pin_memory=gpu)
+    loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
     with torch.enable_grad():
         for i in range(epochs):
             for idx in loader:
-                encoded = model(T)
-                expected_ranking_batch = Dtarget[idx]
-                D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(D_batch, expected_ranking_batch, k, global_k, w, orderby, beta, smooothness_tau, min_global_k, max_global_k)
+                X_ = model(X)
+                miniX_ = X_[idx]
+                miniD = D[idx]
+                miniDsorted = None if Dsorted is None else Dsorted[idx]
+                miniidxs_by_D = idxs_by_D[idx]
+
+                # Distance matrix without diagonal.
+                l = len(idx)
+                miniD_ = pdist(miniX_.unsqueeze(1), X_.unsqueeze(0)).flatten()[1:].view(l - 1, l + 1)[:, :-1].reshape(l, l - 1)
+
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, orderby, beta, smooothness_tau, min_global_k, max_global_k)
                 learning_optimizer.zero_grad()
                 (-loss).backward()
                 learning_optimizer.step()
 
-    return model(T).detach().cpu().numpy().astype(float)
+    return model(X).detach().cpu().numpy().astype(float)

@@ -154,8 +154,8 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.000000000001) + beta * torch.log(g + 0.000000000001)) * 2 - 1
 
 
-def loss_function(predicted_D, expected_D, k, global_k, w, orderby="both", beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
-    n, v = predicted_D.shape  # REMINDER: n can be the size of the batch
+def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, orderby="both", beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
+    n, v = miniD.shape  # REMINDER: n is the size of the minibatch
     if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
     if global_k > v:
@@ -163,10 +163,10 @@ def loss_function(predicted_D, expected_D, k, global_k, w, orderby="both", beta=
     if k + 1 > v:
         k = v - 1
 
-    mu = mu_local = mu_global = tau_local = tau_global = 0
+    mu = mu_local_acc = mu_global_acc = tau_local = tau_global = 0
     rnd_idxs = torch.randperm(v)
     start = 0
-    for pred_d, target_d in zip(predicted_D, expected_D):
+    for d, d_, dsorted, idxs_by_D in zip(miniD, miniD_, miniDsorted, miniidxs_by_D):
         # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
         # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
         # Pra global não impacta otimização, pra local fiz k+1 e slicing abaixo pra não perder o primeiro peso de w.
@@ -174,27 +174,24 @@ def loss_function(predicted_D, expected_D, k, global_k, w, orderby="both", beta=
 
         # local
         if orderby == "both":
-            a, idxs = topk(target_d, k + 1, largest=False)  # todo: see  balanced_embedding()
-            a, idxs = a[1:], idxs[1:]
-            b = pred_d[idxs]
-            mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau)) / 2
+            a, b = dsorted, d_[idxs_by_D]
+            mu_local_d = surrogate_wtau(a, b, w[:k], smooothness_tau)
 
-            a, idxs = topk(pred_d, k + 1, largest=False)
-            a, idxs = a[1:], idxs[1:]
-            b = target_d[idxs]
-            mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau)) / 2
+            a, idxs_by_D_ = topk(d_, k, largest=False)
+            b = d[idxs_by_D_]
+            mu_local_d_ = surrogate_wtau(a, b, w[:k], smooothness_tau)
+
+            mu_local = (mu_local_d + mu_local_d_) / 2
         else:
             if orderby == "X":
-                a, idxs = topk(target_d, k + 1, largest=False)  # todo: see  balanced_embedding()
-                a, idxs = a[1:], idxs[1:]
-                b = pred_d[idxs]
+                a, b = dsorted, d_[idxs_by_D]
             elif orderby == "X_":
-                a, idxs = topk(pred_d, k + 1, largest=False)
-                a, idxs = a[1:], idxs[1:]
-                b = target_d[idxs]
+                a, idxs_by_D_ = topk(d_, k, largest=False)
+                b = d[idxs_by_D_]
             else:
                 raise Exception(f"Unknown: {orderby=}")
-            mu_local += (mu_local0 := surrogate_wtau(a, b, w[:k], smooothness_tau))
+            mu_local = surrogate_wtau(a, b, w[:k], smooothness_tau)
+        mu_local_acc += mu_local
 
         # global
         end = start + global_k
@@ -203,17 +200,16 @@ def loss_function(predicted_D, expected_D, k, global_k, w, orderby="both", beta=
             end = global_k
             rnd_idxs = torch.randperm(v)
         gidxs = rnd_idxs[start:end]
-        ga = pred_d[gidxs]
-        gb = target_d[gidxs]
-        # ga = pred_d
-        # gb = target_d
-        mu_global += (mu_global0 := surrogate_tau(ga, gb, smooothness_tau))
+        ga = d[gidxs]
+        gb = d_[gidxs]
+        mu_global = surrogate_tau(ga, gb, smooothness_tau)
+        mu_global_acc += mu_global
         start += global_k
 
-        mu += geomean(mu_local0, mu_global0, beta)
+        mu += geomean(mu_local, mu_global, beta)
         if ref:
             tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
             p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()
             tau_global += kendalltau(p, t)[0]
 
-    return mu / n, mu_local / n, mu_global / n, tau_local / n, tau_global / n
+    return mu / n, mu_local_acc / n, mu_global_acc / n, tau_local / n, tau_global / n

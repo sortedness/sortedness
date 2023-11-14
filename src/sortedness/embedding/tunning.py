@@ -71,9 +71,9 @@ def balanced_embedding__opt(X, d=2, orderby="both", gamma=4, k=17, global_k: int
                            epochs=(float(epochs), epochs + 0.000001))
         if isinstance(global_k, int):
             fixed_space["global_k"] = (float(global_k), global_k + 0.000001)
-        space = {k: tuple2hyperopt(k, v) for k, v in fixed_space.items()}
     else:
-        space = {}
+        fixed_space = {}
+    space = {k: tuple2hyperopt(k, v) for k, v in fixed_space.items()}
 
     for key, v in chain(embedding__param_space.items(), embedding_optimizer__param_space.items()):
         space[key] = tuple2hyperopt(key, v)

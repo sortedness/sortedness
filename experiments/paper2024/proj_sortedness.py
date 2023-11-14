@@ -55,9 +55,9 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
             if trials is None:
                 print(f"{dataset_name[:8]:8} has no trials yet")
                 continue
-            dct = {k: round(v[0], 3) if round(v[0]) - v[0] != 0 else int(v[0])
+            dct = {f"{k[:4]:4}": f"{v[0]:4.3f}" if round(v[0]) - v[0] != 0 else f"{int(v[0]):3}"
                    for k, v in trials.best_trial["misc"]["vals"].items()}
-            print(f"{dataset_name[:8]:8} best:", dct, f"\tλ: {-trials.best_trial['result']['loss']:2.3f}\t", len(trials.results), flush=True)
+            print(f"{dataset_name[:4]:4} {-trials.best_trial['result']['loss']:4.3f} {len(trials.results)}{dct}", flush=True)
             continue
 
         print(d, "---------------------------------------------------------------------------")
@@ -68,7 +68,7 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
             print(f"Trials {len(trials.results)} >= {max_evals}")
             continue
         for max_evals_ in range(len(trials.results), max_evals + 1):
-            X_, trials = balanced_embedding__opt(X, orderby=swap, epochs=epochs, max_evals=max_evals_, max_neurons=1000, recyclable=False, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+            X_, trials = balanced_embedding__opt(X, orderby=swap, epochs=epochs, max_evals=max_evals_, max_neurons=100, max_batch=50, recyclable=False, progressbar=True, show_parameters=True, return_trials=True, **kwargs)
             remote[key] = trials
 
         if X_.shape[0] != X.shape[0]:
