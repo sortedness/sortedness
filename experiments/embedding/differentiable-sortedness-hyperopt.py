@@ -38,14 +38,13 @@ from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.embedding.tunning import balanced_embedding__opt
 from sortedness.local import geomean_np
 
-orderby = "both"
-bal = 0.5
+alpha = 0.5
+beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-alpha = 0.5
 smooothness_tau = 1
 neurons = 30
-# epochs = 100
+epochs = 50
 batch_size = 20
 seed = 0
 gpu = False
@@ -74,7 +73,7 @@ X = datax[:n]
 idxs = list(range(n))
 X = X.astype(np.float32)
 
-X_ = balanced_embedding__opt(X, orderby=orderby, k=20, global_k=20, max_evals=2, progressbar=True)
+X_ = balanced_embedding__opt(X, epochs=epochs, alpha=alpha, k=k, max_evals=1, progressbar=True)
 Dtarget = cdist(X, X)
 Dtarget = from_numpy(Dtarget / np.max(Dtarget))
 # Dtarget = from_numpy(Dtarget)
@@ -91,9 +90,9 @@ ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, orderby, bal, smooothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=True)
 
-ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
@@ -101,7 +100,7 @@ print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss
 
 ax[1].cla()
 xcp = X_
-ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 if chars:
     for j in range(min(n, 50)):  # xcp.shape[0]):
         ax[1].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
@@ -113,7 +112,7 @@ def taus(r, r_):
     return geomean_np(tau_local, tau_global)
 
 
-ref_local = mean(sortedness(X, X_, symmetric=False, weigher=partial(cau, gamma)))
+ref_local = mean(sortedness(X, X_, symmetric=False, f=weightedtau, weigher=partial(cau, gamma)))
 ref_global = mean(sortedness(X, X_, symmetric=False, f=kendalltau))
 ref_bal = mean(sortedness(X, X_, symmetric=False, f=taus))
 plt.title(f"{ref_local:.4f}  {ref_global:.4f}", fontsize=16)

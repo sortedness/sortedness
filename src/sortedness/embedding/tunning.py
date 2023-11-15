@@ -44,12 +44,47 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
-def balanced_embedding__opt(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, epochs=10,
+def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, epochs=10,
                             max_neurons=100, max_smooth=2, max_batch=200,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False, return_trials=False,
                             min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
+    """
+    Warning: parameter `alpha` for balancing sortedness has nothing to do with embedding optimizer's `alpha`.
+
+    Parameters
+    ----------
+    X
+    d
+    gamma
+    k
+    global_k
+    alpha
+    beta
+    epochs
+    max_neurons
+    max_smooth
+    max_batch
+    embedding__param_space
+    embedding_optimizer
+    embedding_optimizer__param_space
+    hyperoptimizer_algorithm
+    max_evals
+    recyclable
+    progressbar
+    return_trials
+    min_global_k
+    max_global_k
+    seed
+    gpu
+    show_parameters
+    hyperoptimizer_kwargs
+
+    Returns
+    -------
+
+    """
     if hyperoptimizer_algorithm is None:
         hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
     if embedding__param_space is None:
@@ -66,7 +101,7 @@ def balanced_embedding__opt(X, d=2, orderby="both", gamma=4, k=17, global_k: int
 
     # Useful for recycling trials. Different settings should be reflected in the search space.
     if recyclable:
-        fixed_space = dict(d=(float(d), d + 0.000001), orderby=[orderby],
+        fixed_space = dict(d=(float(d), d + 0.000001), alpha_embedding=(float(alpha), alpha + 0.000001),
                            gamma=(float(gamma), gamma + 0.000001), k=(float(k), k + 0.000001), beta=(float(beta), beta + 0.000001),
                            epochs=(float(epochs), epochs + 0.000001))
         if isinstance(global_k, int):
@@ -104,21 +139,30 @@ def balanced_embedding__opt(X, d=2, orderby="both", gamma=4, k=17, global_k: int
         embedding_optimizer__kwargs = {key: v
                                        for key, v in space.items()
                                        if key not in chain(embedding__kwargs, fixed_space)}
+
+        if "alpha" in embedding_optimizer__kwargs:
+            embedding_optimizer__kwargs["alpha_"] = embedding_optimizer__kwargs.pop("alpha")
+
         if show_parameters:
+            print()
             print("___________________________________")
+            print(fixed_space, flush=True)
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
-        X_ = balanced_embedding(X, d, orderby, gamma, k, global_k, beta, epochs=epochs, **embedding__kwargs,
+            print()
+            print()
+        X_ = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
-        if orderby == "both":
-            quality = mean(sortedness(X, X_, symmetric=True, f=taus))
-        elif orderby == "X":
+
+        if 0 < alpha < 1:
+            quality = mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha
+        elif alpha == 0:
             quality = mean(sortedness(X, X_, symmetric=False, f=taus))
-        elif orderby == "X_":
+        elif alpha == 1:
             quality = mean(sortedness(X_, X, symmetric=False, f=taus))
         else:
-            raise Exception(f"Unknown: {orderby=}")
+            raise Exception(f"Outside valid range: {alpha=}")
 
         if quality > bestval[0]:
             bestval[0] = quality

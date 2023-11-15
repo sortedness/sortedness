@@ -45,7 +45,6 @@ import torch
 from hdict import hdict, apply, cache
 from matplotlib import pyplot as plt
 from numpy import array
-from numpy.random import permutation
 from pandas import DataFrame
 from scipy.spatial.distance import pdist, squareform
 from scipy.stats import spearmanr, kendalltau, weightedtau

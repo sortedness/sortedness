@@ -21,11 +21,14 @@
 #  time spent here.
 #
 import math
+from itertools import repeat
 from math import pi
 
 import torch
 from scipy.stats import weightedtau, kendalltau
 from torch import tanh, sum, topk, sqrt, abs
+
+from sortedness.local import geomean_np
 
 cau = lambda r, gamma=1: 1 / pi * gamma / (gamma ** 2 + r ** 2)
 har = lambda r: 1 / (r + 1)
@@ -154,7 +157,7 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.000000000001) + beta * torch.log(g + 0.000000000001)) * 2 - 1
 
 
-def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, orderby="both", beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
+def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha=0.5, beta=0.5, smooothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
     n, v = miniD.shape  # REMINDER: n is the size of the minibatch
     if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
@@ -162,10 +165,22 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, ord
         global_k = v
     if k + 1 > v:
         k = v - 1
+    if k < 1:
+        raise Exception(f"`k` must be greater than 1: {k} > 1")
+    if global_k < 1:
+        raise Exception(f"`global_k` must be greater than 1: {global_k} > 1")
+    if not (0 <= alpha <= 1):
+        raise Exception(f"`alpha` outside valid range: 0 <= {alpha} <= 1")
+    if not (0 <= beta <= 1):
+        raise Exception(f"`beta` outside valid range: 0 <= {beta} <= 1")
+    if not (0.0001 <= smooothness_tau <= 2):
+        raise Exception(f"`beta` outside valid range: 0.0001 <= {smooothness_tau} <= 2")
 
-    mu = mu_local_acc = mu_global_acc = tau_local = tau_global = 0
+    mu = mu_local_acc = mu_global_acc = tau_local_acc = tau_global_acc = 0
     rnd_idxs = torch.randperm(v)
     start = 0
+    if alpha == 1:
+        miniDsorted, miniidxs_by_D = repeat(None), repeat(None)
     for d, d_, dsorted, idxs_by_D in zip(miniD, miniD_, miniDsorted, miniidxs_by_D):
         # REMINDER: o próprio ponto vai ser usado/amostrado 1 vez como sendo vizinho de si mesmo, não vale o custo de remover:
         # Impacta significado da medida em datasets muito pequenos, deixando ela marginalmente mais otimista
@@ -173,43 +188,55 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, ord
         pass
 
         # local
-        if orderby == "both":
-            a, b = dsorted, d_[idxs_by_D]
-            mu_local_d = surrogate_wtau(a, b, w[:k], smooothness_tau)
+        if beta < 1:
+            if 0 < alpha < 1:
+                a1, b1 = dsorted, d_[idxs_by_D]
+                mu_local_d = surrogate_wtau(a1, b1, w[:k], smooothness_tau)
 
-            a, idxs_by_D_ = topk(d_, k, largest=False)
-            b = d[idxs_by_D_]
-            mu_local_d_ = surrogate_wtau(a, b, w[:k], smooothness_tau)
+                a2, idxs_by_D_ = topk(d_, k, largest=False)
+                b2 = d[idxs_by_D_]
+                mu_local_d_ = surrogate_wtau(a2, b2, w[:k], smooothness_tau)
 
-            mu_local = (mu_local_d + mu_local_d_) / 2
-        else:
-            if orderby == "X":
-                a, b = dsorted, d_[idxs_by_D]
-            elif orderby == "X_":
-                a, idxs_by_D_ = topk(d_, k, largest=False)
-                b = d[idxs_by_D_]
+                mu_local = geomean(mu_local_d, mu_local_d_, alpha)
             else:
-                raise Exception(f"Unknown: {orderby=}")
-            mu_local = surrogate_wtau(a, b, w[:k], smooothness_tau)
-        mu_local_acc += mu_local
+                if alpha == 0:
+                    a, b = dsorted, d_[idxs_by_D]
+                else:
+                    a, idxs_by_D_ = topk(d_, k, largest=False)
+                    b = d[idxs_by_D_]
+                mu_local = surrogate_wtau(a, b, w[:k], smooothness_tau)
+            mu_local_acc += mu_local
 
         # global
-        end = start + global_k
-        if end > v:
-            start = 0
-            end = global_k
-            rnd_idxs = torch.randperm(v)
-        gidxs = rnd_idxs[start:end]
-        ga = d[gidxs]
-        gb = d_[gidxs]
-        mu_global = surrogate_tau(ga, gb, smooothness_tau)
-        mu_global_acc += mu_global
-        start += global_k
+        if beta > 0:
+            end = start + global_k
+            if end > v:
+                start = 0
+                end = global_k
+                rnd_idxs = torch.randperm(v)
+            gidxs = rnd_idxs[start:end]
+            start += global_k
+            ga = d[gidxs]
+            gb = d_[gidxs]
+            mu_global = surrogate_tau(ga, gb, smooothness_tau)
+            mu_global_acc += mu_global
 
-        mu += geomean(mu_local, mu_global, beta)
+        if 0 < beta < 1:
+            mu += geomean(mu_local, mu_global, beta)
+        elif beta == 0:
+            mu += mu_local
+        else:
+            mu += mu_global
+
         if ref:
-            tau_local += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
-            p, t = ga.cpu().detach().numpy(), gb.cpu().detach().numpy()
-            tau_global += kendalltau(p, t)[0]
+            if 0 < alpha < 1:
+                lo1 = weightedtau(a1.cpu().detach().numpy(), b1.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+                lo2 = weightedtau(a2.cpu().detach().numpy(), b2.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+                tau_local_acc += geomean_np(lo1, lo2, alpha)
+            else:
+                tau_local_acc += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+            p, t = d.cpu().detach().numpy(), d_.cpu().detach().numpy()
+            tau_global_acc += kendalltau(p, t)[0]
+            #         000000020:	optimized sur: 0.1438  local/globa: 0.1290 0.1604  REF: 0.5243 0.4973		1.000000
 
-    return mu / n, mu_local_acc / n, mu_global_acc / n, tau_local / n, tau_global / n
+    return mu / n, mu_local_acc / n, mu_global_acc / n, tau_local_acc / n, tau_global_acc / n

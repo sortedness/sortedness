@@ -28,21 +28,24 @@ import torch.optim as optim
 from matplotlib import animation
 from numpy import random
 from scipy.spatial.distance import cdist
-from scipy.stats import rankdata
 from sklearn import datasets
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
-from torch import from_numpy, set_num_threads, tensor
+from torch import from_numpy, set_num_threads, tensor, topk
 from torch.utils.data import DataLoader
 
 from sortedness.embedding.sortedness_ import Dt
 from sortedness.embedding.surrogate import cau, loss_function
+from sortedness.local import remove_diagonal
 
-# relative_diff = False
-bal = 0.5
+# X     000000018:	optimized sur: 0.1706  local/globa: 0.1550 0.1879  REF: 0.6209 0.5486		1.000000
+# both  000000018:	optimized sur: 0.1663  local/globa: 0.1611 0.1735  REF: 0.6426 0.4954		1.000000
+# X_    000000018:	optimized sur: 0.1641  local/globa: 0.1556 0.1751  REF: 0.5480 0.4830		1.000000
+alpha = 0.5
+beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-alpha = 0.5
+global_k = k
 smooothness_tau = 1
 neurons = 30
 # epochs = 100
@@ -50,8 +53,7 @@ batch_size = 20
 seed = 0
 gpu = False
 
-orderby = "both"
-n = 1797 // 6
+n = 1797 // 5
 threads = 1
 # cuda.is_available = lambda: False
 set_num_threads(threads)
@@ -96,10 +98,6 @@ model = M()
 if gpu:
     model.cuda()
 print(X.shape)
-Dtarget = cdist(X, X)
-Dtarget = from_numpy(Dtarget / np.max(Dtarget, axis=1))
-if gpu:
-    Dtarget = Dtarget.cuda()
 # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
 T = from_numpy(X).cuda() if gpu else from_numpy(X)
 ca = cau(tensor(range(n)), gamma=gamma) / 0.54
@@ -112,10 +110,19 @@ ax[0], ax[1] = axs
 ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
-D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, orderby, bal, smooothness_tau, ref=True)
+X_ = xcp
+D_ = remove_diagonal(cdist(X_, X_))
+D = remove_diagonal(cdist(X, X))
+D /= np.max(D, axis=1, keepdims=True)
 
-ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+X = from_numpy(X).cuda() if gpu else from_numpy(X)
+D = from_numpy(D).cuda() if gpu else from_numpy(D)
+D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
+
+Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, Dsorted, idxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, ref=True)
+
+ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
@@ -135,22 +142,33 @@ else:
 
 
 def animate(i):
-    encoded = loss = loss_local = loss_global = ref_local = ref_global = None
+    X_ = loss = loss_local = loss_global = ref_local = ref_global = None
     c[0] += 1
     i = c[0]
     for idx in loader[0]:
-        encoded = model(T)
-        expected_ranking_batch = Dtarget[idx]
-        D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(D_batch, expected_ranking_batch, k, gk, w, orderby, bal, smooothness_tau, ref=i % update == 0)
+        X_ = model(X)
+        miniX_ = X_[idx]
+        miniD = D[idx]
+        if alpha == 1:
+            miniDsorted = None
+            miniidxs_by_D = None
+        else:
+            miniDsorted = Dsorted[idx]
+            miniidxs_by_D = idxs_by_D[idx]
+
+        # Distance matrix without diagonal.
+        l = len(idx)
+        miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
+
+        loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, ref=True)
         optimizer.zero_grad()
         (-loss).backward()
         optimizer.step()
 
     if i % update == 0:
         ax[1].cla()
-        xcp = encoded.detach().cpu().numpy()
-        ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+        xcp = X_.detach().cpu().numpy()
+        ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
         if chars:
             for j in range(min(n, 50)):  # xcp.shape[0]):
                 ax[1].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)

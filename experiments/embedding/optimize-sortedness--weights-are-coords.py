@@ -14,16 +14,15 @@ from torch.utils.data import DataLoader
 from sortedness.embedding.sortedness_ import Dt
 from sortedness.embedding.surrogate import cau, loss_function
 
-bal = 0.5
+alpha = 0.5
+beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-alpha = 0.5
 smooothness_tau = 0.1
 batch_size = 20
 seed = 0
 gpu = False
 
-orderby = "both"
 n = 1797 // 6
 threads = 1
 update = 1
@@ -76,9 +75,9 @@ ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, Dtarget, k, gk, w, orderby, bal, smooothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=True)
 
-ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
@@ -105,7 +104,7 @@ def animate(i):
         encoded = model()
         expected_ranking_batch = Dtarget[idx]
         D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(D_batch, expected_ranking_batch, k, gk, w, orderby, bal, smooothness_tau, ref=i % update == 0)
+        loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=i % update == 0)
         optimizer.zero_grad()
         (-loss).backward()
         optimizer.step()
@@ -113,7 +112,7 @@ def animate(i):
     if i % update == 0:
         ax[1].cla()
         xcp = encoded.detach().cpu().numpy()
-        ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=alpha)
+        ax[1].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
         if chars:
             for j in range(min(n, 50)):  # xcp.shape[0]):
                 ax[1].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)

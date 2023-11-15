@@ -20,6 +20,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+
 import numpy as np
 import torch
 from scipy.spatial.distance import cdist
@@ -30,7 +31,7 @@ from torch.utils.data import Dataset, DataLoader
 from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.local import remove_diagonal
 
-pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
+pdist = torch.nn.PairwiseDistance(p=2, keepdim=True, eps=0.000000001)
 
 
 class Dt(Dataset):
@@ -44,7 +45,7 @@ class Dt(Dataset):
         return idx
 
 
-def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "sqrt", beta=0.5, smooothness_tau=1,
+def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smooothness_tau=1,
                        neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
                        min_global_k=100, max_global_k=1000, seed=0, gpu=False, **embedding_optimizer__kwargs):
     """
@@ -56,7 +57,7 @@ def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "s
     >>> rnd = random.default_rng(0)
     >>> rnd.shuffle(X)
     >>> X = StandardScaler().fit_transform(X)
-    >>> X_ = balanced_embedding(X, orderby="X", epochs=2)
+    >>> X_ = balanced_embedding(X, alpha=0, epochs=2)
     >>> X_.shape
     (20, 2)
 
@@ -67,10 +68,6 @@ def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "s
         Matrix with an instance per row in a given space (often high-dimensional data).
     d
         Target dimensionality.
-    orderby
-        "both":     Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
-        "X":        Focus on continuity.
-        "X_":       Focus on trustworthiness.
     gamma
         Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
     k
@@ -78,6 +75,10 @@ def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "s
     global_k
         int:    Number of "neighbors" to sample for global optimization.
         "sqrt": Take the square root of the number of points limited by `max_global_k`.
+    alpha
+        Parameter to balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
+        default=0.5
+            Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
     beta
         Parameter to balance between local and global. 0 is totally local. 1 is totally global.
     smooothness_tau
@@ -135,26 +136,32 @@ def balanced_embedding(X, d=2, orderby="both", gamma=4, k=17, global_k: int = "s
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
-    Dsorted, idxs_by_D = (None, None) if orderby == "X_" else topk(D, k, largest=False, dim=1)
+    Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
     w = cau(tensor(range(n)), gamma=gamma)
 
+    if "alpha_" in embedding_optimizer__kwargs:
+        embedding_optimizer__kwargs["alpha"] = embedding_optimizer__kwargs.pop("alpha_")
     learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
     loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
-    with torch.enable_grad():
+    with ((torch.enable_grad())):
         for i in range(epochs):
             for idx in loader:
                 X_ = model(X)
                 miniX_ = X_[idx]
                 miniD = D[idx]
-                miniDsorted = None if Dsorted is None else Dsorted[idx]
-                miniidxs_by_D = idxs_by_D[idx]
+                if alpha == 1:
+                    miniDsorted = None
+                    miniidxs_by_D = None
+                else:
+                    miniDsorted = Dsorted[idx]
+                    miniidxs_by_D = idxs_by_D[idx]
 
                 # Distance matrix without diagonal.
                 l = len(idx)
-                miniD_ = pdist(miniX_.unsqueeze(1), X_.unsqueeze(0)).flatten()[1:].view(l - 1, l + 1)[:, :-1].reshape(l, l - 1)
+                miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, orderby, beta, smooothness_tau, min_global_k, max_global_k)
+                loss, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, min_global_k, max_global_k)
                 learning_optimizer.zero_grad()
                 (-loss).backward()
                 learning_optimizer.step()
