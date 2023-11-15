@@ -57,13 +57,13 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
                 continue
             dct = {f"{k}": f"{v[0]:4.4f}" if round(v[0]) - v[0] != 0 else f"{int(v[0]):3}"
                    for k, v in trials.best_trial["misc"]["vals"].items()}
-            print(f"{d} {-trials.best_trial['result']['loss']:4.3f} {len(trials.results)} {dct}", flush=True)
+            print(f"{d[:4]:4} {-trials.best_trial['result']['loss']:4.3f} {len(trials.results)} {dct}", flush=True)
             # dct = {f"{k[:4]:4}": f"{v[0]:4.3f}" if round(v[0]) - v[0] != 0 else f"{int(v[0]):3}"
             #        for k, v in trials.best_trial["misc"]["vals"].items()}
-            # print(f"{dataset_name[:4]:4} {-trials.best_trial['result']['loss']:4.3f} {len(trials.results)}{dct}", flush=True)
+            # print(f"{d[:4]:4} {-trials.best_trial['result']['loss']:4.3f} {len(trials.results)}{dct}", flush=True)
             continue
 
-        print(d, "---------------------------------------------------------------------------")
+        print("\n", d, "=====================================================================================================\n", flush=True)
         kwargs, ini = ({}, 1) if trials is None else ({"trials": trials}, len(trials.results))
 
         X, y = load_dataset(d)
