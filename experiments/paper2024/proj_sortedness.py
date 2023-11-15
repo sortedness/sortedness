@@ -10,6 +10,9 @@ from sortedness.config import schedule_uri, remote_cache_uri
 from sortedness.embedding.tunning import balanced_embedding__opt
 
 
+# bash run:
+# for i in $(seq 2 100); do echo "++++++++++ $i epochs"; poetry run python experiments/paper2024/proj_sortedness.py $i $i alpha 0.5; done
+
 def load_dataset(dataset_name):
     data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
     X = np.load(os.path.join(data_dir, 'X.npy'))
@@ -21,26 +24,27 @@ if len(argv) < 3:
     print("Usage: proj_sortedness.py epochs max_evals [alpha 0.7] [best]")
     exit()
 
-datasets = [
-    "bank",
-    "cnae9",
-    "epileptic",
-    "fmd",
-    "hatespeech",
-    "imdb",
-    "secom",
-    "sentiment",
-    "spambase",
-    "cifar10",
-    "coil20",
-    "fashion_mnist",
-    "har",
-    "hiva",
-    "orl",
-    "seismic",
-    "sms",
-    "svhn"
-]
+# datasets = [
+#     # "bank",
+#     "cifar10",
+#     # "cnae9",
+#     "coil20",
+#     "epileptic",
+#     "fashion_mnist",
+#     "fmd",
+#     "har",
+#     # "hatespeech",
+#     "hiva",
+#     # "imdb",
+#     # "orl",
+#     "secom",
+#     # "seismic",
+#     # "sentiment",
+#     "sms",
+#     "spambase",
+#     "svhn"
+# ]
+datasets = ["bank", "cifar10", "cnae9", "coil20", "epileptic", "fashion_mnist", "fmd", "har", "hatespeech", "hiva", "imdb", "orl", "secom", "seismic", "sentiment", "sms", "spambase", "svhn"]
 alpha = float(argv[argv.index("alpha") + 1]) if "alpha" in argv else 0.5
 onlyshowbest = "best" in argv
 epochs = int(argv[1])
@@ -73,7 +77,7 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
         for max_evals_ in range(ini, max_evals + 1):
             X_, trials = balanced_embedding__opt(X, alpha=alpha, epochs=epochs, max_evals=max_evals_, max_neurons=100, max_batch=50,
                                                  embedding_optimizer__param_space={"alpha": (0.950, 0.999), "weight_decay": (0.00, 0.01), "momentum": (0.00, 0.01), "centered": [True, False]},
-                                                 progressbar=True, show_parameters=True, return_trials=True, **kwargs)
+                                                 progressbar=False, show_parameters=True, return_trials=True, **kwargs)
             remote[key] = trials
 
             if X_.shape[0] != X.shape[0]:
@@ -81,4 +85,4 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
                 print("Error running: Projection returned %d rows when %d rows were expected" % (X_.shape[0], X.shape[0]))
                 print('----------------------------------------------------')
 
-            X_.tofile('proj_X_%s_SORT.csv' % d, sep=',')
+            X_.tofile("proj_X_%s_SORT.csv" % d, sep=',')

@@ -144,12 +144,12 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
             embedding_optimizer__kwargs["alpha_"] = embedding_optimizer__kwargs.pop("alpha")
 
         if show_parameters:
-            print("__________________________________________", flush=True)
+            print("·", flush=True)
             print(f"{str(datetime.now())[:19]}")
             print(fixed_space, flush=True)
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
-            print("_", flush=True)
+            print("·", flush=True)
         X_ = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
@@ -177,7 +177,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
     X_ = trials.best_trial["result"]["X_"]
     if show_parameters:
-        dct = {k: round(v[0], 3) for k, v in trials.best_trial["misc"]["vals"].items()}
-        print(f"{str(datetime.now())[:19]}  Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
         print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ")
+        dct = {k: round(v[0], 3) for k, v in trials.best_trial["misc"]["vals"].items()}
+        print(f"{str(datetime.now())[:19]} {len(trials)}/{max_evals} Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
     return (X_, trials) if return_trials else X_
