@@ -24,19 +24,20 @@ def load_dataset(dataset_name):
     return X, y
 
 
-print("Usage: proj_sortedness.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_evals=10] [epochs=2] [alpha=0.5] [best]")
-print("--------------------------------------------------------------------")
 dct = handle_command_line(argv, datasets=list, max_evals=10, epochs=2, alpha=0.5, best=False)
+if "best" not in argv:
+    print("Usage: proj_sortedness.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_evals=10] [epochs=2] [alpha=0.5] [best]")
+    print("--------------------------------------------------------------------")
+    print()
+    print()
+    pprint(dct)
+    print()
+    print()
 datasets = dct["datasets"]
 max_evals = dct["max_evals"]
 alpha = dct["alpha"]
 onlyshowbest = dct["best"]
 epochs = dct["epochs"]
-print()
-print()
-pprint(dct)
-print()
-print()
 
 with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
     tasks = datasets if onlyshowbest else (Scheduler(db, timeout=60, mark_as_done=False) << datasets)

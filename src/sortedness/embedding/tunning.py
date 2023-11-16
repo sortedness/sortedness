@@ -132,8 +132,6 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         tau_global = kendalltau(r, r_)[0]
         return geomean_np(tau_local, tau_global)
 
-    bestval = [-1]
-
     def objective(space):  # todo: replace smooothness_tau by lambda
         embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
                              for key, v in space.items()
@@ -178,14 +176,6 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         if show_parameters:
             print("\n", quality, flush=True)
             print("_", flush=True)
-
-        # Discard worse (X_, model) from trials to save space.
-        if quality > bestval[0]:
-            bestval[0] = quality
-        else:
-            dct["X_"] = None
-            if "model" in dct:
-                dct["model"] = None
 
         return dct
 
