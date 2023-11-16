@@ -44,6 +44,7 @@ sympy = "^1.12"
 hyperopt = "^0.2.7"
 pymysql = "^1.1.0"
 ipython = "^8.17.2"
+argvsucks = "^0.230725.7"
 
 [[tool.poetry.source]]
 name = "torchcpu1130"

@@ -1,17 +1,21 @@
 import os
 from pathlib import Path
+from pprint import pprint
 from sys import argv
 
 import numpy as np
+from argvsucks import handle_command_line
 from shelchemy import sopen
 from shelchemy.scheduler import Scheduler
 
 from sortedness.config import schedule_uri, remote_cache_uri
 from sortedness.embedding.tunning import balanced_embedding__opt
 
+"""
+bash run:
+for i in $(seq 2 100); do echo "++++++++++ $i epochs"; poetry run python experiments/paper2024/proj_sortedness.py $i $i alpha 0.5; done
+"""
 
-# bash run:
-# for i in $(seq 2 100); do echo "++++++++++ $i epochs"; poetry run python experiments/paper2024/proj_sortedness.py $i $i alpha 0.5; done
 
 def load_dataset(dataset_name):
     data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
@@ -20,35 +24,20 @@ def load_dataset(dataset_name):
     return X, y
 
 
-if len(argv) < 3:
-    print("Usage: proj_sortedness.py epochs max_evals [alpha 0.5] [best]")
-    exit()
+print("Usage: proj_sortedness.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_evals=10] [epochs=2] [alpha=0.5] [best]")
+print("--------------------------------------------------------------------")
+dct = handle_command_line(argv, datasets=list, max_evals=10, epochs=2, alpha=0.5, best=False)
+datasets = dct["datasets"]
+max_evals = dct["max_evals"]
+alpha = dct["alpha"]
+onlyshowbest = dct["best"]
+epochs = dct["epochs"]
+print()
+print()
+pprint(dct)
+print()
+print()
 
-# datasets = [
-#     # "bank",
-#     "cifar10",
-#     # "cnae9",
-#     "coil20",
-#     # "epileptic",
-#     # "fashion_mnist",
-#     "fmd",
-#     "har",
-#     # "hatespeech",
-#     "hiva",
-#     # "imdb",
-#     # "orl",
-#     "secom",
-#     # "seismic",
-#     # "sentiment",
-#     # "sms",
-#     # "spambase",
-#     "svhn"
-# ]
-datasets = ["bank", "cifar10", "cnae9", "coil20", "epileptic", "fashion_mnist", "fmd", "har", "hatespeech", "hiva", "imdb", "orl", "secom", "seismic", "sentiment", "sms", "spambase", "svhn"]
-alpha = float(argv[argv.index("alpha") + 1]) if "alpha" in argv else 0.5
-onlyshowbest = "best" in argv
-epochs = int(argv[1])
-max_evals = int(argv[2])
 with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
     tasks = datasets if onlyshowbest else (Scheduler(db, timeout=60, mark_as_done=False) << datasets)
     for d in tasks:

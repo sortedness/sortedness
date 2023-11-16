@@ -160,9 +160,10 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
 
         dct = {"status": STATUS_OK}
         if return_only_X_:
-            dct["X_"] = X_ = tup
+            dct["X_"] = tup
         else:
             dct["X_"], dct["model"], dct["quality"] = tup
+        X_ = dct["X_"]
 
         if 0 < alpha < 1:
             quality = mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha
@@ -200,5 +201,5 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     if return_only_X_:
         return result["X_"]
     if "model" in result:
-        return result["X_"], best["model"], best["quality"], trials
+        return result["X_"], result["model"], result["quality"], trials
     return result["X_"], None, None, trials

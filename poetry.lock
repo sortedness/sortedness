@@ -27,6 +27,17 @@ files = [
 ]
 
 [[package]]
+name = "argvsucks"
+version = "0.230725.7"
+description = ""
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "argvsucks-0.230725.7-py3-none-any.whl", hash = "sha256:1d0d431301cd8f97ae18b0d6a27ca453247686d263d3cc38ebf753324365adf3"},
+    {file = "argvsucks-0.230725.7.tar.gz", hash = "sha256:8af130f115172f58382eca22fc2ea27929162d72640f854f2c41225fb61c886a"},
+]
+
+[[package]]
 name = "asttokens"
 version = "2.4.1"
 description = "Annotate AST trees with source code positions"
@@ -3311,4 +3322,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "5fef0a9da81a45527f468f293e12835f796af96aa087436ad8b083a7fa31ed9d"
+content-hash = "e7895e0820ba8f6b24dd81cce0a732b5c62864764521da8d6a990017f26b8347"
