@@ -21,7 +21,7 @@ def load_dataset(dataset_name):
 
 
 if len(argv) < 3:
-    print("Usage: proj_sortedness.py epochs max_evals [alpha 0.7] [best]")
+    print("Usage: proj_sortedness.py epochs max_evals [alpha 0.5] [best]")
     exit()
 
 # datasets = [
@@ -29,8 +29,8 @@ if len(argv) < 3:
 #     "cifar10",
 #     # "cnae9",
 #     "coil20",
-#     "epileptic",
-#     "fashion_mnist",
+#     # "epileptic",
+#     # "fashion_mnist",
 #     "fmd",
 #     "har",
 #     # "hatespeech",
@@ -40,8 +40,8 @@ if len(argv) < 3:
 #     "secom",
 #     # "seismic",
 #     # "sentiment",
-#     "sms",
-#     "spambase",
+#     # "sms",
+#     # "spambase",
 #     "svhn"
 # ]
 datasets = ["bank", "cifar10", "cnae9", "coil20", "epileptic", "fashion_mnist", "fmd", "har", "hatespeech", "hiva", "imdb", "orl", "secom", "seismic", "sentiment", "sms", "spambase", "svhn"]
@@ -75,10 +75,12 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
             print(f"Trials {len(trials.results)} > {max_evals}")
             continue
         for max_evals_ in range(ini, max_evals + 1):
-            X_, trials = balanced_embedding__opt(X, alpha=alpha, epochs=epochs, max_evals=max_evals_, max_neurons=100, max_batch=50,
-                                                 embedding_optimizer__param_space={"alpha": (0.950, 0.999), "weight_decay": (0.00, 0.01), "momentum": (0.00, 0.01), "centered": [True, False]},
-                                                 track_best_model=True,
-                                                 progressbar=False, show_parameters=True, return_trials=True, **kwargs)
+            X_, model, quality, trials = balanced_embedding__opt(X, alpha=alpha, epochs=epochs, max_evals=max_evals_, max_neurons=100, max_batch=50,
+                                                                 embedding_optimizer__param_space={
+                                                                     "alpha": (0.950, 0.999), "weight_decay": (0.00, 0.01), "momentum": (0.00, 0.01), "centered": [True, False]
+                                                                 },
+                                                                 track_best_model=True,
+                                                                 progressbar=False, return_only_X_=False, show_parameters=True, **kwargs)
             remote[key] = trials
 
             if X_.shape[0] != X.shape[0]:
@@ -86,4 +88,5 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
                 print("Error running: Projection returned %d rows when %d rows were expected" % (X_.shape[0], X.shape[0]))
                 print('----------------------------------------------------')
 
-            X_.tofile("proj_X_%s_SORT.csv" % d, sep=',')
+            print(">>>>>>>>>>>>>>>>", quality, "<<<<<<<<<<<<<<<<<")
+            X_.tofile(f"proj-X_-{d}-SORT-quality_{quality}.csv", sep=',')

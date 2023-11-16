@@ -49,8 +49,8 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
                             max_neurons=100, max_smooth=2, max_batch=200,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
-                            hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False, return_trials=False,
-                            min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
+                            hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False,
+                            min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
     """
     Warning: parameter `alpha` for balancing sortedness has nothing to do with embedding optimizer's `alpha`.
 
@@ -74,11 +74,11 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     max_evals
     recyclable
     progressbar
-    return_trials
     min_global_k
     max_global_k
     seed
     track_best_model
+    return_only_X_
     gpu
     show_parameters
     hyperoptimizer_kwargs
@@ -152,9 +152,17 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
             print("·", flush=True)
-        X_ = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
-                                embedding_optimizer=embedding_optimizer,
-                                min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, track_best_model=track_best_model, gpu=gpu, **embedding_optimizer__kwargs)
+        tup = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
+                                 embedding_optimizer=embedding_optimizer,
+                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed,
+                                 track_best_model=track_best_model, return_only_X_=return_only_X_,
+                                 gpu=gpu, **embedding_optimizer__kwargs)
+
+        dct = {"status": STATUS_OK}
+        if return_only_X_:
+            dct["X_"] = X_ = tup
+        else:
+            dct["X_"], dct["model"], dct["quality"] = tup
 
         if 0 < alpha < 1:
             quality = mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha
@@ -164,22 +172,33 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
             quality = mean(sortedness(X_, X, symmetric=False, f=taus))
         else:
             raise Exception(f"Outside valid range: {alpha=}")
-
-        if quality > bestval[0]:
-            bestval[0] = quality
-        else:
-            X_ = None
+        dct["loss"] = -quality
 
         if show_parameters:
             print("\n", quality, flush=True)
             print("_", flush=True)
-        return {"loss": -quality, "status": STATUS_OK, "X_": X_}
+
+        # Discard worse (X_, model) from trials to save space.
+        if quality > bestval[0]:
+            bestval[0] = quality
+        else:
+            dct["X_"] = None
+            if "model" in dct:
+                dct["model"] = None
+
+        return dct
 
     rnd = default_rng(seed)
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
-    X_ = trials.best_trial["result"]["X_"]
+    best = trials.best_trial
     if show_parameters:
         print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ")
-        dct = {k: round(v[0], 3) for k, v in trials.best_trial["misc"]["vals"].items()}
-        print(f"{str(datetime.now())[:19]} {len(trials)}/{max_evals} Best:", dct, f"λ:\t{-trials.best_trial['result']['loss']}", flush=True, sep="\t")
-    return (X_, trials) if return_trials else X_
+        dct = {k: round(v[0], 3) for k, v in best["misc"]["vals"].items()}
+        print(f"{str(datetime.now())[:19]} {len(trials)}/{max_evals} Best:", dct, f"λ:\t{-best['result']['loss']}", flush=True, sep="\t")
+
+    result = best["result"]
+    if return_only_X_:
+        return result["X_"]
+    if "model" in result:
+        return result["X_"], best["model"], best["quality"], trials
+    return result["X_"], None, None, trials

@@ -48,7 +48,8 @@ class Dt(Dataset):
 
 def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smooothness_tau=1,
                        neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
-                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, gpu=False, **embedding_optimizer__kwargs):
+                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
+                       gpu=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -98,6 +99,8 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         int
     track_best_model
         Whether to return the best result (default) or the last one.
+    return_only_X_
+        Return `X_` or `(X_, model, quality)`?
     gpu
         Whether to use GPU.
     embedding_optimizer__kwargs
@@ -126,6 +129,10 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         def forward(self, x):
             return self.encoder(x)
 
+    if epochs < 1:
+        raise Exception(f"`epochs` < 1")
+    if batch_size < 1:
+        raise Exception(f"`batch_size` < 1")
     torch.manual_seed(seed)
     model = M()
     if gpu:
@@ -169,6 +176,7 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
                 quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, min_global_k, max_global_k)
                 if track_best_model and quality > best_quality:
                     best_quality = quality
+                    best_X_ = X_
                     best_dct = copy.deepcopy(model.state_dict())
 
                 learning_optimizer.zero_grad()
@@ -178,5 +186,11 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     if track_best_model:
         model = M()
         model.load_state_dict(best_dct)
+        X_ = best_X_
 
-    return model(X).detach().cpu().numpy().astype(float)
+    X_ = X_.detach().cpu().numpy().astype(float)
+
+    if return_only_X_:
+        return X_
+
+    return X_, model, best_quality
