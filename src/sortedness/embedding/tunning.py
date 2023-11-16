@@ -44,12 +44,13 @@ def tuple2hyperopt(key, v):
     return hp.choice(key, v)
 
 
+# todo: replace max_smooth by max_lambda
 def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, epochs=10,
                             max_neurons=100, max_smooth=2, max_batch=200,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False, return_trials=False,
-                            min_global_k=100, max_global_k=1000, seed=0, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
+                            min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
     """
     Warning: parameter `alpha` for balancing sortedness has nothing to do with embedding optimizer's `alpha`.
 
@@ -77,6 +78,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     min_global_k
     max_global_k
     seed
+    track_best_model
     gpu
     show_parameters
     hyperoptimizer_kwargs
@@ -132,7 +134,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
 
     bestval = [-1]
 
-    def objective(space):
+    def objective(space):  # todo: replace smooothness_tau by lambda
         embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
                              for key, v in space.items()
                              if key in ["smooothness_tau", "neurons", "batch_size"]}
@@ -152,7 +154,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
             print("·", flush=True)
         X_ = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
                                 embedding_optimizer=embedding_optimizer,
-                                min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, gpu=gpu, **embedding_optimizer__kwargs)
+                                min_global_k=min_global_k, max_global_k=max_global_k, seed=seed, track_best_model=track_best_model, gpu=gpu, **embedding_optimizer__kwargs)
 
         if 0 < alpha < 1:
             quality = mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha

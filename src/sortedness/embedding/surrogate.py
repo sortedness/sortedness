@@ -229,6 +229,7 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
             mu += mu_global
 
         if ref:
+            # todo: ref is not perfect as it is sampled/shortened
             if 0 < alpha < 1:
                 lo1 = weightedtau(a1.cpu().detach().numpy(), b1.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
                 lo2 = weightedtau(a2.cpu().detach().numpy(), b2.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]

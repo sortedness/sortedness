@@ -77,6 +77,7 @@ with (sopen(schedule_uri) as db, sopen(remote_cache_uri) as remote):
         for max_evals_ in range(ini, max_evals + 1):
             X_, trials = balanced_embedding__opt(X, alpha=alpha, epochs=epochs, max_evals=max_evals_, max_neurons=100, max_batch=50,
                                                  embedding_optimizer__param_space={"alpha": (0.950, 0.999), "weight_decay": (0.00, 0.01), "momentum": (0.00, 0.01), "centered": [True, False]},
+                                                 track_best_model=True,
                                                  progressbar=False, show_parameters=True, return_trials=True, **kwargs)
             remote[key] = trials
 

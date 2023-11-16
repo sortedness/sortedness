@@ -27,7 +27,7 @@ import numpy as np
 import torch
 from numpy import random, mean
 from scipy.spatial.distance import cdist
-from scipy.stats import rankdata, weightedtau, kendalltau
+from scipy.stats import weightedtau, kendalltau
 from sklearn import datasets
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
@@ -36,15 +36,16 @@ from torch import from_numpy, set_num_threads, tensor
 from sortedness import sortedness
 from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.embedding.tunning import balanced_embedding__opt
-from sortedness.local import geomean_np
+from sortedness.local import geomean_np, remove_diagonal
 
-alpha = 0.5
+alpha = 1
 beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-smooothness_tau = 1
+smooothness_tau = 0.002
 neurons = 30
-epochs = 50
+epochs = 20
+max_evals = 1
 batch_size = 20
 seed = 0
 gpu = False
@@ -73,7 +74,7 @@ X = datax[:n]
 idxs = list(range(n))
 X = X.astype(np.float32)
 
-X_ = balanced_embedding__opt(X, epochs=epochs, alpha=alpha, k=k, max_evals=1, progressbar=True)
+X_ = balanced_embedding__opt(X, epochs=epochs, max_smooth=0.01, alpha=alpha, k=k, max_evals=max_evals, progressbar=True, show_parameters=True)
 Dtarget = cdist(X, X)
 Dtarget = from_numpy(Dtarget / np.max(Dtarget))
 # Dtarget = from_numpy(Dtarget)
@@ -89,14 +90,19 @@ ax[0], ax[1] = axs
 ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
-D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=True)
+D = remove_diagonal(cdist(X, X))  # todo: distance by batches in a more memory-friendly way
+D_ = remove_diagonal(cdist(xcp, xcp))  # todo: distance by batches in a more memory-friendly way
+D /= np.max(D, axis=1, keepdims=True)
+
+D = from_numpy(D).cuda() if gpu else from_numpy(D)
+D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
-print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
+print(f"TSNE:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
 
 ax[1].cla()
 xcp = X_
@@ -114,10 +120,15 @@ def taus(r, r_):
 
 ref_local = mean(sortedness(X, X_, symmetric=False, f=weightedtau, weigher=partial(cau, gamma)))
 ref_global = mean(sortedness(X, X_, symmetric=False, f=kendalltau))
+print(ref_local, ref_global)
+print("---------------")
 ref_bal = mean(sortedness(X, X_, symmetric=False, f=taus))
 plt.title(f"{ref_local:.4f}  {ref_global:.4f}", fontsize=16)
 
-print(f"optimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
+D_ = remove_diagonal(cdist(X_, X_))
+D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
+loss, loss_local, loss_global, _, _ = loss_function(D, D_, None, None, k, gk, w, alpha, beta, smooothness_tau, ref=True)
+print(f">>> optimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
 # mng = plt.get_current_fig_manager()
 # mng.resize(*mng.window.maxsize())
 plt.show()

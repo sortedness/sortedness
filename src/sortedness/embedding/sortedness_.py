@@ -20,6 +20,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+import copy
 
 import numpy as np
 import torch
@@ -47,7 +48,7 @@ class Dt(Dataset):
 
 def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smooothness_tau=1,
                        neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
-                       min_global_k=100, max_global_k=1000, seed=0, gpu=False, **embedding_optimizer__kwargs):
+                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, gpu=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -94,6 +95,9 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     max_global_k
         Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
     seed
+        int
+    track_best_model
+        Whether to return the best result (default) or the last one.
     gpu
         Whether to use GPU.
     embedding_optimizer__kwargs
@@ -144,6 +148,7 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
     loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
+    best_quality = -1
     with ((torch.enable_grad())):
         for i in range(epochs):
             for idx in loader:
@@ -161,9 +166,17 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
                 l = len(idx)
                 miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-                loss, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, min_global_k, max_global_k)
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, min_global_k, max_global_k)
+                if track_best_model and quality > best_quality:
+                    best_quality = quality
+                    best_dct = copy.deepcopy(model.state_dict())
+
                 learning_optimizer.zero_grad()
-                (-loss).backward()
+                (-quality).backward()
                 learning_optimizer.step()
+
+    if track_best_model:
+        model = M()
+        model.load_state_dict(best_dct)
 
     return model(X).detach().cpu().numpy().astype(float)
