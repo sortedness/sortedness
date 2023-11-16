@@ -127,6 +127,8 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     else:
         trials: Trials = hyperoptimizer_kwargs["trials"]
 
+    best_quality = [trials.best_trial["result"]["quality"]] if len(trials) > 0 else [-1]
+
     def taus(r, r_):
         tau_local = weightedtau(r, r_, weigher=partial(cau, gamma), rank=False)[0]
         tau_global = kendalltau(r, r_)[0]
@@ -172,6 +174,12 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         else:
             raise Exception(f"Outside valid range: {alpha=}")
         dct["loss"] = -quality
+
+        if quality > best_quality[0]:
+            best_quality[0] = quality
+        else:
+            # Erase worse contents to save space.
+            dct["X_"] = dct["model"] = None
 
         if show_parameters:
             print("\n", quality, flush=True)
