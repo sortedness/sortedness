@@ -48,10 +48,17 @@ class Dt(Dataset):
         return idx
 
 
-def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smooothness_tau=1,
-                       neurons=30, epochs=100, batch_size=20, embedding_optimizer=RMSprop,
-                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
-                       gpu=False, **embedding_optimizer__kwargs):
+def balanced_embedding_tacito(X, d=2, gamma=4,
+                              # alpha=0.5,
+                              beta=0.5, smoothness_tau=1,
+                              neurons=30, epochs=100,
+                              # batch_size=20,
+                              # embedding_optimizer=RMSprop,
+                              # min_global_k=100, max_global_k=1000,
+                              seed=0,
+                              # track_best_model=True,
+                              # return_only_X_=True,
+                              gpu=False, verbose=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
