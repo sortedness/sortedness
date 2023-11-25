@@ -1,19 +1,9 @@
-import os
-from pathlib import Path
-
 import numpy as np
 
 from sortedness.embedding.sortedness_ import balanced_embedding_tacito
 from sortedness.local import balanced_kendalltau
 from sortedness.local import sortedness
-
-
-def load_dataset(dataset_name):
-    data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
-    X = np.load(os.path.join(data_dir, 'X.npy'))
-    y = np.load(os.path.join(data_dir, 'y.npy'))
-    return X, y
-
+from sortedness.misc.dataset import load_dataset
 
 datasets = [
     "bank",

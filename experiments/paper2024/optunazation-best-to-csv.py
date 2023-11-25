@@ -20,8 +20,6 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import os
-from pathlib import Path
 from sys import argv
 
 import numpy as np
@@ -32,14 +30,7 @@ from sortedness import sortedness
 from sortedness.config import near_cache_uri
 from sortedness.embedding import balanced_embedding
 from sortedness.local import balanced_kendalltau
-
-
-def load_dataset(dataset_name):
-    data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
-    X = np.load(os.path.join(data_dir, 'X.npy'))
-    y = np.load(os.path.join(data_dir, 'y.npy'))
-    return X, y
-
+from sortedness.misc.dataset import load_dataset
 
 dct = handle_command_line(argv, datasets=list)
 print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn")

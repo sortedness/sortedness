@@ -20,14 +20,11 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import os
 from collections import ChainMap
-from pathlib import Path
 from pprint import pprint
 from sys import argv
 from time import sleep
 
-import numpy as np
 import optuna
 from argvsucks import handle_command_line
 from optuna._callbacks import RetryFailedTrialCallback
@@ -35,14 +32,6 @@ from optuna.distributions import FloatDistribution, CategoricalDistribution, Int
 from shelchemy import sopen
 
 from sortedness.config import remote_cache_uri, near_cache_uri
-
-
-def load_dataset(dataset_name):
-    data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
-    X = np.load(os.path.join(data_dir, 'X.npy'))
-    y = np.load(os.path.join(data_dir, 'y.npy'))
-    return X, y
-
 
 dct = handle_command_line(argv, datasets=list)
 print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn")

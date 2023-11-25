@@ -21,3 +21,25 @@
 #  time spent here.
 #
 
+import glob
+import os
+from pathlib import Path
+
+import numpy as np
+
+
+def load_dataset(dataset_name, result=False):
+    dir = f"{Path.home()}/csv_proj_sortedness_out"
+    data_dir = os.path.join(dir, dataset_name)
+    X = np.load(os.path.join(data_dir, 'X.npy'))
+    y = np.load(os.path.join(data_dir, 'y.npy'))
+
+    if result:
+        res = f"{Path.home()}/csvs/*X_*{dataset_name}*.csv"
+        list_of_files = glob.glob(res)
+        latest_file = max(list_of_files, key=os.path.getctime)
+        print(latest_file, "loaded!!!")
+        X_ = np.fromfile(latest_file, sep=',')
+        return X, y, X_.reshape((X.shape[0], 2))
+
+    return X, y

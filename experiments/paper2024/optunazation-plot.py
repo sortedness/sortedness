@@ -20,23 +20,13 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import os
-from pathlib import Path
 from sys import argv
 
-import numpy as np
 import optuna
 from argvsucks import handle_command_line
 
 from sortedness.config import optuna_uri
-
-
-def load_dataset(dataset_name):
-    data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
-    X = np.load(os.path.join(data_dir, 'X.npy'))
-    y = np.load(os.path.join(data_dir, 'y.npy'))
-    return X, y
-
+from sortedness.misc.dataset import load_dataset
 
 dct = handle_command_line(argv, datasets=list)
 print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn")
@@ -81,8 +71,8 @@ for dataset in datasets:
 
     for study in [study1, study4]:
         best = study.best_trial
-        if best.value > dct[dataset]:
-            break
+        # if best.value > dct[dataset]:
+        #     break
         print(f"{dataset:13} {str(load_dataset(dataset)[0].shape):13}", end="")
         df = study.trials_dataframe()
         mark = f"{100 * best.value / dct[dataset] - 100:03.3f}%" if best.value > dct[dataset] else "      "

@@ -20,9 +20,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import os
 from math import ceil
-from pathlib import Path
 from sys import argv
 
 import numpy as np
@@ -39,13 +37,6 @@ from sortedness.embedding import balanced_embedding
 from sortedness.embedding.sortedness_ import optimized_balanced_embedding
 from sortedness.local import balanced_kendalltau
 from sortedness.local import sortedness
-
-
-def load_dataset(dataset_name):
-    data_dir = os.path.join(f"{Path.home()}/csv_proj_sortedness_out", dataset_name)
-    X = np.load(os.path.join(data_dir, 'X.npy'))
-    y = np.load(os.path.join(data_dir, 'y.npy'))
-    return X, y
 
 
 def getbest(st):
