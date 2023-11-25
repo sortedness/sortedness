@@ -145,7 +145,7 @@ def animate(i):
     ax[1].cla()
 
     optim.zero_grad()
-    lo = lossf(Z, D, smooothness=10, i=i)
+    lo = lossf(Z, D, smoothness=10, i=i)
     lo.backward()
     optim.step()
 

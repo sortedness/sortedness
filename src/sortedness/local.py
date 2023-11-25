@@ -93,9 +93,36 @@ def geomean_np(lo, gl, beta=0.5):
     return math.exp((1 - beta) * math.log(l + 0.000000000001) + beta * math.log(g + 0.000000000001)) * 2 - 1
 
 
-def balanced_kendalltau(r, r_, beta=0.5, gamma=4):
-    tau_local = weightedtau(r, r_, weigher=lambda r: 1 / pi * gamma / (gamma ** 2 + r ** 2), rank=False)[0]
-    tau_global = kendalltau(r, r_)[0]
+def balanced_kendalltau(unordered_values, unordered_values_, beta=0.5, gamma=4):
+    """
+    >>> round(balanced_kendalltau(np.array([2,1,3,4,5]), np.array([2,1,3,4,5]), beta=1), 5)
+    1.0
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=1), 5)
+    -1.0
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([1,2,3,4,5]), beta=0), 5)
+    1.0
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=0), 5)
+    -1.0
+    >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0]), beta=0), 5) # strong break of trustworthiness
+    0.83258
+    >>> # order of importance is defined by internally sorting the first sequence.
+    >>> round(balanced_kendalltau(np.array([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), np.array([0,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), beta=0), 5) # strong break of trustworthiness
+    0.83258
+    >>> # weaker break of trustworthiness = an intermediate median distance value (one with intermediate weight) becomes the nearest neighbor.
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of trustworthiness
+    0.88332
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # strong break of continuity
+    0.53172
+    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of continuity
+    0.76555
+    """
+    if beta == 1:
+        tau_local = 1
+    else:
+        idx = np.argsort(unordered_values, kind="stable")
+        tau_local = weightedtau(unordered_values, unordered_values_, weigher=lambda r: 1 / pi * gamma / (gamma ** 2 + r ** 2), rank=idx)[0]
+    tau_global = 1 if beta == 0 else kendalltau(unordered_values, unordered_values_)[0]
     return geomean_np(tau_local, tau_global, beta)
 
 

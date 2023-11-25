@@ -24,6 +24,7 @@ import copy
 
 import numpy as np
 import torch
+from gradient_descent_the_ultimate_optimizer import gdtuo
 from scipy.spatial.distance import cdist
 from torch import from_numpy, tensor, topk
 from torch.optim import RMSprop
@@ -32,6 +33,7 @@ from torch.utils.data import Dataset, DataLoader
 from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.local import remove_diagonal
 
+activation_function_dct = {"tanh": torch.nn.Tanh, "sigm": torch.nn.Sigmoid, "relu": torch.nn.ReLU, "relu6": torch.nn.ReLU6}
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True, eps=0.000000001)
 
 
@@ -72,6 +74,35 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         Target dimensionality.
     gamma
         Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
+    beta
+        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
+    smoothness_tau
+        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smoothness_tau tends to 0.
+    neurons
+    epochs
+
+    seed
+        int
+
+    return_only_X_
+        Return `X_` or `(X_, model, quality)`?
+    gpu
+        Whether to use GPU.
+    verbose
+        Print information about best epoch?
+            best_epoch, best_quality
+    embedding_optimizer__kwargs
+        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+        Default arguments for RMSprop:
+            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
+
+    Returns
+    -------
+    Transformed `d`-dimensional data as a numpy float array.
+
+    """
+
+    """
     k
         Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
     global_k
@@ -81,12 +112,7 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         Parameter to balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
         default=0.5
             Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
-    beta
-        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
-    smooothness_tau
-        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smooothness_tau tends to 0.
-    neurons
-    epochs
+
     batch_size
     embedding_optimizer
         Callable to perform gradient descent. See learner_parameters below.
@@ -95,24 +121,24 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         Lower bound for the number of "neighbors" to sample when `global_k` is dynamic.
     max_global_k
         Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
-    seed
-        int
+
     track_best_model
         Whether to return the best result (default) or the last one.
-    return_only_X_
-        Return `X_` or `(X_, model, quality)`?
-    gpu
-        Whether to use GPU.
-    embedding_optimizer__kwargs
-        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
-        Default arguments for RMSprop: 
-            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
-            
-    Returns
-    -------
-    Transformed `d`-dimensional data as a numpy float array.
-
     """
+    try:
+        k = next(i for i, v in enumerate(cau(r, gamma) for r in range(len(X))) if v / cau(0, gamma) < 0.001)  # todo: ajeitar isso antes de empacotar
+    except:
+        k = len(X)
+    # if verbose:
+    #     print(f"Estimated k={k}")
+    alpha = 1
+    global_k = "sqrt"
+    batch_size = 12
+    embedding_optimizer = RMSprop
+    min_global_k = 100
+    max_global_k = 1000
+    track_best_model = True
+    return_only_X_ = False
 
     class M(torch.nn.Module):
         def __init__(self):
@@ -133,6 +159,9 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         raise Exception(f"`epochs` < 1")
     if batch_size < 1:
         raise Exception(f"`batch_size` < 1")
+    if "alpha_" in embedding_optimizer__kwargs:
+        embedding_optimizer__kwargs["alpha"] = embedding_optimizer__kwargs.pop("alpha_")
+
     torch.manual_seed(seed)
     model = M()
     if gpu:
@@ -155,7 +184,7 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
     model.train()
     loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
-    best_quality = -1
+    best_quality_surrogate = best_epoch = -1
     with ((torch.enable_grad())):
         for i in range(epochs):
             for idx in loader:
@@ -173,10 +202,11 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
                 l = len(idx)
                 miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, min_global_k, max_global_k)
-                if track_best_model and quality > best_quality:
-                    best_quality = quality
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, min_global_k, max_global_k)
+                if track_best_model and quality > best_quality_surrogate:
+                    best_quality_surrogate = quality
                     best_X_ = X_
+                    best_epoch = i
                     best_dct = copy.deepcopy(model.state_dict())
 
                 learning_optimizer.zero_grad()
@@ -187,10 +217,341 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
         model = M()
         model.load_state_dict(best_dct)
         X_ = best_X_
+        if verbose:
+            print(f"{best_epoch=} {float(best_quality_surrogate)=}", flush=True)
 
     X_ = X_.detach().cpu().numpy().astype(float)
 
     if return_only_X_:
         return X_
 
-    return X_, model, best_quality
+    return X_, model, float(best_quality_surrogate)
+
+
+def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
+                       hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"], embedding_optimizer=RMSprop,
+                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
+                       gpu=False, verbose=False, **embedding_optimizer__kwargs):
+    """
+    >>> from sklearn import datasets
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from numpy import random, round
+    >>> digits = datasets.load_digits()
+    >>> X = digits.images.reshape((len(digits.images), -1))[:20]
+    >>> rnd = random.default_rng(0)
+    >>> rnd.shuffle(X)
+    >>> X = StandardScaler().fit_transform(X)
+    >>> X_ = balanced_embedding(X, alpha=0, epochs=2)
+    >>> X_.shape
+    (20, 2)
+
+
+    Parameters
+    ----------
+    X
+        Matrix with an instance per row in a given space (often high-dimensional data).
+    d
+        Target dimensionality.
+    gamma
+        Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
+    k
+        Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
+    global_k
+        int:    Number of "neighbors" to sample for global optimization.
+        "sqrt": Take the square root of the number of points limited by `max_global_k`.
+    alpha
+        Parameter to analogously balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
+        default=0.5
+            Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
+    beta
+        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
+    smoothness_tau
+        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smoothness_tau tends to 0.
+    neurons
+    epochs
+    batch_size
+    embedding_optimizer
+        Callable to perform gradient descent. See learner_parameters below.
+        Default = RMSProp
+    min_global_k
+        Lower bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    max_global_k
+        Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    seed
+        int
+    track_best_model
+        Whether to return the best result (default) or the last one.
+    return_only_X_
+        Return `X_` or `(X_, model, quality_surrogate)`?
+    gpu
+        Whether to use GPU.
+    verbose
+        Print information about best epoch?
+            best_epoch, best_quality_surrogate, best_dct
+    embedding_optimizer__kwargs
+        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+        Default arguments for RMSprop: 
+            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
+            
+    Returns
+    -------
+    Transformed `d`-dimensional data as a numpy float array.
+
+    """
+
+    class M(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            layers = [torch.nn.Linear(X.shape[1], hidden_layers[0]), activation_function_dct[activation_functions[0]]()]
+            previous = hidden_layers[0]
+            for neurons, af in zip(hidden_layers[1:], activation_functions[1:]):
+                layers.extend([torch.nn.Linear(previous, neurons), activation_function_dct[af]()])
+                previous = neurons
+            layers.append(torch.nn.Linear(previous, d))
+            self.encoder = torch.nn.Sequential(*layers)
+            # self.decoder = torch.nn.Sequential(
+            #     torch.nn.Linear(d, neurons), torch.nn.ReLU(),
+            #     torch.nn.Linear(neurons, X.shape[1])
+            # )
+
+        def forward(self, x):
+            return self.encoder(x)
+
+    if epochs < 1:
+        raise Exception(f"`epochs` < 1")
+    if batch_size < 1:
+        raise Exception(f"`batch_size` < 1")
+    if "alpha_" in embedding_optimizer__kwargs:
+        embedding_optimizer__kwargs["alpha"] = embedding_optimizer__kwargs.pop("alpha_")
+
+    torch.manual_seed(seed)
+    model = M()
+    if gpu:
+        model.cuda()
+
+    X = X.astype(np.float32)
+    n = X.shape[0]
+
+    D = remove_diagonal(cdist(X, X))  # todo: distance by batches in a more memory-friendly way
+    D /= np.max(D, axis=1, keepdims=True)
+
+    X = from_numpy(X).cuda() if gpu else from_numpy(X)
+    D = from_numpy(D).cuda() if gpu else from_numpy(D)
+
+    Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
+    w = cau(tensor(range(n)), gamma=gamma)
+
+    if "alpha_" in embedding_optimizer__kwargs:
+        embedding_optimizer__kwargs["alpha"] = embedding_optimizer__kwargs.pop("alpha_")
+    learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
+    model.train()
+    loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
+    best_quality_surrogate = best_epoch = -2
+    with ((torch.enable_grad())):
+        for i in range(epochs):
+            for idx in loader:
+                X_ = model(X)
+                miniX_ = X_[idx]
+                miniD = D[idx]
+                if alpha == 1:
+                    miniDsorted = None
+                    miniidxs_by_D = None
+                else:
+                    miniDsorted = Dsorted[idx]
+                    miniidxs_by_D = idxs_by_D[idx]
+
+                # Distance matrix without diagonal.
+                l = len(idx)
+                miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
+
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, min_global_k, max_global_k)
+                if track_best_model and quality > best_quality_surrogate:
+                    best_quality_surrogate = quality
+                    best_X_ = X_
+                    best_epoch = i
+                    best_dct = copy.deepcopy(model.state_dict())
+
+                learning_optimizer.zero_grad()
+                (-quality).backward()
+                learning_optimizer.step()
+
+    if track_best_model:
+        model = M()
+        model.load_state_dict(best_dct)
+        X_ = best_X_
+        if verbose:
+            print(f"{best_epoch=} {float(best_quality_surrogate)=}", flush=True)
+
+    X_ = X_.detach().cpu().numpy().astype(float)
+
+    if return_only_X_:
+        return X_
+
+    return {"X_": X_, "model": model, "epoch": best_epoch, "surrogate_quality": float(best_quality_surrogate)}
+
+
+def optimized_balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
+                                 hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"],
+                                 min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
+                                 gpu=False, verbose=False,
+                                 optim=1, sgd_alpha=0.01, sgd_mu=0.0):
+    """
+    >>> from sklearn import datasets
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from numpy import random, round
+    >>> digits = datasets.load_digits()
+    >>> X = digits.images.reshape((len(digits.images), -1))[:20]
+    >>> rnd = random.default_rng(0)
+    >>> rnd.shuffle(X)
+    >>> X = StandardScaler().fit_transform(X)
+    >>> X_ = optimized_balanced_embedding(X, alpha=0, epochs=2)
+    >>> X_.shape
+    (20, 2)
+
+
+    Parameters
+    ----------
+    X
+        Matrix with an instance per row in a given space (often high-dimensional data).
+    d
+        Target dimensionality.
+    gamma
+        Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
+    k
+        Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
+    global_k
+        int:    Number of "neighbors" to sample for global optimization.
+        "sqrt": Take the square root of the number of points limited by `max_global_k`.
+    alpha
+        Parameter to analogously balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
+        default=0.5
+            Consider neighborhood order on both X and X_ for weighting. Take the mean between extrusion and intrusion emphasis.
+    beta
+        Parameter to balance between local and global. 0 is totally local. 1 is totally global.
+    smoothness_tau
+        Regularizer. Surrogate function tends to (non differentiable) Kendall tau when smoothness_tau tends to 0.
+    neurons
+    epochs
+    batch_size
+    embedding_optimizer
+        Callable to perform gradient descent. See learner_parameters below.
+        Default = RMSProp
+    min_global_k
+        Lower bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    max_global_k
+        Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    seed
+        int
+    track_best_model
+        Whether to return the best result (default) or the last one.
+    return_only_X_
+        Return `X_` or `(X_, model, quality_surrogate)`?
+    gpu
+        Whether to use GPU.
+    verbose
+        Print information about best epoch?
+            best_epoch, best_quality_surrogate, best_dct
+    embedding_optimizer__kwargs
+        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+        Default arguments for RMSprop:
+            lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
+
+    Returns
+    -------
+    Transformed `d`-dimensional data as a numpy float array.
+
+    """
+
+    class M(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            layers = [torch.nn.Linear(X.shape[1], hidden_layers[0]), activation_function_dct[activation_functions[0]]()]
+            previous = hidden_layers[0]
+            for neurons, af in zip(hidden_layers[1:], activation_functions[1:]):
+                layers.extend([torch.nn.Linear(previous, neurons), activation_function_dct[af]()])
+                previous = neurons
+            layers.append(torch.nn.Linear(previous, d))
+            self.encoder = torch.nn.Sequential(*layers)
+            # self.decoder = torch.nn.Sequential(
+            #     torch.nn.Linear(d, neurons), torch.nn.ReLU(),
+            #     torch.nn.Linear(neurons, X.shape[1])
+            # )
+
+        def forward(self, x):
+            return self.encoder(x)
+
+    if epochs < 1:
+        raise Exception(f"`epochs` < 1")
+    if batch_size < 1:
+        raise Exception(f"`batch_size` < 1")
+
+    torch.manual_seed(seed)
+    model = M()
+    if gpu:
+        model.cuda()
+
+    X = X.astype(np.float32)
+    n = X.shape[0]
+
+    D = remove_diagonal(cdist(X, X))  # todo: distance by batches in a more memory-friendly way
+    D /= np.max(D, axis=1, keepdims=True)
+
+    X = from_numpy(X).cuda() if gpu else from_numpy(X)
+    D = from_numpy(D).cuda() if gpu else from_numpy(D)
+
+    Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
+    w = cau(tensor(range(n)), gamma=gamma)
+
+    if optim == 1:
+        optim = gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
+    elif optim == 2:
+        optim = gdtuo.Adam(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
+    else:
+        raise Exception(f"Invalid optim: {optim}")
+    mw = gdtuo.ModuleWrapper(model, optimizer=optim)
+    mw.initialize()
+
+    model.train()
+    loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
+    best_quality_surrogate = best_epoch = -2
+    with ((torch.enable_grad())):
+        for i in range(epochs):
+            for idx in loader:
+                mw.begin()
+
+                X_ = model(X)
+                miniX_ = X_[idx]
+                miniD = D[idx]
+                if alpha == 1:
+                    miniDsorted = None
+                    miniidxs_by_D = None
+                else:
+                    miniDsorted = Dsorted[idx]
+                    miniidxs_by_D = idxs_by_D[idx]
+                l = len(idx)
+                miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, min_global_k, max_global_k)
+                if track_best_model and quality > best_quality_surrogate:
+                    best_quality_surrogate = quality
+                    best_X_ = X_
+                    best_epoch = i
+                    best_dct = copy.deepcopy(model.state_dict())
+
+                mw.zero_grad()
+                loss = -quality
+                loss.backward(create_graph=True)
+                mw.step()
+
+    if track_best_model:
+        model = M()
+        model.load_state_dict(best_dct)
+        X_ = best_X_
+        if verbose:
+            print(f"{best_epoch=} {float(best_quality_surrogate)=}", flush=True)
+
+    X_ = X_.detach().cpu().numpy().astype(float)
+
+    if return_only_X_:
+        return X_
+
+    return {"X_": X_, "model": model, "epoch": best_epoch, "surrogate_quality": float(best_quality_surrogate)}

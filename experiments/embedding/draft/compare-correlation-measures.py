@@ -107,7 +107,7 @@ def get(n):
 with sopen("duckdb:////home/davi/.sortedness.db") as db:
     d = hdict(n=n) >> apply(get)("d", "dp", "dt", "df") >> cache(db)
     # d >>= {("d", "dp", "dt", "df"): get(n)}
-    d, dp, dt, df = d.d, d.dp, d.dt, d.df
+    d, dp, dt, df = d.dataset, d.dp, d.dt, d.df
 
 # bins = linspace(0, 1, num=100)
 # plt.hist(d, bins, alpha=0.5, label="original distances", edgecolor="k")

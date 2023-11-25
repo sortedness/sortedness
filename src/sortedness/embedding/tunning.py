@@ -25,6 +25,7 @@ from functools import partial
 from itertools import chain
 
 from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+from hyperopt.exceptions import AllTrialsFailed
 from numpy import mean
 from numpy.random import default_rng
 from scipy.stats import weightedtau, kendalltau
@@ -88,13 +89,13 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
 
     """
     if hyperoptimizer_algorithm is None:
-        hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=4, n_EI_candidates=8)
+        hyperoptimizer_algorithm = partial(tpe.suggest, n_startup_jobs=3, n_EI_candidates=6)
     if embedding__param_space is None:
         embedding__param_space = {}
     if embedding_optimizer__param_space is None:
         embedding_optimizer__param_space = {}
 
-    for key, v in {"smooothness_tau": (0.0001, max_smooth), "neurons": (d, max_neurons), "batch_size": (1, min(max_batch, len(X)))}.items():
+    for key, v in {"smoothness_tau": (0.0001, max_smooth), "neurons": (d, max_neurons), "batch_size": (1, min(max_batch, len(X)))}.items():
         if key not in embedding__param_space:
             embedding__param_space[key] = v
     for key, v in {"lr": (0.0001, 0.1), "alpha": (0.90, 0.99), "weight_decay": (0.0, 0.1), "momentum": (0.0, 0.1), "centered": [True, False]}.items():
@@ -127,36 +128,46 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     else:
         trials: Trials = hyperoptimizer_kwargs["trials"]
 
-    best_quality = [trials.best_trial["result"]["quality"]] if len(trials) > 0 else [-1]
+    if len(trials) > 0:
+        best = trials.best_trial
+        result = best["result"]
+        best_loss = [result["loss"]]
+        if show_parameters:
+            print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ", flush=True)
+            dct1 = {k: round(v[0], 8) for k, v in best["misc"]["vals"].items()}
+            print(f"{str(datetime.now())[:19]} {len(trials)}/{max_evals} Best:", dct1, f"λ:\t{-best['result']['loss']}", flush=True, sep="\t")
+            # print(">>>>>>>>>>>>>>>>", quality, "<<<<<<<<<<<<<<<<<")
+            # X_.tofile(f"proj-X_-{d}-SORT-quality_{quality}.csv", sep=',')
+    else:
+        best_loss = [-1]
 
     def taus(r, r_):
         tau_local = weightedtau(r, r_, weigher=partial(cau, gamma), rank=False)[0]
         tau_global = kendalltau(r, r_)[0]
         return geomean_np(tau_local, tau_global)
 
-    def objective(space):  # todo: replace smooothness_tau by lambda
-        embedding__kwargs = {key: (v if key == "smooothness_tau" else int(v))
+    def objective(space):  # todo: replace smoothness_tau by lambda
+        embedding__kwargs = {key: (v if key == "smoothness_tau" else int(v))
                              for key, v in space.items()
-                             if key in ["smooothness_tau", "neurons", "batch_size"]}
+                             if key in ["smoothness_tau", "neurons", "batch_size"]}
         embedding_optimizer__kwargs = {key: v
                                        for key, v in space.items()
                                        if key not in chain(embedding__kwargs, fixed_space)}
-
+        if "centered" in embedding_optimizer__kwargs:
+            del embedding_optimizer__kwargs["centered"]
         if "alpha" in embedding_optimizer__kwargs:
             embedding_optimizer__kwargs["alpha_"] = embedding_optimizer__kwargs.pop("alpha")
 
         if show_parameters:
             print("·", flush=True)
-            print(f"{str(datetime.now())[:19]}")
+            print(f"{str(datetime.now())[:19]}", flush=True)
             print(fixed_space, flush=True)
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
             print("·", flush=True)
-        tup = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs,
-                                 embedding_optimizer=embedding_optimizer,
+        tup = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs, embedding_optimizer=embedding_optimizer,
                                  min_global_k=min_global_k, max_global_k=max_global_k, seed=seed,
-                                 track_best_model=track_best_model, return_only_X_=return_only_X_,
-                                 gpu=gpu, **embedding_optimizer__kwargs)
+                                 track_best_model=track_best_model, return_only_X_=return_only_X_, gpu=gpu, **embedding_optimizer__kwargs)
 
         dct = {"status": STATUS_OK}
         if return_only_X_:
@@ -166,23 +177,29 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         X_ = dct["X_"]
 
         if 0 < alpha < 1:
-            quality = mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha
+            loss = -mean(sortedness(X, X_, symmetric=True, f=taus))  # todo: replace symmetric by alpha
         elif alpha == 0:
-            quality = mean(sortedness(X, X_, symmetric=False, f=taus))
+            loss = -mean(sortedness(X, X_, symmetric=False, f=taus))
         elif alpha == 1:
-            quality = mean(sortedness(X_, X, symmetric=False, f=taus))
+            loss = -mean(sortedness(X_, X, symmetric=False, f=taus))
         else:
             raise Exception(f"Outside valid range: {alpha=}")
-        dct["loss"] = -quality
+        dct["loss"] = loss
 
-        if quality > best_quality[0]:
-            best_quality[0] = quality
+        if loss < best_loss[0]:
+            best_loss[0] = loss
+            if show_parameters:
+                print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ", flush=True)
+                try:
+                    print(f"{str(datetime.now())[:19]} {len(trials) + 1}/{max_evals} Best: see above", f"λ:\t{loss} vs {loss}", flush=True, sep="\t")
+                except AllTrialsFailed as e:
+                    print(e)
         else:
             # Erase worse contents to save space.
             dct["X_"] = dct["model"] = None
 
         if show_parameters:
-            print("\n", quality, flush=True)
+            print("\n", loss, flush=True)
             print("_", flush=True)
 
         return dct
@@ -191,7 +208,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     fmin(fn=objective, space=space, rstate=rnd, **hyperoptimizer_kwargs)
     best = trials.best_trial
     if show_parameters:
-        print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ")
+        print("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ", flush=True)
         dct = {k: round(v[0], 3) for k, v in best["misc"]["vals"].items()}
         print(f"{str(datetime.now())[:19]} {len(trials)}/{max_evals} Best:", dct, f"λ:\t{-best['result']['loss']}", flush=True, sep="\t")
 
@@ -199,5 +216,5 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     if return_only_X_:
         return result["X_"]
     if "model" in result:
-        return result["X_"], result["model"], result["quality"], trials
+        return result["X_"], result["model"], -result["loss"], trials
     return result["X_"], None, None, trials

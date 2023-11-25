@@ -48,30 +48,30 @@ def psums(x):
     return dis[indices[0], indices[1]]
 
 
-def surrogate_tau(a, b, smooothness):
+def surrogate_tau(a, b, smoothness):
     da, db = pdiffs(a), pdiffs(b)
-    return sum(tanh(da / smooothness) * tanh(db / smooothness))  # todo: somar random residual para nunca ser zero? p/ otimizar tanto faz?
+    return sum(tanh(da / smoothness) * tanh(db / smoothness))  # todo: somar random residual para nunca ser zero? p/ otimizar tanto faz?
 
 
-def surrogate_wtau2(a, b, wa, wb, smooothness):
+def surrogate_wtau2(a, b, wa, wb, smoothness):
     da, db, swa, swb = pdiffs(a), pdiffs(b), psums(wa), psums(wb)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
+    s = tanh(da / smoothness) * tanh(db / smoothness)
     return (sum(s * swa) / sum(swa) + sum(s * swb) / sum(swb)) / 2
 
 
-def surrogate_wtau(a, b, w, smooothness):
+def surrogate_wtau(a, b, w, smoothness):
     da, db, sw = pdiffs(a), pdiffs(b), psums(w)
-    s = tanh(da / smooothness) * tanh(db / smooothness)
+    s = tanh(da / smoothness) * tanh(db / smoothness)
     return sum(s * sw) / sum(sw)
 
 
-def lossf(predicted_D, expected_D, smooothness, i=None, running=None):
+def lossf(predicted_D, expected_D, smoothness, i=None, running=None):
     n = predicted_D.shape[0]
     m = predicted_D.shape[1]
     r = []
     mu = wtau = 0
     for pred, target in zip(predicted_D, expected_D):  # tODO: same size? ver diagonal
-        surr = surrogate_tau(pred.view(m), target.view(m), smooothness=smooothness)
+        surr = surrogate_tau(pred.view(m), target.view(m), smoothness=smoothness)
         wtau += weightedtau(pred.detach().cpu().numpy(), target.detach().cpu().numpy())[0]
         mu += surr
     plt.title(f"{i}:    {wtau / predicted_D.shape[0]:.8f}    {float(mu):.8f}   {running=}", fontsize=20)
@@ -87,34 +87,34 @@ def lossf2(predicted_ranks, expected_ranks, i=None, running=None):
     return mu / ((o * (o - 1) / 2) * n)
 
 
-def wlossf4(predicted_ranks, expected_ranks, smooothness_ranking, smooothness_tau):
+def wlossf4(predicted_ranks, expected_ranks, smoothness_ranking, smoothness_tau):
     n, o = predicted_ranks.shape
     mu = 0
     for pred, target in zip(predicted_ranks, expected_ranks):
-        w_p = tensor([cau(r, gamma=4) for r in soft_rank(pred.view(1, o), regularization_strength=smooothness_ranking).view(o)], requires_grad=True)
-        w_t = tensor([cau(r, gamma=4) for r in soft_rank(target.view(1, o), regularization_strength=smooothness_ranking).view(o)], requires_grad=True)
-        mu += surrogate_wtau2(pred, target, w_p, w_t, smooothness_tau)
+        w_p = tensor([cau(r, gamma=4) for r in soft_rank(pred.view(1, o), regularization_strength=smoothness_ranking).view(o)], requires_grad=True)
+        w_t = tensor([cau(r, gamma=4) for r in soft_rank(target.view(1, o), regularization_strength=smoothness_ranking).view(o)], requires_grad=True)
+        mu += surrogate_wtau2(pred, target, w_p, w_t, smoothness_tau)
     return mu / n
 
 
-def wlossf5(predicted_ranks, expected_ranks, smooothness_tau):
+def wlossf5(predicted_ranks, expected_ranks, smoothness_tau):
     n, o = predicted_ranks.shape
     mu = 0
     for pred, target in zip(predicted_ranks, expected_ranks):
         w_p = tensor([cau(r, gamma=4) for r in pred], requires_grad=True)  # .cuda()
         w_t = tensor([cau(r, gamma=4) for r in target], requires_grad=True)  # .cuda()
-        mu += surrogate_wtau2(pred, target, w_p, w_t, smooothness_tau)
+        mu += surrogate_wtau2(pred, target, w_p, w_t, smoothness_tau)
     return mu / n
 
 
-def wlossf6(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w):
+def wlossf6(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w):
     n, o = predicted_D.shape
     mu = tau = tau_ = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        w_p = cau(soft_rank(pred_d.view(1, o), regularization_strength=smooothness_ranking).view(o), gamma=gamma)
+        w_p = cau(soft_rank(pred_d.view(1, o), regularization_strength=smoothness_ranking).view(o), gamma=gamma)
         w_t = cau(target_r, gamma=4)  # todo: pesos do target ja podem vir prontos de fora (e serem ordenados como estou fdazendo aqui com os ranks)
-        # mu += surrogate_wtau(pred_d, target_r, w_p, smooothness_tau)
-        mu += surrogate_wtau2(pred_d, target_r, w_p, w_t, smooothness_tau)
+        # mu += surrogate_wtau(pred_d, target_r, w_p, smoothness_tau)
+        mu += surrogate_wtau2(pred_d, target_r, w_p, w_t, smoothness_tau)
         if ref:
             # a, idxs = topk(pred_d, k, largest=False)
             # b = target_r[idxs]
@@ -132,7 +132,7 @@ def wlossf6(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, 
     return mu / n, tau / n
 
 
-def wlossf8(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w):
+def wlossf8(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w):
     n, o = predicted_D.shape
     mu = tau_local = tau_global = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
@@ -141,9 +141,9 @@ def wlossf8(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, 
         # pred_d = (pred_d - pmn) / (pmx - pmn)
         # target_r = (target_r - tmn) / (tmx - tmn)
 
-        # w_p = cau(soft_rank(pred_d.view(1, o), regularization_strength=smooothness_ranking).view(o), gamma=gamma)
+        # w_p = cau(soft_rank(pred_d.view(1, o), regularization_strength=smoothness_ranking).view(o), gamma=gamma)
         # w_t = cau(target_r, gamma=4)  # todo: pesos do target ja podem vir prontos de fora (e serem ordenados como estou fdazendo aqui com os ranks)
-        # mu += surrogate_wtau2(pred_d, target_r, w_p, w_t, smooothness_tau)
+        # mu += surrogate_wtau2(pred_d, target_r, w_p, w_t, smoothness_tau)
 
         a, idxs = sort(pred_d)
         b = target_r[idxs]
@@ -153,10 +153,10 @@ def wlossf8(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, 
         # a_, idxs = topk(target_r, k, largest=False)
         # b_ = pred_d[idxs]
 
-        surrtau = surrogate_wtau(a, b, w, smooothness_tau)  # todo: empates, diagonal, normalização p/ compatibilizar X com X_
-        # surrtau_ = surrogate_wtau(a_, b_, w, smooothness_tau)
+        surrtau = surrogate_wtau(a, b, w, smoothness_tau)  # todo: empates, diagonal, normalização p/ compatibilizar X com X_
+        # surrtau_ = surrogate_wtau(a_, b_, w, smoothness_tau)
         # mu_local = (surrtau + surrtau_) / 2
-        # mu_global = surrogate_tau(pred_d, target_r, smooothness_tau) / (o ** 2 - o) * 2
+        # mu_global = surrogate_tau(pred_d, target_r, smoothness_tau) / (o ** 2 - o) * 2
         mu += surrtau  # torch.sqrt((mu_local + 1) / 2 * (mu_global + 1) / 2) * 2 - 1
 
         if ref:
@@ -168,13 +168,13 @@ def wlossf8(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, 
     return mu / n, tau_local / n, tau_global / n
 
 
-def wlossf10(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w):
+def wlossf10(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w):
     n, o = predicted_D.shape
     mu = tau = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        w = cau(soft_rank(pred_d.view(1, o), regularization_strength=smooothness_ranking).view(o), gamma=gamma)
-        mu_local = surrogate_wtau(pred_d, target_r, w, smooothness_tau)
-        mu_global = surrogate_tau(pred_d, target_r, smooothness_tau) / (o ** 2 - o) * 2
+        w = cau(soft_rank(pred_d.view(1, o), regularization_strength=smoothness_ranking).view(o), gamma=gamma)
+        mu_local = surrogate_wtau(pred_d, target_r, w, smoothness_tau)
+        mu_global = surrogate_tau(pred_d, target_r, smoothness_tau) / (o ** 2 - o) * 2
         mu += torch.sqrt((mu_local + 1) / 2 * (mu_global + 1) / 2) * 2 - 1
 
         if ref:
@@ -186,12 +186,12 @@ def wlossf10(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref,
     return mu / n, tau / n
 
 
-def wlossf11(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w):
+def wlossf11(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w):
     n, o = predicted_D.shape
     mu = tau = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
-        w = cau(soft_rank(pred_d.view(1, o), regularization_strength=smooothness_ranking).view(o), gamma=gamma)
-        mu_local = surrogate_wtau(pred_d, target_r, w, smooothness_tau)
+        w = cau(soft_rank(pred_d.view(1, o), regularization_strength=smoothness_ranking).view(o), gamma=gamma)
+        mu_local = surrogate_wtau(pred_d, target_r, w, smoothness_tau)
         mu += mu_local
 
         if ref:
@@ -202,13 +202,13 @@ def wlossf11(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref,
     return mu / n, tau / n
 
 
-def wlossf12(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w):
+def wlossf12(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w):
     n, o = predicted_D.shape
     mu = tau = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
         a, idxs = topk(pred_d, k, largest=False)
         b = target_r[idxs]
-        mu_local = surrogate_wtau(a, b, w[:k], smooothness_tau)
+        mu_local = surrogate_wtau(a, b, w[:k], smoothness_tau)
         mu += mu_local
 
         if ref:
@@ -218,7 +218,7 @@ def wlossf12(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref,
     return mu / n, tau / n
 
 
-def wlossf9(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, k, gamma, w, wharmonic):
+def wlossf9(predicted_D, expected_R, smoothness_ranking, smoothness_tau, ref, k, gamma, w, wharmonic):
     n, o = predicted_D.shape
     mu = tau_local = tau_global = 0
     for pred_d, target_r in zip(predicted_D, expected_R):
@@ -229,8 +229,8 @@ def wlossf9(predicted_D, expected_R, smooothness_ranking, smooothness_tau, ref, 
 
         # a, idxs = topk(pred_d, k, largest=False)
         # b = target_r[idxs]
-        # mu_local = surrogate_wtau(a, b, w[:k], smooothness_tau)
-        mu_global = surrogate_wtau(pred_d, target_r, wharmonic, smooothness_tau) #/ (o ** 2 - o) * 2
+        # mu_local = surrogate_wtau(a, b, w[:k], smoothness_tau)
+        mu_global = surrogate_wtau(pred_d, target_r, wharmonic, smoothness_tau) #/ (o ** 2 - o) * 2
         mu += mu_global
         # l = (mu_local + 1) / 2
         # g = (mu_global + 1) / 2

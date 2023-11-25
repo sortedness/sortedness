@@ -28,6 +28,8 @@ config.read(f"{Path.home()}/.cache.config")
 try:  # pragma: no cover
     local_cache_uri = config.get("Storage", "local")
     near_cache_uri = config.get("Storage", "near")
+    optuna_uri = config.get("Storage", "optuna")
+    optuna_uri2 = config.get("Storage", "optuna2")
     remote_cache_uri = config.get("Storage", "remote")
     schedule_uri = config.get("Storage", "schedule")
 except Exception as e:

@@ -43,7 +43,7 @@ threads = 1
 set_num_threads(threads)
 n = 200
 k, gamma = n, 4
-smooothness_ranking, smooothness_tau, decay = [5], [5], 0
+smoothness_ranking, smoothness_tau, decay = [5], [5], 0
 batch_size = [20]
 update = 1
 gpu = not True
@@ -117,7 +117,7 @@ D = pdist(encoded.unsqueeze(1), encoded.unsqueeze(0)).view(n, n)
 w = cau(tensor(range(k)), gamma=gamma)
 if gpu:
     w = w.cuda()
-loss, ref = f(D, R, smooothness_ranking[0], smooothness_tau[0], ref=True, k=k, gamma=gamma, w=w)
+loss, ref = f(D, R, smoothness_ranking[0], smoothness_tau[0], ref=True, k=k, gamma=gamma, w=w)
 ax[0].cla()
 xcp = encoded.detach().cpu().numpy()
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=rad, c=alph[idxs], alpha=alpha)
@@ -127,7 +127,7 @@ if letters:
     for j in range(min(n, 50)):  # xcp.shape[0]):
         ax[0].text(xcp[j, 0] + delta, xcp[j, 1] + delta, alph[j], size=fs)
 ax[0].title.set_text(f"{0}:    {ref:.8f}   ")
-print(f"{0:09d}:\toptimized sur: {loss:.8f}\tresulting wtau: {ref}\t\t{smooothness_ranking[0]:.6f}\t{smooothness_tau[0]:.6f}")
+print(f"{0:09d}:\toptimized sur: {loss:.8f}\tresulting wtau: {ref}\t\t{smoothness_ranking[0]:.6f}\t{smoothness_tau[0]:.6f}")
 
 optimizer = optim.RMSprop(model.parameters())
 # optimizer = optim.Rprop(model.parameters())
@@ -157,7 +157,7 @@ def animate(i):
         encoded = model(T)
         expected_ranking_batch = R[idx]
         D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-        loss, ref_ = f(D_batch, expected_ranking_batch, smooothness_ranking[0], smooothness_tau[0], ref=i % update == 0, k=k, gamma=gamma, w=w)
+        loss, ref_ = f(D_batch, expected_ranking_batch, smoothness_ranking[0], smoothness_tau[0], ref=i % update == 0, k=k, gamma=gamma, w=w)
         if ref_ != 0:
             ref = ref_
         (-loss).backward()
@@ -173,9 +173,9 @@ def animate(i):
             for j in range(min(n, 50)):  # xcp.shape[0]):
                 ax[1].text(xcp[j, 0] + delta, xcp[j, 1] + delta, alph[j], size=fs)
         plt.title(f"{i}:    {ref:.8f}   ", fontsize=20)
-        smooothness_ranking[0] *= 1 - decay
-        smooothness_tau[0] *= 1 - decay
-        print(f"{i:09d}:\toptimized sur: {loss:.8f}\tresulting wtau: {ref}\t\t{smooothness_ranking[0]:.6f}\t{smooothness_tau[0]:.6f}")
+        smoothness_ranking[0] *= 1 - decay
+        smoothness_tau[0] *= 1 - decay
+        print(f"{i:09d}:\toptimized sur: {loss:.8f}\tresulting wtau: {ref}\t\t{smoothness_ranking[0]:.6f}\t{smoothness_tau[0]:.6f}")
 
     return ax[1].step([], [])
 

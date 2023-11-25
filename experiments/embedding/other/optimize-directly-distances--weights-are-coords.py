@@ -135,7 +135,7 @@ D = torch.from_numpy(remove_diagonal(cdist(R, R))).cuda() if gpu else torch.from
 def animate(i):
     if not running[0]:
         if running[0] is None:
-            lossf(m(), D, smooothness=10)
+            lossf(m(), D, smoothness=10)
             print("stopped")
         running[0] = False
         sleep(1)

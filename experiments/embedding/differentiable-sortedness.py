@@ -46,7 +46,7 @@ beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
 global_k = k
-smooothness_tau = 1
+smoothness_tau = 1
 neurons = 30
 # epochs = 100
 batch_size = 20
@@ -120,13 +120,13 @@ D = from_numpy(D).cuda() if gpu else from_numpy(D)
 D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
 
 Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, Dsorted, idxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, Dsorted, idxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
-print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
+print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
 
 optimizer = optim.RMSprop(model.parameters())
 # optimizer = optim.ASGD(model.parameters())
@@ -160,7 +160,7 @@ def animate(i):
         l = len(idx)
         miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smooothness_tau, ref=True)
+        loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, ref=True)
         optimizer.zero_grad()
         (-loss).backward()
         optimizer.step()
@@ -173,7 +173,7 @@ def animate(i):
             for j in range(min(n, 50)):  # xcp.shape[0]):
                 ax[1].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
         plt.title(f"{i}:  {ref_local:.4f}  {ref_global:.4f}", fontsize=16)
-    print(f"{i:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smooothness_tau:.6f}")
+    print(f"{i:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
 
     return ax[1].step([], [])
 
