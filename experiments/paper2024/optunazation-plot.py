@@ -45,21 +45,21 @@ bools = {"centered": [False, True]}
 
 dct = dict(
     bank=0.4915,
-    cifar10=0.6843,
+    cifar10=0.6911,
     cnae9=0.6102,
     coil20=0.6927,
-    epileptic=0.5144,
+    epileptic=0.5260,
     fashion_mnist=0.7600,
     fmd=0.6067,
     har=0.8781,
     hatespeech=0.3740,
-    hiva=0.599358,
+    hiva=0.6175,
     imdb=0.4556,
     orl=0.997,
-    secom=0.600921684717123837,
-    seismic=0.7301,
-    sentiment=0.3420,
-    sms=0.5688,
+    secom=0.604479,
+    seismic=0.75997,
+    sentiment=0.3496,
+    sms=0.57124,
     spambase=0.6599,
     svhn=0.783
 )
@@ -69,7 +69,7 @@ for dataset in datasets:
     study1 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma1_d2_epoch_layers_optim_k_kg")
     study4 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma4_d2_epoch_layers_optim_k_kg")
 
-    for study in [study1, study4]:
+    for study in [study1, study4][:1]:
         best = study.best_trial
         # if best.value > dct[dataset]:
         #     break

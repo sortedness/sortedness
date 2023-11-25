@@ -37,6 +37,7 @@ from sortedness.embedding import balanced_embedding
 from sortedness.embedding.sortedness_ import optimized_balanced_embedding
 from sortedness.local import balanced_kendalltau
 from sortedness.local import sortedness
+from sortedness.misc.dataset import load_dataset
 
 
 def getbest(st):
@@ -68,9 +69,9 @@ suffix0 = f"alpha1_beta05_gamma{gamma}_d2_epoch_layers_optim_k_kg"
 current_uri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 
 with sopen(schedule_uri) as db:
-    for epochs0 in gp[3, 3.1, ..., max_epochs]:
+    for epochs0 in gp[3, 3.333, ..., max_epochs]:
         print(f"{int(epochs0)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
-        tasks = [(int(epochs0), k0, global_k0, d0, suffix0) for d0 in datasets]
+        tasks = [(round(epochs0, 1), k0, global_k0, d0, suffix0) for d0 in datasets]
         for epochs, k, global_k, dataset, suffix in Scheduler(db, timeout=30) << tasks:
             name = f"{dataset}_{suffix}"
             print(f"{name=} {epochs=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
@@ -143,7 +144,6 @@ with sopen(schedule_uri) as db:
                     qualities.tofile(f"optuna-{quality:04.4}-{trial.number}-best_quality-for-each-point-{dataset}_{suffix}.csv", sep=',')
                     print("CSVs saved")
                 return quality
-
 
 
             print(f"««««««« Retry FAILed trials «««««««")
