@@ -48,6 +48,7 @@ argvsucks = "^0.230725.7"
 optuna = "^3.4.0"
 plotly = "^5.18.0"
 gradient-descent-the-ultimate-optimizer = "^1.0"
+som-pbc = "^1.0.2"
 
 [[tool.poetry.source]]
 name = "torchcpu1130"

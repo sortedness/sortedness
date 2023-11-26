@@ -2990,6 +2990,22 @@ files = [
 ]
 
 [[package]]
+name = "som-pbc"
+version = "1.0.2"
+description = "self organizing maps with periodic boundary conditions"
+optional = false
+python-versions = "*"
+files = [
+    {file = "som-pbc-1.0.2.tar.gz", hash = "sha256:05f6c1a9976eb4c2cf85d5dfd92853b0e657056347022b4726302f5e8623a238"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+numpy = "*"
+scikit-learn = "*"
+scipy = "*"
+
+[[package]]
 name = "soupsieve"
 version = "2.5"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -3426,4 +3442,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "d8bd142a1cefd0785340d9e6c4a182eec5d5c08a6c2c17a611833520bd3a3159"
+content-hash = "9605df063d024875ba156620edea0a8c23773f761393c641ac96387c6103cf56"

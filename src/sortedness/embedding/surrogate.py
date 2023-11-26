@@ -22,7 +22,6 @@
 #
 import math
 from itertools import repeat
-from math import pi
 
 import torch
 from scipy.stats import weightedtau, kendalltau
@@ -30,7 +29,19 @@ from torch import tanh, sum, topk, sqrt, abs
 
 from sortedness.local import geomean_np
 
-cau = lambda r, gamma=1: 1 / pi * gamma / (gamma ** 2 + r ** 2)
+
+# lin = lambda r,k: 2*(k+1-i)/k*(k+1)
+def cau(r, gamma=4):
+    """
+    >>> import torch
+    >>> from lange import ap
+    >>> cau(torch.tensor(ap[0,1,...,2]))
+    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    """
+
+    return gamma ** 2 / (gamma ** 2 + r ** 2)
+
+
 har = lambda r: 1 / (r + 1)
 
 
@@ -42,6 +53,12 @@ def pdiffs(x):
 
 def psums(x):
     dis = x.unsqueeze(1) + x
+    indices = torch.triu_indices(*dis.shape, offset=1)
+    return dis[indices[0], indices[1]]
+
+
+def pmuls(x):
+    dis = x.unsqueeze(1) * x
     indices = torch.triu_indices(*dis.shape, offset=1)
     return dis[indices[0], indices[1]]
 
@@ -63,7 +80,7 @@ def surrogate_tau(a, b, smoothness):
     ta, tb = tanh(da / smoothness), tanh(db / smoothness)
     num = sum(ta * tb)
     v = sum(abs(ta)) * sum(abs(tb))
-    den = sqrt(v + 0.000000000001)
+    den = sqrt(v + 0.00000000001)
     return num / den
 
 
@@ -103,8 +120,24 @@ def surrogate_wtau(a, b, w, smoothness):
     ta, tb = tanh(da / smoothness), tanh(db / smoothness)
     num = sum(ta * tb * sw)
     v = sum(abs(ta * sw)) * sum(abs(tb * sw))
-    den = sqrt(v + 0.000000000001)
+    den = sqrt(v + 0.00000000001)
     return num / den
+
+
+"""
+000000001:	optimized sur: 0.2526  local/globa: 0.2526 0.0000  REF: 0.3930 0.2909		0.300000
+000000002:	optimized sur: 0.3596  local/globa: 0.3596 0.0000  REF: 0.5666 0.2984		0.300000
+000000003:	optimized sur: 0.3662  local/globa: 0.3662 0.0000  REF: 0.5824 0.2662		0.300000
+000000004:	optimized sur: 0.3639  local/globa: 0.3639 0.0000  REF: 0.5574 0.2855		0.300000
+000000005:	optimized sur: 0.3627  local/globa: 0.3627 0.0000  REF: 0.5660 0.2971		0.300000
+
+000000001:	optimized sur: 0.2526  local/globa: 0.2526 0.0000  REF: 0.3930 0.2909		0.300000
+000000002:	optimized sur: 0.3596  local/globa: 0.3596 0.0000  REF: 0.5666 0.2984		0.300000
+000000003:	optimized sur: 0.3662  local/globa: 0.3662 0.0000  REF: 0.5824 0.2662		0.300000
+000000004:	optimized sur: 0.3639  local/globa: 0.3639 0.0000  REF: 0.5574 0.2855		0.300000
+000000005:	optimized sur: 0.3627  local/globa: 0.3627 0.0000  REF: 0.5660 0.2971		0.300000
+
+"""
 
 
 # def surrogate_tau_rel(a, b, smoothness):
@@ -169,7 +202,7 @@ def geomean(lo, gl, beta=0.5):
     """
     l = (lo + 1) / 2
     g = (gl + 1) / 2
-    return torch.exp((1 - beta) * torch.log(l + 0.000000000001) + beta * torch.log(g + 0.000000000001)) * 2 - 1
+    return torch.exp((1 - beta) * torch.log(l + 0.00000000001) + beta * torch.log(g + 0.00000000001)) * 2 - 1
 
 
 def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha=0.5, beta=0.5, smoothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
@@ -200,21 +233,22 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
         # local
         if beta < 1:
             if 0 < alpha < 1:
-                a1, b1 = dsorted, d_[idxs_by_D]
-                mu_local_d = surrogate_wtau(a1, b1, w[:k], smoothness_tau)
+                a0, b0 = dsorted, d_[idxs_by_D]
+                mu_local_d = surrogate_wtau(a0, b0, w[:k], smoothness_tau)
 
-                a2, idxs_by_D_ = topk(d_, k, largest=False)
-                b2 = d[idxs_by_D_]
-                mu_local_d_ = surrogate_wtau(a2, b2, w[:k], smoothness_tau)
+                a1, idxs_by_D_ = topk(d_, k, largest=False)
+                b1 = d[idxs_by_D_]
+                mu_local_d_ = surrogate_wtau(a1, b1, w[:k], smoothness_tau)
 
                 mu_local = geomean(mu_local_d, mu_local_d_, alpha)
             else:
                 if alpha == 0:
-                    a, b = dsorted, d_[idxs_by_D]
+                    a0, b0 = dsorted, d_[idxs_by_D]
+                    mu_local = surrogate_wtau(a0, b0, w[:k], smoothness_tau)
                 else:
-                    a, idxs_by_D_ = topk(d_, k, largest=False)
-                    b = d[idxs_by_D_]
-                mu_local = surrogate_wtau(a, b, w[:k], smoothness_tau)
+                    a1, idxs_by_D_ = topk(d_, k, largest=False)
+                    b1 = d[idxs_by_D_]
+                    mu_local = surrogate_wtau(a1, b1, w[:k], smoothness_tau)
             mu_local_acc += mu_local
 
         # global
@@ -240,14 +274,17 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
 
         if ref:
             # todo: ref is not perfect as it is sampled/shortened
-            if 0 < alpha < 1:
-                lo1 = weightedtau(a1.cpu().detach().numpy(), b1.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
-                lo2 = weightedtau(a2.cpu().detach().numpy(), b2.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
-                tau_local_acc += geomean_np(lo1, lo2, alpha)
-            else:
-                tau_local_acc += weightedtau(a.cpu().detach().numpy(), b.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False)[0]
+            if alpha == 0 or beta == 1:
+                a1, idxs_by_D = topk(d, 2 * k, largest=False)
+                b1 = d_[idxs_by_D]
+            if alpha == 1 or beta == 1:
+                b0, idxs_by_D_ = topk(d_, 2 * k, largest=False)
+                a0 = d[idxs_by_D_]
+            lo0 = weightedtau(a0.cpu().detach().numpy(), b0.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False, additive=True)[0]
+            lo1 = weightedtau(a1.cpu().detach().numpy(), b1.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False, additive=True)[0]
+            tau_local_acc += geomean_np(lo0, lo1, alpha)
+
             p, t = d.cpu().detach().numpy(), d_.cpu().detach().numpy()
             tau_global_acc += kendalltau(p, t)[0]
-            #         000000020:	optimized sur: 0.1438  local/globa: 0.1290 0.1604  REF: 0.5243 0.4973		1.000000
 
     return mu / n, mu_local_acc / n, mu_global_acc / n, tau_local_acc / n, tau_global_acc / n

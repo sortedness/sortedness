@@ -24,7 +24,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.optim as optim
+from gradient_descent_the_ultimate_optimizer import gdtuo
 from matplotlib import animation
 from numpy import random
 from scipy.spatial.distance import cdist
@@ -35,25 +35,29 @@ from torch import from_numpy, set_num_threads, tensor, topk
 from torch.utils.data import DataLoader
 
 from sortedness.embedding.sortedness_ import Dt
-from sortedness.embedding.surrogate import cau, loss_function
-from sortedness.local import remove_diagonal
+from sortedness.embedding.surrogate import loss_function
+from sortedness.local import remove_diagonal, gaussian_np
 
 # X     000000018:	optimized sur: 0.1706  local/globa: 0.1550 0.1879  REF: 0.6209 0.5486		1.000000
 # both  000000018:	optimized sur: 0.1663  local/globa: 0.1611 0.1735  REF: 0.6426 0.4954		1.000000
 # X_    000000018:	optimized sur: 0.1641  local/globa: 0.1556 0.1751  REF: 0.5480 0.4830		1.000000
+n = 500  # 1797
+ref = True
 alpha = 0.5
 beta = 0.5
 gamma = 4
-k, gk = 17, "sqrt"
+sigma = 2
+# ca = cau(tensor(range(n)), gamma=gamma) / 0.54
+ca = (tensor(gaussian_np(list(range(n)), sigma=sigma)))
+print(ca)
+k, gk = 20, 400
 global_k = k
 smoothness_tau = 1
 neurons = 30
-# epochs = 100
 batch_size = 20
 seed = 0
 gpu = False
 
-n = 1797 // 5
 threads = 1
 # cuda.is_available = lambda: False
 set_num_threads(threads)
@@ -83,6 +87,7 @@ class M(torch.nn.Module):
         super().__init__()
         self.encoder = torch.nn.Sequential(
             torch.nn.Linear(X.shape[1], neurons), torch.nn.Tanh(),
+            # torch.nn.Linear(neurons, neurons), torch.nn.Tanh(),
             torch.nn.Linear(neurons, 2)
         )
         # self.decoder = torch.nn.Sequential(
@@ -97,10 +102,13 @@ class M(torch.nn.Module):
 model = M()
 if gpu:
     model.cuda()
+optim = gdtuo.Adam(optimizer=gdtuo.SGD())
+mw = [gdtuo.ModuleWrapper(model, optimizer=optim)]
+mw[0].initialize()
+
 print(X.shape)
 # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
 T = from_numpy(X).cuda() if gpu else from_numpy(X)
-ca = cau(tensor(range(n)), gamma=gamma) / 0.54
 print(sum(ca))
 w = ca.cuda() if gpu else ca
 # wharmonic = har(tensor(range(n)))
@@ -109,7 +117,9 @@ fig, axs = plt.subplots(1, 2, figsize=(12, 9))
 ax[0], ax[1] = axs
 ax[0].cla()
 
+print("tsne")
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
+print("done")
 X_ = xcp
 D_ = remove_diagonal(cdist(X_, X_))
 D = remove_diagonal(cdist(X, X))
@@ -128,10 +138,8 @@ for j in range(min(n, 50)):  # xcp.shape[0]):
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
 print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
 
-optimizer = optim.RMSprop(model.parameters())
-# optimizer = optim.ASGD(model.parameters())
-# optimizer = optim.Rprop(model.parameters())
-model.train()
+# optimizer = optim.RMSprop(model.parameters())
+# model.train()
 
 c = [0]
 
@@ -145,25 +153,27 @@ def animate(i):
     X_ = loss = loss_local = loss_global = ref_local = ref_global = None
     c[0] += 1
     i = c[0]
-    for idx in loader[0]:
-        X_ = model(X)
-        miniX_ = X_[idx]
-        miniD = D[idx]
-        if alpha == 1:
-            miniDsorted = None
-            miniidxs_by_D = None
-        else:
-            miniDsorted = Dsorted[idx]
-            miniidxs_by_D = idxs_by_D[idx]
+    with torch.enable_grad():
+        for idx in loader[0]:
+            mw[0].begin()
+            X_ = model(X)
+            miniX_ = X_[idx]
+            miniD = D[idx]
+            if alpha == 1:
+                miniDsorted = None
+                miniidxs_by_D = None
+            else:
+                miniDsorted = Dsorted[idx]
+                miniidxs_by_D = idxs_by_D[idx]
 
-        # Distance matrix without diagonal.
-        l = len(idx)
-        miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
+            # Distance matrix without diagonal.
+            l = len(idx)
+            miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, ref=True)
-        optimizer.zero_grad()
-        (-loss).backward()
-        optimizer.step()
+            loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, smoothness_tau, ref=ref)
+            mw[0].zero_grad()
+            (-loss).backward(create_graph=True)
+            mw[0].step()
 
     if i % update == 0:
         ax[1].cla()

@@ -140,8 +140,8 @@ with sopen(schedule_uri) as db:
                 qualities = sortedness(res["X_"], X, symmetric=False, f=balanced_kendalltau, gamma=gamma)
                 quality = np.mean(qualities)
                 if (best := getbest(study)) is None or quality > best.value:
-                    res["X_"].tofile(f"optuna-{quality:04.4}-{trial.number}-best_X_-points-{dataset}_{suffix}.csv", sep=',')
-                    qualities.tofile(f"optuna-{quality:04.4}-{trial.number}-best_quality-for-each-point-{dataset}_{suffix}.csv", sep=',')
+                    res["X_"].tofile(f"optuna-{dataset.ljust(20, '_')}-{quality:04.4f}-{trial.number}-best_X_-points_{suffix}.csv", sep=',')
+                    qualities.tofile(f"optuna-{dataset.ljust(20, '_')}-{quality:04.4f}-{trial.number}-best_quality-for-each-point-{dataset}_{suffix}.csv", sep=',')
                     print("CSVs saved")
                 return quality
 
