@@ -57,7 +57,6 @@ print("--------------------------------------------------------------------")
 print()
 datasets = dct["datasets"]
 max_epochs = dct["max_epochs"]
-k0 = dct["k"]
 global_k0 = dct["global_k"]
 max_neurons_first_layer = dct["max_neurons_first_layer"]
 max_hidden_layers = dct["max_hidden_layers"]

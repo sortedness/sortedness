@@ -25,7 +25,7 @@ from itertools import repeat
 
 import torch
 from scipy.stats import weightedtau, kendalltau
-from torch import tanh, sum, topk, sqrt, abs
+from torch import tanh, sum, topk, sqrt, abs, tensor
 
 from sortedness.local import geomean_np
 
@@ -262,6 +262,7 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
             start += global_k
             ga = d[gidxs]
             gb = d_[gidxs]
+            # mu_global = tensor(kendalltau(ga, gb)[0])
             mu_global = surrogate_tau(ga, gb, smoothness_tau)
             mu_global_acc += mu_global
 
