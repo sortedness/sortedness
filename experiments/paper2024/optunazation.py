@@ -74,6 +74,7 @@ with sopen(schedule_uri) as db:
         for epochs, k, global_k, dataset, suffix in Scheduler(db, timeout=30) << tasks:
             name = f"{dataset}_{suffix}"
             print(f"{name=} {epochs=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            epochs = int(epochs0)
             # study = optuna.create_study(storage=olduri, study_name=name, load_if_exists=True, direction="maximize")
             study = optuna.create_study(storage=current_uri, study_name=name, load_if_exists=True, direction="maximize")
 
