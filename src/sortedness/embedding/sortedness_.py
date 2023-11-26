@@ -346,7 +346,7 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
-    sigma = kappa / math.sqrt(-2 * log(0.5)) + 0.00000000001
+    sigma = kappa / math.sqrt(-2 * math.log(0.5)) + 0.00000000001
     k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
     w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
@@ -509,7 +509,7 @@ def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
-    sigma = kappa / math.sqrt(-2 * log(0.5)) + 0.00000000001
+    sigma = kappa / math.sqrt(-2 * math.log(0.5)) + 0.00000000001
     k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
     w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
