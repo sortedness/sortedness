@@ -35,7 +35,7 @@ from shelchemy.scheduler import Scheduler
 from sortedness.config import schedule_uri, optuna_uri
 from sortedness.embedding import balanced_embedding
 from sortedness.embedding.sortedness_ import optimized_balanced_embedding
-from sortedness.local import balanced_kendalltau
+from sortedness.local import balanced_kendalltau_gaussian
 from sortedness.local import sortedness
 from sortedness.misc.dataset import load_dataset
 
@@ -48,8 +48,8 @@ def getbest(st):
             return None
 
 
-dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, k=17, global_k=100, gamma=4)
-print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [k=17] [global_k=100] [gamma=4]")
+dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, global_k=100, kappa=5)
+print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [global_k=100] [kappa=5]")
 print("--------------------------------------------------------------------")
 for tup in dct.items():
     print(tup)
@@ -61,15 +61,15 @@ k0 = dct["k"]
 global_k0 = dct["global_k"]
 max_neurons_first_layer = dct["max_neurons_first_layer"]
 max_hidden_layers = dct["max_hidden_layers"]
-gamma = dct["gamma"]
+kappa = dct["kappa"]
 
-suffix0 = f"alpha1_beta05_gamma{gamma}_d2_epoch_layers_optim_k_kg"
+suffix0 = f"alpha1_beta05_kappa{kappa}_d2_epoch_layers_optim_k_kg"
 # newuri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 # olduri = optuna.storages.RDBStorage(url=optuna_uri2, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 current_uri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 
 with sopen(schedule_uri) as db:
-    for epochs0 in gp[3, 3.333, ..., max_epochs]:
+    for epochs0 in gp[3, 3.2, ..., max_epochs]:
         print(f"{int(epochs0)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
         tasks = [(round(epochs0, 1), k0, global_k0, d0, suffix0) for d0 in datasets]
         for epochs, k, global_k, dataset, suffix in Scheduler(db, timeout=30) << tasks:
@@ -114,7 +114,7 @@ with sopen(schedule_uri) as db:
                 embedding_optimizer = trial.suggest_int("embedding_optimizer", 0, 2)
                 if embedding_optimizer == 0:
                     res = balanced_embedding(
-                        X, gamma=gamma, k=k, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
+                        X, kappa=kappa, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
                         smoothness_tau=trial.suggest_float("smoothness_tau", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
@@ -127,7 +127,7 @@ with sopen(schedule_uri) as db:
                         return_only_X_=False, verbose=False)
                 else:
                     res = optimized_balanced_embedding(
-                        X, gamma=gamma, k=k, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
+                        X, kappa=kappa, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
                         smoothness_tau=trial.suggest_float("smoothness_tau", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
@@ -137,7 +137,7 @@ with sopen(schedule_uri) as db:
                         sgd_mu=trial.suggest_float("sgd_mu", 0.000001, 1, log=True),
                         return_only_X_=False, verbose=False)
                 trial.suggest_int("epoch", res["epoch"], res["epoch"])
-                qualities = sortedness(res["X_"], X, symmetric=False, f=balanced_kendalltau, gamma=gamma)
+                qualities = sortedness(res["X_"], X, symmetric=False, f=balanced_kendalltau_gaussian, kappa=kappa)
                 quality = np.mean(qualities)
                 if (best := getbest(study)) is None or quality > best.value:
                     res["X_"].tofile(f"optuna-{dataset.ljust(20, '_')}-{quality:04.4f}-{trial.number}-best_X_-points_{suffix}.csv", sep=',')

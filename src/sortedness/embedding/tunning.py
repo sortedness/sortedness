@@ -141,6 +141,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     else:
         best_loss = [-1]
 
+    raise Exception(f"trocar para gaussian")
     def taus(r, r_):
         tau_local = weightedtau(r, r_, weigher=partial(cau, gamma), rank=False)[0]
         tau_global = kendalltau(r, r_)[0]

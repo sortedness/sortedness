@@ -21,6 +21,7 @@
 #  time spent here.
 #
 import copy
+import math
 
 import numpy as np
 import torch
@@ -235,7 +236,7 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
     return X_, model, float(best_quality_surrogate)
 
 
-def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
+def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
                        hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"], embedding_optimizer=RMSprop,
                        min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
                        gpu=False, verbose=False, **embedding_optimizer__kwargs):
@@ -345,8 +346,10 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
+    sigma = kappa / math.sqrt(-2 * log(0.5)) + 0.00000000001
+    k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
+    w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
-    w = cau(tensor(range(n)), gamma=gamma)
 
     if "alpha_" in embedding_optimizer__kwargs:
         embedding_optimizer__kwargs["alpha"] = embedding_optimizer__kwargs.pop("alpha_")
@@ -397,7 +400,7 @@ def balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5,
     return {"X_": X_, "model": model, "epoch": best_epoch, "surrogate_quality": float(best_quality_surrogate)}
 
 
-def optimized_balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
+def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
                                  hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"],
                                  min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
                                  gpu=False, verbose=False,
@@ -506,8 +509,10 @@ def optimized_balanced_embedding(X, d=2, gamma=4, k=17, global_k: int = "sqrt", 
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
+    sigma = kappa / math.sqrt(-2 * log(0.5)) + 0.00000000001
+    k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
+    w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
-    w = cau(tensor(range(n)), gamma=gamma)
 
     if optim == 1:
         optim = gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
