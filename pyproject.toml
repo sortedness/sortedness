@@ -15,6 +15,7 @@ python = "^3.10,<3.13"
 scipy = "^1.11.2"
 lange = "^1.230203.1"
 pathos = "^0.3.0"
+pyqt6 = "^6.6.0"
 
 [tool.poetry.group.dev.dependencies]
 #  todo: all dev deps should he hidden from the normal library usage. e.g.: torch, Cython should only be imported by functions that use them
