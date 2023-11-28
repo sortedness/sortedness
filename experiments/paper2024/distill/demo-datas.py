@@ -417,42 +417,37 @@ def plot_all(*args, y, exp):
 # Distill study cases
 
 ## Cluster sizes in a t-SNE plot mean nothing
-def case02():
+def case02(p=50, n=5000, e=100):
     points = two_different_clusters_data_2d(75)
-
-    # plot_points(points)
 
     X = np.array(getCoords(points))
     y = getColors(points)
-    sort_proj = balanced_embedding(X, alpha=1, epochs=100, return_only_X_=True)
+    
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
 
-    # plot_proj(X_, y)
-
-    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40
-        , n_iter=300, n_jobs=-1).fit_transform(X)
-
-    # plot_proj(xcp, y)
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y, 2)
 
 ## Distances between clusters might not mean anything - 50 points
-def case03a():
+def case03a(p=50, n=5000, e=100):
     points = three_clusters_data_2d(50)
 
     X = np.array(getCoords(points))
     y = getColors(points)
 
-    # plot_proj(X, y)
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
 
-    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=50
-        , n_iter=5000, n_jobs=-1).fit_transform(X)
-
-    sort_proj = balanced_embedding(X, alpha=1, epochs=100, return_only_X_=True)
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y, '3a')
 
 ## Distances between clusters might not mean anything - 200 points
-def case03b():
+def case03b(p=50, n=5000, e=100)):
     points = three_clusters_data_2d(200)
 
     X = np.array(getCoords(points))
@@ -460,18 +455,19 @@ def case03b():
 
     # plot_proj(X, y)
 
-    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=50
-        , n_iter=5000, n_jobs=-1).fit_transform(X)
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
 
-    sort_proj = balanced_embedding(X, alpha=1, epochs=100, activation_functions=["relu"], return_only_X_=True)
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y, '3b')
 
 ## Main
 if __name__ == '__main__':
     
-    # case02()
+    case02(50, 5000, 5000)
 
-    # case03a()
-    case03b()
+    # case03a(50, 5000, 5000)
+    # case03b(50, 5000, 5000)
 
