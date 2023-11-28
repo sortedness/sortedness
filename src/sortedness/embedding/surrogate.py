@@ -243,7 +243,7 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
                 mu_local = geomean(mu_local_d, mu_local_d_, alpha)
             else:
                 if alpha == 0:
-                    a0, b0 = dsorted, d_[idxs_by_D]
+                    a0, b0 = dsorted, d_[idxs_by_D]  # todo: não precisa reindexar toda hora, só reindexar X do lado de fora conforme D
                     mu_local = surrogate_wtau(a0, b0, w[:k], smoothness_tau)
                 else:
                     a1, idxs_by_D_ = topk(d_, k, largest=False)

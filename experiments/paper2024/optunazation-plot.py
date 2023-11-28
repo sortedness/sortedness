@@ -45,19 +45,19 @@ bools = {"centered": [False, True]}
 
 dct = dict(
     bank=0.4915,
-    cifar10=0.6911,
+    cifar10=0.6932,
     cnae9=0.6102,
     coil20=0.6927,
-    epileptic=0.5260,
-    fashion_mnist=0.7600,
+    epileptic=0.5626,
+    fashion_mnist=0.7966,
     fmd=0.6067,
     har=0.8781,
-    hatespeech=0.3740,
-    hiva=0.6175,
+    hatespeech=0.3931,
+    hiva=0.6192,
     imdb=0.4556,
     orl=0.997,
-    secom=0.604479,
-    seismic=0.75997,
+    secom=0.6184,
+    seismic=0.7616,
     sentiment=0.3496,
     sms=0.57124,
     spambase=0.6599,
@@ -67,9 +67,10 @@ storage = optuna.storages.RDBStorage(url=optuna_uri)
 
 for dataset in datasets:
     study1 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma1_d2_epoch_layers_optim_k_kg")
-    study4 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma4_d2_epoch_layers_optim_k_kg")
+    # study4 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma4_d2_epoch_layers_optim_k_kg")
+    studyg = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_kappa5_d2_epoch_layers_optim_k_kg")
 
-    for study in [study1, study4][:1]:
+    for study in [study1, studyg]:
         best = study.best_trial
         # if best.value > dct[dataset]:
         #     break
@@ -78,7 +79,7 @@ for dataset in datasets:
         mark = f"{100 * best.value / dct[dataset] - 100:03.3f}%" if best.value > dct[dataset] else "      "
         state = "COMPLETE"
         print(f"{best.value:03.10f} {mark} {df[df['state'] != state].shape[0]:3}/{df.shape[0]} not {state}  {best.params}")
-
+    print()
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 
     # plot_contour(study, params=["epoch", "hidden_layers"], target_name=dataset).show()

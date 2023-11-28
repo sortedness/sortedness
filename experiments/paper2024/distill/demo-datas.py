@@ -3,20 +3,23 @@
 # This file is also licensed under the Apache 2.0 License.
 
 import math
-import numpy as np
-# import matplotlib
-import matplotlib.pyplot as plt
-from scipy.stats import norm
 from colorsys import hls_to_rgb
 
-from sortedness.embedding import balanced_embedding
+# import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import norm
 from sklearn.manifold import TSNE
+
+from sortedness.embedding import balanced_embedding
+
 
 ## A point with color info.
 class Point:
     def __init__(self, coords, color='#039'):
         self.coords = coords
         self.color = color
+
 
 ## Euclidean distance.
 def dist(a, b):
@@ -25,18 +28,22 @@ def dist(a, b):
         d += (val - b[i]) ** 2
     return math.sqrt(d)
 
+
 ## Gaussian generator, mean = 0, std = 1.
 def normal():
     return norm.rvs(0, 1)
+
 
 ## Create random Gaussian vector.
 def normal_vector(dim):
     return norm.rvs(0, 1, size=dim)
 
+
 ## Scale the given vector.
 def scale(vector, a):
     for i, val in enumerate(vector):
         vector[i] *= a
+
 
 ## Add two vectors.
 def add(a, b):
@@ -44,6 +51,7 @@ def add(a, b):
     for i in range(len(a)):
         result.append(a[i] + b[i])
     return result
+
 
 ## Adds colors to points depending on 2D location of original.
 def add_spatial_colors(points):
@@ -57,11 +65,13 @@ def add_spatial_colors(points):
         c2 = int(np.interp(y, y_extent, np.arange(256)))
         point.color = f'rgb(20, {c1}, {c2})'
 
+
 ## Convenience function to wrap 2d arrays as Points, using a default color scheme.
 def make_points(originals, color_scheme='viridis'):
     points = [Point(coords) for coords in originals]
     add_spatial_colors(points)
     return points
+
 
 ## Creates distance matrix for t-SNE input.
 def distance_matrix(points):
@@ -74,6 +84,7 @@ def distance_matrix(points):
 
     return matrix
 
+
 ## Data in shape of 2D grid.
 def grid_data(size):
     points = []
@@ -83,16 +94,19 @@ def grid_data(size):
 
     return make_points(points)
 
+
 ## Gaussian cloud, symmetric, of given dimension.
-def gaussian_data(n, dim):
+def gaussian_data(n, dim=2):
     points = []
     for _ in range(n):
         p = np.random.normal(size=dim)
         points.append(Point(p))
     return points
 
+
 ## Elongated Gaussian ellipsoid.
-def elongated_gaussian_data(n, dim):
+def elongated_gaussian_data(n, dim=2):
+    print("elongated_gaussian_data")
     points = []
     for _ in range(n):
         p = np.random.normal(size=dim)
@@ -100,13 +114,16 @@ def elongated_gaussian_data(n, dim):
         points.append(Point(p))
     return points
 
+
 ## Return a color for the given angle.
 def angle_color(t):
     hue = (300 * t) / (2 * math.pi)
     return hls_to_rgb(hue, 0.5, 0.5)
 
+
 ## Data in a 2D circle, regularly spaced.
 def circle_data(num_points):
+    print("circle_data")
     points = []
     for i in range(num_points):
         angle = 2 * np.pi * i / num_points
@@ -116,8 +133,10 @@ def circle_data(num_points):
 
     return points
 
+
 ## Random points on a 2D circle.
 def random_circle_data(num_points):
+    print("random_circle_data")
     points = []
     for i in range(num_points):
         angle = 2 * np.pi * np.random.random()
@@ -127,8 +146,11 @@ def random_circle_data(num_points):
 
     return points
 
+
 ## Clusters arranged in a circle.
 def random_circle_cluster_data(num_points):
+    print("random_circle_cluster_data")
+    num_points //= 2
     points = []
     for i in range(num_points):
         angle = 2 * np.pi * i / num_points
@@ -140,16 +162,20 @@ def random_circle_cluster_data(num_points):
 
     return points
 
+
 ## Two 2D clusters of different sizes.
 def two_different_clusters_data_2d(n):
+    print("two_different_clusters_data_2d")
     points = []
     for i in range(n):
         points.append(Point([10 * np.random.normal(), 10 * np.random.normal()], '#039'))
         points.append(Point([100 + np.random.normal(), np.random.normal()], '#f90'))
     return points
 
+
 ## Two clusters of the same size.
 def two_clusters_data(n, dim=50):
+    print("two_clusters_data")
     points = []
     for _ in range(n):
         points.append(Point(np.random.normal(size=dim), '#039'))
@@ -158,8 +184,10 @@ def two_clusters_data(n, dim=50):
         points.append(Point(v, '#f90'))
     return points
 
+
 ## Two differently sized clusters, of arbitrary dimensions.
 def two_different_clusters_data(n, dim=50, scale=10):
+    print("two_different_clusters_data")
     dim = dim or 50
     scale = scale or 10
     points = []
@@ -171,8 +199,10 @@ def two_different_clusters_data(n, dim=50, scale=10):
         points.append(Point(v, '#f90'))
     return points
 
+
 ## Three clusters, at different distances from each other, in 2D
 def three_clusters_data_2d(n):
+    print("three_clusters_data_2d")
     points = []
     for _ in range(n):
         points.append(Point([np.random.normal(), np.random.normal()], '#039'))
@@ -180,8 +210,10 @@ def three_clusters_data_2d(n):
         points.append(Point([50 + np.random.normal(), np.random.normal()], '#6a3'))
     return points
 
+
 ## Three clusters, at different distances from each other, in any dimension.
 def three_clusters_data(n, dim=50):
+    print("three_clusters_data")
     dim = dim or 50
     points = []
     for _ in range(n):
@@ -195,8 +227,10 @@ def three_clusters_data(n, dim=50):
         points.append(Point(p3, '#6a3'))
     return points
 
+
 ## One tiny cluster inside of a big cluster.
 def subset_clusters_data(n, dim=2):
+    print("subset_clusters_data")
     dim = dim or 2
     points = []
     for _ in range(n):
@@ -207,8 +241,10 @@ def subset_clusters_data(n, dim=2):
         points.append(Point(p2, '#f90'))
     return points
 
+
 ## Data in a rough simplex.
 def simplex_data(n, noise=0):
+    print("simplex_data")
     points = []
     for i in range(n):
         p = []
@@ -220,17 +256,21 @@ def simplex_data(n, noise=0):
 
     return points
 
-## Uniform points from a cube.
-def cube_data(n, dim):
-  points = []
-  for _ in range(n):
-    p = np.random.uniform(size=dim)
-    points.append(Point(p))
 
-  return points
+## Uniform points from a cube.
+def cube_data(n, dim=2):
+    print("cube_data")
+    points = []
+    for _ in range(n):
+        p = np.random.uniform(size=dim)
+        points.append(Point(p))
+
+    return points
+
 
 ## Points in two unlinked rings.
 def unlink_data(n):
+    print("unlink_data")
     points = []
 
     def rotate(x, y, z):
@@ -254,8 +294,10 @@ def unlink_data(n):
 
     return points
 
+
 ## Points in linked rings.
 def link_data(n):
+    print("link_data")
     points = []
 
     def rotate(x, y, z):
@@ -279,8 +321,10 @@ def link_data(n):
 
     return points
 
+
 ## Points in a trefoil knot.
 def trefoil_data(n):
+    print("trefoil_data")
     points = []
     for i in range(n):
         t = 2 * np.pi * i / n
@@ -292,8 +336,10 @@ def trefoil_data(n):
 
     return points
 
+
 ## Two long, linear clusters in 2D.
 def long_cluster_data(n):
+    print("long_cluster_data")
     points = []
     s = 0.03 * n
     for i in range(n):
@@ -305,8 +351,10 @@ def long_cluster_data(n):
         points.append(Point([x2, y2], '#f90'))
     return points
 
+
 ## Mutually orthogonal steps.
 def ortho_curve(n):
+    print("ortho_curve")
     points = []
     for i in range(n):
         coords = np.zeros(n)
@@ -316,8 +364,10 @@ def ortho_curve(n):
         points.append(Point(coords, color))
     return points
 
+
 ## Random walk
-def random_walk(n, dim):
+def random_walk(n, dim=2):
+    print("random_walk")
     points = []
     current = np.zeros(dim)
 
@@ -330,8 +380,10 @@ def random_walk(n, dim):
 
     return points
 
+
 ## Random walk
-def random_jump(n, dim):
+def random_jump(n, dim=2):
+    print("random_jump")
     points = []
     current = np.zeros(dim)
 
@@ -347,6 +399,7 @@ def random_jump(n, dim):
 
     return points
 
+
 ##########################################
 ##########################################
 
@@ -356,11 +409,13 @@ def getCoords(points):
         coords.append(point.coords)
     return coords
 
+
 def getColors(points):
     colors = []
     for point in points:
         colors.append(point.color)
     return colors
+
 
 def plot_points(points):
     # matplotlib.use('QtAgg')
@@ -375,42 +430,47 @@ def plot_points(points):
     # plt.savefig("%s/plots/fig1.pdf"  % (output_dir, metric), format='pdf')
     # plt.savefig("%s/plots/fig1.png"  % (output_dir, metric), format='png')
 
+
 def plot_proj(X, y):
-    plt.scatter(X[:,0], X[:,1], color=y)
+    plt.scatter(X[:, 0], X[:, 1], color=y)
     plt.show()
 
-def plot_all(X, tsne_proj, sort_proj, y):
+
+def plot_all(*args, y):
     fig, axes = plt.subplots(1, 3)
+    fig.set_size_inches(12, 4)
+    for ax, X, name in zip(axes, args, ["Original", "t-SNE", "SORTbmap"]):
+        # ax.set_xlim([-0.05, 1.05])
+        # ax.set_ylim([-0.05, 1.05])
 
-    axes[0].scatter(X[:,0], X[:,1], color=y)
-    axes[0].set_title("Original")
+        min_vals = np.min(X[:, :2], axis=0, keepdims=True)
+        max_vals = np.max(X[:, :2], axis=0, keepdims=True)
+        X = (X[:, :2] - min_vals) / (max_vals - min_vals)
 
-    axes[1].scatter(tsne_proj[:,0], tsne_proj[:,1], color=y)
-    axes[1].set_title("TSNE")
-
-    axes[2].scatter(sort_proj[:,0], sort_proj[:,1], color=y)
-    axes[2].set_title("SORT")
-
+        ax.scatter(X[:, 0], X[:, 1], color=y)
+        ax.set_title(name)
     plt.show()
+
 
 ## Main
 if __name__ == '__main__':
-    points = two_different_clusters_data_2d(75)
+    # for f in [two_clusters_data, gaussian_data, elongated_gaussian_data, circle_data, random_circle_data, random_circle_cluster_data, two_different_clusters_data_2d, two_clusters_data, two_different_clusters_data, three_clusters_data_2d, three_clusters_data, subset_clusters_data, simplex_data, cube_data, unlink_data, link_data, trefoil_data, long_cluster_data, ortho_curve, random_walk, random_jump]:
+    for f in [two_different_clusters_data_2d, two_clusters_data, two_different_clusters_data, three_clusters_data_2d, random_circle_cluster_data, two_clusters_data, gaussian_data, elongated_gaussian_data, circle_data, random_circle_data, three_clusters_data, subset_clusters_data, simplex_data, cube_data, unlink_data, link_data, trefoil_data, long_cluster_data, ortho_curve, random_walk, random_jump]:
+        points = f(75)
 
-    # plot_points(points)
+        # plot_points(points)
 
-    X = np.array(getCoords(points))
-    y = getColors(points)
-    sort_proj = balanced_embedding(X, alpha=1, epochs=100, return_only_X_=True)
+        X = np.array(getCoords(points))
+        y = getColors(points)
+        sort_proj = balanced_embedding(X, alpha=1, epochs=25, activation_functions=["relu"], return_only_X_=True)
 
-    # plot_proj(X_, y)
+        # plot_proj(X_, y)
 
-    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40
-        , n_iter=300, n_jobs=-1).fit_transform(X)
+        tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 
-    # plot_proj(xcp, y)
+        # plot_proj(xcp, y)
 
-    plot_all(X, tsne_proj, sort_proj, y)
+        plot_all(X, tsne_proj, sort_proj, y=y)
 
-    # for p in points:
-    #     print(p.coords)
+        # for p in points:
+        #     print(p.coords)
