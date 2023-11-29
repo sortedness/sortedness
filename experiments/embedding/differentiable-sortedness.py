@@ -193,3 +193,4 @@ mng = plt.get_current_fig_manager()
 with torch.enable_grad():
     anim = animation.FuncAnimation(fig, animate)
 plt.show()
+

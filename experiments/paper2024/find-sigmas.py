@@ -39,6 +39,7 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from itertools import chain
 from pprint import pprint
 
 from lange import ap
@@ -48,12 +49,12 @@ from scipy.stats import halfnorm
 
 old = -1
 precalculated_sigma = {}
-for pct in ap[1, 2, 5, 10, 12.5, 15, 20, 25, 30, 33.33, 40, 50, 60, 70, 75, 80, 85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99]:
+for pct in ap[0.01, 0.1, 1, 2, 5, 10, 12.5, 15, 20, 25, 30, 33.33, 40, 50, 60, 70, 75, 80, 85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 99.9, 99.99]:
     precalculated_sigma[pct] = None
     p = pct / 100
-    for sigma in ap[.1, .2, ..., 300]:
+    for sigma in chain(ap[.025, .050, ..., 10], ap[10, 11, ..., 100], ap[100, 110, ..., 1000], ap[1000, 1100, ..., 10000], ap[10000, 11000, ..., 100000]):
         kappa = int(halfnorm.ppf(p, 0, sigma))
-        if kappa == old or kappa == 0:
+        if kappa == old or kappa == 0 or kappa > max(100, pct * 10):
             continue
         old = kappa
 
