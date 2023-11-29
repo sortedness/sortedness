@@ -75,6 +75,7 @@ def distance_matrix(points):
 
 ## Data in shape of 2D grid.
 def grid_data(size):
+    print("grid_data")
     points = []
     for x in range(size):
         for y in range(size):
@@ -84,6 +85,7 @@ def grid_data(size):
 
 ## Gaussian cloud, symmetric, of given dimension.
 def gaussian_data(n, dim=2):
+    print("gaussian_data")
     points = []
     for _ in range(n):
         p = np.random.normal(size=dim)
@@ -304,6 +306,7 @@ def trefoil_data(n):
         z = -np.sin(3 * t)
         color = hls_to_rgb(t / (2 * np.pi), 0.5, 0.5)
         points.append(Point([x, y, z], color))
+        # points.append(Point([x, y, z], angle_color(t)))
 
     return points
 
@@ -387,10 +390,58 @@ def plot_proj(X, y):
     plt.yticks([])
     plt.show()
 
+def plot_proj_r(X, y, r):
+    plt.scatter(X[:,0], X[:,1], color=y, s=r)
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
+
+def plot_all_r(*args, y, exp, r):
+    fig, axes = plt.subplots(1, 3)
+    fig.set_size_inches(12, 4)
+
+    for ax, X, name in zip(axes, args, ["Original", "t-SNE", "SORTbmap"]):
+        
+        if X.shape[1] > 2:
+            index = list(range(X.shape[0]))
+            index.sort(key=lambda i: X[i,2])
+
+            # Usando o loop for
+            y_new = y.copy()
+            r_new = r.copy()
+            a = 0
+            for i in index:
+                y_new[a] = y[i]
+                r_new[a] = r[i]
+                a = a + 1
+                        
+        min_vals = np.min(X[:, :2], axis=0, keepdims=True)
+        max_vals = np.max(X[:, :2], axis=0, keepdims=True)
+        X = (X[:, :2] - min_vals) / (max_vals - min_vals)
+
+        if (name == "Original"):
+            if r:
+                ax.scatter(X[index, 0], X[index, 1], color=y_new, s=r_new, edgecolor="white")
+            else:
+                ax.scatter(X[:, 0], X[:, 1], color=y)
+        else:
+            ax.scatter(X[:, 0], X[:, 1], color=y)
+        ax.set_title(name)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    # plt.show()
+
+    # output_folder = 'Documentos/eurovis2024/'
+    output_folder = 'pCloudDrive/Pesquisa/sortedness/eurovis2024'
+    output_dir = os.path.join(os.path.expanduser('~'), output_folder)
+    plt.savefig("%s/Distill_Figue_%s.pdf"  % (output_dir, exp), format='pdf')
+    plt.savefig("%s/Distill_Figue_%s.png"  % (output_dir, exp), format='png')
 
 def plot_all(*args, y, exp):
     fig, axes = plt.subplots(1, 3)
     fig.set_size_inches(12, 4)
+
     for ax, X, name in zip(axes, args, ["Original", "t-SNE", "SORTbmap"]):
         # ax.set_xlim([-0.05, 1.05])
         # ax.set_ylim([-0.05, 1.05])
@@ -404,13 +455,50 @@ def plot_all(*args, y, exp):
         ax.set_xticks([])
         ax.set_yticks([])
 
-    plt.show()
+    # plt.show()
 
     # output_folder = 'Documentos/eurovis2024/'
-    # output_folder = 'pCloudDrive/Pesquisa/sortedness/eurovis2024'
-    # output_dir = os.path.join(os.path.expanduser('~'), output_folder)
-    # plt.savefig("%s/Distill_Figue_%s.pdf"  % (output_dir, exp), format='pdf')
-    # plt.savefig("%s/Distill_Figue_%s.png"  % (output_dir, exp), format='png')
+    output_folder = 'pCloudDrive/Pesquisa/sortedness/eurovis2024'
+    output_dir = os.path.join(os.path.expanduser('~'), output_folder)
+    plt.savefig("%s/Distill_Figue_%s.pdf"  % (output_dir, exp), format='pdf')
+    plt.savefig("%s/Distill_Figue_%s.png"  % (output_dir, exp), format='png')
+
+def getRadius(points):
+    # Extract coordinates from points
+    coordinates = np.array(getCoords(points))
+
+    # Calculate extents in each dimension
+    x_extent = np.min(coordinates[:, 0]), np.max(coordinates[:, 0])
+    y_extent = np.min(coordinates[:, 1]), np.max(coordinates[:, 1])
+    z_extent = np.min(coordinates[:, 2]), np.max(coordinates[:, 2])
+    z_scale = plt.cm.ScalarMappable(cmap="viridis")
+    z_scale.set_clim(z_extent[0], z_extent[1])
+
+    # Calculate center of data points
+    center_x = (x_extent[0] + x_extent[1]) / 2
+    center_y = (y_extent[0] + y_extent[1]) / 2
+
+    # Calculate scale based on extents and canvas size
+    scale = min(100, 100) / max(x_extent[1] - x_extent[0], y_extent[1] - y_extent[0])
+    scale *= 0.9
+
+    # Create a figure and axes
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    r = []
+
+    # Plot circles for each point
+    for point in points:
+        color = point.color
+
+        x = (point.coords[0] - center_x) * scale + 250
+        y = -(point.coords[1] - center_y) * scale + 350
+
+        radius = z_scale.to_rgba(point.coords[2])[0] * 10
+
+        r.append(radius)
+
+    return r
 
 ##########################################
 ##########################################
@@ -423,13 +511,15 @@ def case02(p=50, n=5000, e=100):
     X = np.array(getCoords(points))
     y = getColors(points)
     
+    print("tsne...")
     tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
         , n_iter=n, n_jobs=-1).fit_transform(X)
 
+    print("sort...")
     sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
         , return_only_X_=True)
 
-    plot_all(X, tsne_proj, sort_proj, y, 2)
+    plot_all(X, tsne_proj, sort_proj, y=y, exp=2)
 
 ## Distances between clusters might not mean anything - 50 points
 def case03a(p=50, n=5000, e=100):
@@ -438,16 +528,18 @@ def case03a(p=50, n=5000, e=100):
     X = np.array(getCoords(points))
     y = getColors(points)
 
+    print("tsne...")
     tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
         , n_iter=n, n_jobs=-1).fit_transform(X)
 
+    print("sort...")
     sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
         , return_only_X_=True)
 
-    plot_all(X, tsne_proj, sort_proj, y, '3a')
+    plot_all(X, tsne_proj, sort_proj, y=y, exp='3a')
 
 ## Distances between clusters might not mean anything - 200 points
-def case03b(p=50, n=5000, e=100)):
+def case03b(p=50, n=5000, e=100):
     points = three_clusters_data_2d(200)
 
     X = np.array(getCoords(points))
@@ -455,19 +547,135 @@ def case03b(p=50, n=5000, e=100)):
 
     # plot_proj(X, y)
 
+    print("tsne...")
     tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
         , n_iter=n, n_jobs=-1).fit_transform(X)
 
+    print("sort...")
     sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
         , return_only_X_=True)
 
-    plot_all(X, tsne_proj, sort_proj, y, '3b')
+    plot_all(X, tsne_proj, sort_proj, y=y, exp='3b')
 
+## Random noise doesn’t always look random - 500 points
+def case04(p=50, n=5000, e=100):
+    points = gaussian_data(500, 100)
+
+    X = np.array(getCoords(points))
+    y = getColors(points)
+
+    # plot_proj(X, y)
+
+    print("tsne...")
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
+
+    print("sort...")
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
+
+    plot_all(X, tsne_proj, sort_proj, y=y, exp='4')
+
+## You can see some shapes, sometimes
+def case05a(p=50, n=5000, e=100):
+    points = long_cluster_data(75)
+
+    X = np.array(getCoords(points))
+    y = getColors(points)
+
+    # plot_proj(X, y)
+
+    print("tsne...")
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
+
+    print("sort...")
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
+
+    plot_all(X, tsne_proj, sort_proj, y=y, exp='5a')
+
+## For topology, you may need more than one plot
+def case06a(p=50, n=5000, e=100):
+    points = subset_clusters_data(75, 50)
+
+    X = np.array(getCoords(points))
+    y = getColors(points)
+
+    # plot_proj(X, y)
+
+    print("tsne...")
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
+
+    print("sort...")
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
+
+    plot_all(X, tsne_proj, sort_proj, y=y, exp='6a')
+
+## For topology, you may need more than one plot
+def case06b(p=50, n=5000, e=100):
+    points = unlink_data(75)
+
+    X = np.array(getCoords(points))
+    y = getColors(points)
+
+    r = getRadius(points)
+    r = [i * 50 for i in r]
+    # plot_proj_r(X, y, r)
+
+    print("tsne...")
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
+
+    print("sort...")
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
+
+    # plot_all(X, tsne_proj, sort_proj, y=y, exp='6b')
+    plot_all_r(X, tsne_proj, sort_proj, y=y, exp='6b', r=r)
+
+## For topology, you may need more than one plot
+def case06c(p=50, n=5000, e=100):
+    points = trefoil_data(75)
+
+    X = np.array(getCoords(points))
+    y = getColors(points)
+
+    r = getRadius(points)
+    r = [i * 50 for i in r]
+    # plot_proj_r(X, y, r)
+
+    print("tsne...")
+    tsne_proj = TSNE(random_state=42, n_components=2, verbose=0, perplexity=p
+        , n_iter=n, n_jobs=-1).fit_transform(X)
+
+    print("sort...")
+    sort_proj = balanced_embedding(X, alpha=1, epochs=e, activation_functions=["relu"]
+        , return_only_X_=True)
+
+    # plot_all(X, tsne_proj, sort_proj, y=y, exp='6c')
+    plot_all_r(X, tsne_proj, sort_proj, y=y, exp='6c', r=r)
+    
 ## Main
 if __name__ == '__main__':
     
-    case02(50, 5000, 5000)
+    tsne_perplexity = 50
+    tsne_n_iter = 5000
+    sort_epochs = 2000
+    # sort_epochs = 100
 
-    # case03a(50, 5000, 5000)
-    # case03b(50, 5000, 5000)
+    case02(tsne_perplexity, tsne_n_iter, sort_epochs)
+    
+    case03a(tsne_perplexity, tsne_n_iter, sort_epochs)
+    case03b(tsne_perplexity, tsne_n_iter, sort_epochs)
+
+    case04(tsne_perplexity, tsne_n_iter, sort_epochs)
+
+    case05a(tsne_perplexity, tsne_n_iter, sort_epochs)
+
+    case06a(tsne_perplexity, tsne_n_iter, sort_epochs)
+    case06b(tsne_perplexity, tsne_n_iter, sort_epochs)
+    case06c(tsne_perplexity, tsne_n_iter, sort_epochs)
 
