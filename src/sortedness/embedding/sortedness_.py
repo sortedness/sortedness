@@ -237,7 +237,7 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
 
 
 def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
-                       hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"], embedding_optimizer=RMSprop,
+                       hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["relu"], embedding_optimizer=RMSprop,
                        min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
                        gpu=False, verbose=False, **embedding_optimizer__kwargs):
     """
@@ -401,7 +401,7 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
 
 
 def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
-                                 hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["tanh"],
+                                 hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["relu"],
                                  min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
                                  gpu=False, verbose=False,
                                  optim=1, sgd_alpha=0.01, sgd_mu=0.0):
