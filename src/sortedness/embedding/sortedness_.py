@@ -21,16 +21,17 @@
 #  time spent here.
 #
 import copy
-import math
 
 import numpy as np
 import torch
 from gradient_descent_the_ultimate_optimizer import gdtuo
 from scipy.spatial.distance import cdist
+from scipy.stats import halfnorm
 from torch import from_numpy, tensor, topk
 from torch.optim import RMSprop
 from torch.utils.data import Dataset, DataLoader
 
+from sortedness.embedding.sigmas import findsigma
 from sortedness.embedding.surrogate import cau, loss_function
 from sortedness.local import remove_diagonal
 
@@ -238,7 +239,7 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
 
 def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
                        hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["relu"], embedding_optimizer=RMSprop,
-                       min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
+                       min_global_k=100, max_global_k=1000, pct=90, epsilon=0.00001, seed=0, track_best_model=True, return_only_X_=True,
                        gpu=False, verbose=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
@@ -346,8 +347,11 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
-    sigma = kappa / math.sqrt(-2 * math.log(0.5)) + 0.00000000001
-    k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
+    # sigma = kappa / math.sqrt(-2 * math.log(0.5)) + 0.00000000001
+    # k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
+    sigma = findsigma(pct, kappa)
+    k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
+
     w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
 
@@ -402,7 +406,7 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
 
 def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, smoothness_tau=1,
                                  hidden_layers=[30], epochs=100, batch_size=20, activation_functions=["relu"],
-                                 min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True,
+                                 min_global_k=100, max_global_k=1000, pct=90, epsilon=0.00001, seed=0, track_best_model=True, return_only_X_=True,
                                  gpu=False, verbose=False,
                                  optim=1, sgd_alpha=0.01, sgd_mu=0.0):
     """
@@ -425,10 +429,10 @@ def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=
         Matrix with an instance per row in a given space (often high-dimensional data).
     d
         Target dimensionality.
-    gamma
-        Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
+    kappa
+         Proxy to the normal distribution parameter sigma. Represents the number of neighbors with weight especified by `pct`.
     k
-        Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
+        Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights.
     global_k
         int:    Number of "neighbors" to sample for global optimization.
         "sqrt": Take the square root of the number of points limited by `max_global_k`.
@@ -509,8 +513,8 @@ def optimized_balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=
     X = from_numpy(X).cuda() if gpu else from_numpy(X)
     D = from_numpy(D).cuda() if gpu else from_numpy(D)
 
-    sigma = kappa / math.sqrt(-2 * math.log(0.5)) + 0.00000000001
-    k = int(sigma * math.sqrt(-2 * math.log(0.0001)))
+    sigma = findsigma(pct, kappa)
+    k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
     w = torch.exp(- (tensor(range(n)) / sigma) ** 2 / 2)
     Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
 

@@ -20,6 +20,10 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+import bisect
+
+from indexed import IndexedOrderedDict
+
 sigmas = {0.01: {1: 8000,
                  2: 16000,
                  3: 24000,
@@ -3752,10 +3756,41 @@ sigmas = {0.01: {1: 8000,
                   894: 230,
                   933: 240,
                   972: 250}}
+ord_dcts = {}
+for pct, dct in sigmas.items():
+    ord_dcts[pct] = IndexedOrderedDict(dct)
 
 
-def sigma(pct, kappa):
+def findsigma(pct, kappa):
     """
     Given the `pct` of the weight intended for `kappa` neighbors, return the respective sigma for the Gaussian distribution.
+
+    >>> findsigma(1, 1)
+    80
+    >>> findsigma(1, 100)
+    8000
+    >>> findsigma(2, 31)
+    1250.0
+    >>> findsigma(95, 5)
+    2.575
+    >>> findsigma(95, 5.199)
+    2.6745
     """
-    
+    if kappa < 1:
+        raise Exception(f"kappa ({kappa}) should be a positive integer")
+    if pct not in ord_dcts:
+        raise Exception(f"{pct}% not one of the allowed precomputed values: {ord_dcts.keys()}")
+    kappas_sigmas = ord_dcts[pct]
+    if kappa > kappas_sigmas.keys()[-1]:
+        raise Exception(f"kappa too high: {kappa} ; limit: {kappas_sigmas.keys()[-1]}")
+    ind = bisect.bisect_left(kappas_sigmas.keys(), kappa)
+    kappa_ = kappas_sigmas.keys()[ind]
+    if kappa_ == kappa:
+        return kappas_sigmas[kappa]
+
+    ka = kappas_sigmas.keys()[ind - 1]
+    kb = kappa_
+    a = kappas_sigmas.values()[ind - 1]
+    b = kappas_sigmas.values()[ind]
+    p = (kappa - ka) / (kb - ka)
+    return p * (b - a) + a
