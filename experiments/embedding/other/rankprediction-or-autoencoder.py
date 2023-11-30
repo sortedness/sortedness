@@ -77,8 +77,8 @@ from torch.utils.data import Dataset, DataLoader
 from sortedness.local import remove_diagonal
 
 n = 30
-smoothness_ranking, smoothness_tau = 0.1, 0.1
-# smoothness_ranking = smoothness_tau = 0.0000000001
+smoothness_ranking, lambd = 0.1, 0.1
+# smoothness_ranking = lambd = 0.0000000001
 update = 10
 ae = False
 gpu = not True
@@ -201,8 +201,8 @@ def animate(i):
             loss = loss_fn(pred_r_batch, expected_r_batch)
         else:
             # loss = lossf2(pred_r_batch, expected_r_batch)
-            # loss = wlossf4(pred_r_batch, expected_r_batch, smoothness_ranking, smoothness_tau)
-            loss = wlossf5(pred_r_batch, expected_r_batch, smoothness_tau)
+            # loss = wlossf4(pred_r_batch, expected_r_batch, smoothness_ranking, lambd)
+            loss = wlossf5(pred_r_batch, expected_r_batch, lambd)
         lo += float(loss)
         optimizer.zero_grad()
         (-loss).backward()
@@ -211,8 +211,8 @@ def animate(i):
     lo /= c
 
     # encoded, predicted_rankings = model(T)
-    # # lo = wlossf4(predicted_rankings, R, smoothness_ranking, smoothness_tau)
-    # lo = wlossf5(predicted_rankings, R, smoothness_tau)
+    # # lo = wlossf4(predicted_rankings, R, smoothness_ranking, lambd)
+    # lo = wlossf5(predicted_rankings, R, lambd)
     # optimizer.zero_grad()
     # (-lo).backward()
     # optimizer.step()
@@ -226,7 +226,7 @@ def animate(i):
         c = 0
         for pred, target in zip(ds, R.detach().cpu().numpy()):
             wtau[0] += weightedtau(-target, -pred, weigher=cau)[0]
-            resur[0] += wlossf4(tensor([target]), tensor([pred]), smoothness_ranking, smoothness_tau)
+            resur[0] += wlossf4(tensor([target]), tensor([pred]), smoothness_ranking, lambd)
             c += 1
         wtau[0] = wtau[0] / c
         resur[0] = resur[0] / c

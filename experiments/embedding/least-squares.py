@@ -30,7 +30,7 @@ from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
 n = 500
-smoothness_ranking, smoothness_tau, decay = [5], [5], 0
+smoothness_ranking, lambd, decay = [5], [5], 0
 batch_size = [20]
 update = 2
 seed = 0
@@ -79,7 +79,7 @@ ax1.scatter(X_[:, 0], X_[:, 1], s=rad, c=alph[idxs], alpha=alpha)
 for j in range(min(n, 50)):
     ax1.text(X_[j, 0] + delta, X_[j, 1] + delta, alph[j], size=fs)
 smoothness_ranking[0] *= 1 - decay
-smoothness_tau[0] *= 1 - decay
+lambd[0] *= 1 - decay
 
 mng = plt.get_current_fig_manager()
 # mng.resize(*mng.window.maxsize())

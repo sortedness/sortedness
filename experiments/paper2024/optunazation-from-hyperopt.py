@@ -65,7 +65,7 @@ with sopen(remote_cache_uri) as remote:
         key = f"{d} - new trials"
         hyperopt_trials = remote[key]
         hyperopt_params = [{k: round(v[0], 5) for k, v in tr['misc']['vals'].items()} for tr in hyperopt_trials.trials]
-        floats = {"smoothness_tau": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
+        floats = {"lambd": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
         ints = {"epochs": (1, 400), "neurons": (2, 100), "batch_size": (1, 100)}
         bools = {"centered": [False, True]}
         study = optuna.create_study(storage=storage, study_name=f"{d}_{suffix}", direction='maximize')
@@ -77,7 +77,7 @@ with sopen(remote_cache_uri) as remote:
             del params["gamma"]
             del params["k"]
             del params["d"]
-            params["smoothness_tau"] = params.pop("smooothness_tau")
+            params["lambd"] = params.pop("smooothness_tau")
             dists_lst = [
                 {k: FloatDistribution(*args, log=True) for k, args in floats.items()},
                 {k: IntDistribution(*args) for k, args in ints.items()},

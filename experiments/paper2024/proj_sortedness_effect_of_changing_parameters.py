@@ -35,7 +35,7 @@ for d in datasets:
         d=2,  # dimensões;
         gamma=4,  # alcance de vizinhança da Cauchy;
         beta=0.5,  # balanço entre localidade e globalidade;
-        smoothness_tau=1,  # suavidade da derivada para o gradiente descendente;
+        lambd=1,  # suavidade da derivada para o gradiente descendente;
         neurons=2,  # número de neurônios da única camada oculta;
         epochs=2,  # número de épocas de treinamento (quantas vezes o dataset será apresentado à rede neural);
         seed=0,  # semente para o gerador pseudo-aleatório de pesos iniciais para as sinapses da rede.

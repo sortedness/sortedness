@@ -35,6 +35,7 @@ from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata
 from scipy.stats import weightedtau, kendalltau
 
+from sortedness.embedding.sigmas import findsigma, findweight
 from sortedness.misc.parallel import rank_alongrow, rank_alongcol
 
 
@@ -917,7 +918,7 @@ def balanced_kendalltau_cauchy(unordered_values, unordered_values_, beta=0.5, ga
     return geomean_np(tau_local, tau_global, beta)
 
 
-def balanced_kendalltau_gaussian(unordered_values, unordered_values_, beta=0.5, kappa=5):
+def balanced_kendalltau_gaussian(unordered_values, unordered_values_, alpha=0.5, beta=0.5, kappa=5, pct=0.9) -> float:
     """
     >>> round(balanced_kendalltau(np.array([2,1,3,4,5]), np.array([2,1,3,4,5]), beta=1), 5)
     1.0
@@ -941,11 +942,13 @@ def balanced_kendalltau_gaussian(unordered_values, unordered_values_, beta=0.5, 
     >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of continuity
     0.76555
     """
-    if beta == 1:
-        tau_local = 1
-    else:
-        idx = np.argsort(unordered_values, kind="stable")
-        sigma = sqrt(-(kappa ** 2) / (2 * math.log(0.5))) + 0.0000000001
-        tau_local = weightedtau(unordered_values, unordered_values_, weigher=lambda r: exp(- (r / sigma) ** 2 / 2), rank=idx)[0]
-    tau_global = 1 if beta == 0 else kendalltau(unordered_values, unordered_values_)[0]
-    return geomean_np(tau_local, tau_global, beta)
+    sigma = findsigma(pct, kappa)
+    w = [findweight(x, sigma) for x in range(len(unordered_values))]
+    idx0 = np.argsort(unordered_values, kind="stable") if alpha < 1 else None
+    idx1 = np.argsort(unordered_values_, kind="stable") if alpha > 0 else None
+    l0 = (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx0)[0] + 1) / 2 if alpha < 1 else 1
+    l1 = (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx1)[0] + 1) / 2 if alpha > 0 else 1
+    g = (kendalltau(unordered_values, unordered_values_)[0] + 1) / 2 if beta > 0 else 1
+    z = alpha * beta - alpha
+    s = l0 ** (z - beta + 1) * l1 ** (-z) * g ** beta
+    return 2 * s - 1

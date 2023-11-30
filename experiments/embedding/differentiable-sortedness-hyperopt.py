@@ -42,7 +42,7 @@ alpha = 1
 beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-smoothness_tau = 0.002
+lambd = 0.002
 neurons = 30
 epochs = 20
 max_evals = 1
@@ -96,13 +96,13 @@ D /= np.max(D, axis=1, keepdims=True)
 
 D = from_numpy(D).cuda() if gpu else from_numpy(D)
 D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, None, None, k, gk, w, alpha, beta, smoothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, None, None, k, gk, w, alpha, beta, lambd, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
-print(f"TSNE:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
+print(f"TSNE:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{lambd:.6f}")
 
 ax[1].cla()
 xcp = X_
@@ -127,8 +127,8 @@ plt.title(f"{ref_local:.4f}  {ref_global:.4f}", fontsize=16)
 
 D_ = remove_diagonal(cdist(X_, X_))
 D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
-loss, loss_local, loss_global, _, _ = loss_function(D, D_, None, None, k, gk, w, alpha, beta, smoothness_tau, ref=True)
-print(f">>> optimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
+loss, loss_local, loss_global, _, _ = loss_function(D, D_, None, None, k, gk, w, alpha, beta, lambd, ref=True)
+print(f">>> optimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{lambd:.6f}")
 # mng = plt.get_current_fig_manager()
 # mng.resize(*mng.window.maxsize())
 plt.show()

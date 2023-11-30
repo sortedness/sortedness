@@ -39,7 +39,7 @@ print()
 print()
 datasets = dct["datasets"]
 
-floats = {"smoothness_tau": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
+floats = {"lambd": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
 ints = {"epochs": (1, 400), "neurons": (2, 100), "batch_size": (1, 100)}
 bools = {"centered": [False, True]}
 
@@ -85,9 +85,9 @@ for dataset in datasets:
     # plot_contour(study, params=["epoch", "hidden_layers"], target_name=dataset).show()
     # plot_param_importances(study, target_name=dataset).show()
     # plot_optimization_history(study, error_bar=True, target_name=dataset).show()
-    # vis.plot_contour(study, params=["epoch", "smoothness_tau"], target_name=d).show()
+    # vis.plot_contour(study, params=["epoch", "lambd"], target_name=d).show()
     # exit()
-    # vis.plot_contour(study, params=["smoothness_tau", "centered"]).show()
+    # vis.plot_contour(study, params=["lambd", "centered"]).show()
     # plot_slice(study, params=["hidden_layers"], target_name=dataset).show()
     # vis.plot_slice(study, params=["neurons", "batch_size"]).show()
     # vis.plot_parallel_coordinate(study, target_name=d).show()

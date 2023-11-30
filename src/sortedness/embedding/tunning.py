@@ -95,7 +95,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     if embedding_optimizer__param_space is None:
         embedding_optimizer__param_space = {}
 
-    for key, v in {"smoothness_tau": (0.0001, max_smooth), "neurons": (d, max_neurons), "batch_size": (1, min(max_batch, len(X)))}.items():
+    for key, v in {"lambd": (0.0001, max_smooth), "neurons": (d, max_neurons), "batch_size": (1, min(max_batch, len(X)))}.items():
         if key not in embedding__param_space:
             embedding__param_space[key] = v
     for key, v in {"lr": (0.0001, 0.1), "alpha": (0.90, 0.99), "weight_decay": (0.0, 0.1), "momentum": (0.0, 0.1), "centered": [True, False]}.items():
@@ -147,10 +147,10 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         tau_global = kendalltau(r, r_)[0]
         return geomean_np(tau_local, tau_global)
 
-    def objective(space):  # todo: replace smoothness_tau by lambda
-        embedding__kwargs = {key: (v if key == "smoothness_tau" else int(v))
+    def objective(space):  # todo: replace lambd by lambda
+        embedding__kwargs = {key: (v if key == "lambd" else int(v))
                              for key, v in space.items()
-                             if key in ["smoothness_tau", "neurons", "batch_size"]}
+                             if key in ["lambd", "neurons", "batch_size"]}
         embedding_optimizer__kwargs = {key: v
                                        for key, v in space.items()
                                        if key not in chain(embedding__kwargs, fixed_space)}

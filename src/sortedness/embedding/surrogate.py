@@ -24,10 +24,7 @@ import math
 from itertools import repeat
 
 import torch
-from scipy.stats import weightedtau, kendalltau
 from torch import tanh, sum, topk, sqrt, abs, tensor
-
-from sortedness.local import geomean_np
 
 
 # lin = lambda r,k: 2*(k+1-i)/k*(k+1)
@@ -208,7 +205,7 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.00000000001) + beta * torch.log(g + 0.00000000001)) * 2 - 1
 
 
-def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha=0.5, beta=0.5, smoothness_tau=1, min_global_k=100, max_global_k=1000, ref=False):
+def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha=0.5, beta=0.5, lambd=0.5, min_global_k=100, max_global_k=1000, ref=False):
     n, v = miniD.shape  # REMINDER: n is the size of the minibatch
     if global_k == "sqrt":
         global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
@@ -224,35 +221,37 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
         raise Exception(f"`alpha` outside valid range: 0 <= {alpha} <= 1")
     if not (0 <= beta <= 1):
         raise Exception(f"`beta` outside valid range: 0 <= {beta} <= 1")
-    if not (0.00001 <= smoothness_tau <= 100):
-        raise Exception(f"`smoothness_tau` outside valid range: 0.0001 <= {smoothness_tau} <= 100")
+    if not (0.00001 <= lambd <= 100):
+        raise Exception(f"`lambd` outside valid range: 0.0001 <= {lambd} <= 100")
 
     mu = mu_local_acc = mu_global_acc = tau_local_acc = tau_global_acc = 0
     rnd_idxs = torch.randperm(v)
     start = 0
     if alpha == 1:
         miniDsorted, miniidxs_by_D = repeat(None), repeat(None)
+    z = alpha * beta - alpha
     for d, d_, dsorted, idxs_by_D in zip(miniD, miniD_, miniDsorted, miniidxs_by_D):
         # local
         if beta < 1:
             if 0 < alpha < 1:
                 a0, b0 = dsorted, d_[idxs_by_D]
-                mu_local_d = surrogate_wtau(a0, b0, w[:k], smoothness_tau)
+                l0 = (surrogate_wtau(a0, b0, w[:k], lambd)+1)/2
 
                 a1, idxs_by_D_ = topk(d_, k, largest=False)
                 b1 = d[idxs_by_D_]
-                mu_local_d_ = surrogate_wtau(a1, b1, w[:k], smoothness_tau)
-
-                mu_local = geomean(mu_local_d, mu_local_d_, alpha)
+                l1 = (surrogate_wtau(a1, b1, w[:k], lambd)+1)/2
             else:
                 if alpha == 0:
-                    a0, b0 = dsorted, d_[idxs_by_D]  # todo: não precisa reindexar toda hora, só reindexar X do lado de fora conforme D
-                    mu_local = surrogate_wtau(a0, b0, w[:k], smoothness_tau)  # todo: não precisa recalcular step para a0 toda hora
+                    a0, b0 = dsorted, d_[idxs_by_D]
+                    l0 = (surrogate_wtau(a0, b0, w[:k], lambd)+1)/2  # todo: não precisa recalcular step para a0 toda hora, mas ocuparia espaço nk²
+                    l1 = 1
                 else:
                     a1, idxs_by_D_ = topk(d_, k, largest=False)
                     b1 = d[idxs_by_D_]
-                    mu_local = surrogate_wtau(a1, b1, w[:k], smoothness_tau)
-            mu_local_acc += mu_local
+                    l0 = 1
+                    l1 = (surrogate_wtau(a1, b1, w[:k], lambd)+1)/2
+        else:
+            l0 = l1 = 1
 
         # global
         if beta > 0:
@@ -265,30 +264,11 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
             start += global_k
             ga = d[gidxs]
             gb = d_[gidxs]
-            # mu_global = tensor(kendalltau(ga, gb)[0])
-            mu_global = surrogate_tau(ga, gb, smoothness_tau)
-            mu_global_acc += mu_global
-
-        if 0 < beta < 1:
-            mu += geomean(mu_local, mu_global, beta)
-        elif beta == 0:
-            mu += mu_local
+            g = (surrogate_tau(ga, gb, lambd)+1)/2
         else:
-            mu += mu_global
+            g = 1
 
-        if ref:
-            # todo: ref is not perfect as it is sampled/shortened
-            if alpha == 0 or beta == 1:
-                a1, idxs_by_D = topk(d, 2 * k, largest=False)
-                b1 = d_[idxs_by_D]
-            if alpha == 1 or beta == 1:
-                b0, idxs_by_D_ = topk(d_, 2 * k, largest=False)
-                a0 = d[idxs_by_D_]
-            lo0 = weightedtau(a0.cpu().detach().numpy(), b0.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False, additive=True)[0]
-            lo1 = weightedtau(a1.cpu().detach().numpy(), b1.cpu().detach().numpy(), weigher=lambda r: w[r], rank=False, additive=True)[0]
-            tau_local_acc += geomean_np(lo0, lo1, alpha)
-
-            p, t = d.cpu().detach().numpy(), d_.cpu().detach().numpy()
-            tau_global_acc += kendalltau(p, t)[0]
+        # balanced
+        mu += 2 * l0 ** (z - beta + 1) * l1 ** (-z) * g ** beta - 1
 
     return mu / n, mu_local_acc / n, mu_global_acc / n, tau_local_acc / n, tau_global_acc / n

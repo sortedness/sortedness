@@ -48,8 +48,8 @@ def getbest(st):
             return None
 
 
-dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, global_k=100, kappa=5)
-print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [global_k=100] [kappa=5]")
+dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, global_k=100, kappa=5, alpha=0.5, beta=0.5, pct=0.9)
+print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [global_k=100] [kappa=5] [alpha=0.5] [beta=0.5] [pct=0.9]")
 print("--------------------------------------------------------------------")
 for tup in dct.items():
     print(tup)
@@ -57,25 +57,24 @@ print("--------------------------------------------------------------------")
 print()
 datasets = dct["datasets"]
 max_epochs = dct["max_epochs"]
-global_k0 = dct["global_k"]
+global_k = dct["global_k"]
 max_neurons_first_layer = dct["max_neurons_first_layer"]
 max_hidden_layers = dct["max_hidden_layers"]
 kappa = dct["kappa"]
+alpha = dct["alpha"]
+beta = dct["beta"]
+pct = dct["pct"]
 
-suffix0 = f"alpha1_beta05_kappa{kappa}_d2_epoch_layers_optim_k_kg"
-# newuri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
-# olduri = optuna.storages.RDBStorage(url=optuna_uri2, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 current_uri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, grace_period=120, failed_trial_callback=RetryFailedTrialCallback())
 
 with sopen(schedule_uri) as db:
-    for epochs0 in gp[3, 3.2, ..., max_epochs]:
-        print(f"{int(epochs0)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
-        tasks = [(round(epochs0, 1), kappa, global_k0, d0, suffix0) for d0 in datasets]
-        for epochs, k, global_k, dataset, suffix in Scheduler(db, timeout=30) << tasks:
-            name = f"{dataset}_{suffix}"
-            print(f"{name=} {epochs=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-            epochs = int(epochs0)
-            # study = optuna.create_study(storage=olduri, study_name=name, load_if_exists=True, direction="maximize")
+    for epochsf in gp[3, 3.2, ..., max_epochs]:
+        print(f"{int(epochsf)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+        tasks = [(d, f"epochs={round(epochsf, 1)} {kappa=} {alpha=} {beta=} {global_k=} {pct=}") for d in datasets]
+        for dataset, txt in Scheduler(db, timeout=30) << tasks:
+            name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
+            print(f"{name=} {epochsf=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            epochs = int(epochsf)
             study = optuna.create_study(storage=current_uri, study_name=name, load_if_exists=True, direction="maximize")
 
             # print("ADD NEW HYPERPARAMETERS !!!!!!")
@@ -96,7 +95,6 @@ with sopen(schedule_uri) as db:
 
             def objective(trial: Trial):
                 trial.suggest_int("epochs", epochs, epochs)
-                trial.suggest_int("k", k, k)
                 trial.suggest_int("global_k", global_k, global_k)
 
                 # topology
@@ -114,11 +112,11 @@ with sopen(schedule_uri) as db:
                 embedding_optimizer = trial.suggest_int("embedding_optimizer", 0, 2)
                 if embedding_optimizer == 0:
                     res = balanced_embedding(
-                        X, kappa=kappa, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
-                        smoothness_tau=trial.suggest_float("smoothness_tau", 0.00001, 100, log=True),
+                        X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
+                        lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
-                        min_global_k=17, max_global_k=10000,
+                        min_global_k=17, max_global_k=10000, pct=pct,
                         lr=trial.suggest_float("lr", 0.000001, 1, log=True),
                         momentum=trial.suggest_float("momentum", 0.000001, 1, log=True),
                         weight_decay=trial.suggest_float("weight_decay", 0.0000001, 1, log=True),
@@ -127,21 +125,21 @@ with sopen(schedule_uri) as db:
                         return_only_X_=False, verbose=False)
                 else:
                     res = optimized_balanced_embedding(
-                        X, kappa=kappa, global_k=global_k, alpha=1, beta=0.5, epochs=epochs,
-                        smoothness_tau=trial.suggest_float("smoothness_tau", 0.00001, 100, log=True),
+                        X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
+                        lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
-                        min_global_k=17, max_global_k=10000,
+                        min_global_k=17, max_global_k=10000, pct=pct,
                         optim=embedding_optimizer,
                         sgd_alpha=trial.suggest_float("sgd_alpha", 0.000001, 1, log=True),
                         sgd_mu=trial.suggest_float("sgd_mu", 0.000001, 1, log=True),
                         return_only_X_=False, verbose=False)
                 trial.suggest_int("epoch", res["epoch"], res["epoch"])
-                qualities = sortedness(res["X_"], X, symmetric=False, f=balanced_kendalltau_gaussian, kappa=kappa)
+                qualities = sortedness(X, res["X_"], symmetric=False, f=balanced_kendalltau_gaussian, alpha=alpha, beta=beta, kappa=kappa, pct=pct)
                 quality = np.mean(qualities)
                 if (best := getbest(study)) is None or quality > best.value:
-                    res["X_"].tofile(f"optuna-{dataset.ljust(20, '_')}-{quality:04.4f}-{trial.number}-best_X_-points_{suffix}.csv", sep=',')
-                    qualities.tofile(f"optuna-{dataset.ljust(20, '_')}-{quality:04.4f}-{trial.number}-best_quality-for-each-point-{dataset}_{suffix}.csv", sep=',')
+                    res["X_"].tofile(f"optuna-{dataset.ljust(20, '_')}-best_X__{name}.csv", sep=',')
+                    qualities.tofile(f"optuna-{dataset.ljust(20, '_')}-best_quality-for-each-point-{dataset}_{name}.csv", sep=',')
                     print("CSVs saved")
                 return quality
 

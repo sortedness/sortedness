@@ -8,7 +8,6 @@ from colorsys import hls_to_rgb
 
 import matplotlib.pyplot as plt
 import numpy as np
-from colorsys import hls_to_rgb
 from scipy.stats import norm
 from sklearn.manifold import TSNE
 
@@ -581,7 +580,7 @@ def case02(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp=2)
@@ -599,7 +598,7 @@ def case03a(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp='3a')
@@ -619,7 +618,7 @@ def case03b(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp='3b')
@@ -639,7 +638,7 @@ def case04(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp='4')
@@ -659,7 +658,7 @@ def case05a(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp='5a')
@@ -679,7 +678,7 @@ def case06a(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     plot_all(X, tsne_proj, sort_proj, y=y, exp='6a')
@@ -703,7 +702,7 @@ def case06b(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     # plot_all(X, tsne_proj, sort_proj, y=y, exp='6b')
@@ -726,7 +725,7 @@ def case06c(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     # plot_all(X, tsne_proj, sort_proj, y=y, exp='6c')
@@ -748,7 +747,7 @@ def case_spiral(p=50, n=5000, e=100):
                      , n_iter=n, n_jobs=-1).fit_transform(X)
 
     print("sort...")
-    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], smoothness_tau=lmbd
+    sort_proj = balanced_embedding(X, alpha=alpha, beta=beta, hidden_layers=[neurons], kappa=kappa, epochs=e, activation_functions=[activation_function], lambd=lmbd
                                    , return_only_X_=True)
 
     # plot_all(X, tsne_proj, sort_proj, y=y, exp='6c')

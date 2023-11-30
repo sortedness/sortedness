@@ -42,7 +42,7 @@ datasets = dct["datasets"]
 
 suffix = "alpha1_beta05_gamma4_k17_d2_epochbest_new2addneurons2__emboptmultil"
 
-floats = {"smoothness_tau": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
+floats = {"lambd": (0.00001, 100), "lr": (0.000001, 1), "alpha": (0.0000001, 0.99999), "weight_decay": (0.0000001, 0.99999), "momentum": (0.000001, 1)}
 ints = {"epochs": (1, 400), "neurons": (2, 100), "batch_size": (1, 100)}
 bools = {"centered": [False, True]}
 

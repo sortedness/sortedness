@@ -23,6 +23,13 @@
 import bisect
 
 from indexed import IndexedOrderedDict
+from scipy.stats import halfnorm
+
+
+def findweight(zero_based_index, sigma):
+    """index 0 means first neighbor"""
+    return halfnorm.cdf(zero_based_index + 1, scale=sigma) - halfnorm.cdf(zero_based_index, scale=sigma)
+
 
 sigmas = {0.01: {1: 8000,
                  2: 16000,

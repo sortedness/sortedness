@@ -18,7 +18,7 @@ alpha = 0.5
 beta = 0.5
 gamma = 4
 k, gk = 17, "sqrt"
-smoothness_tau = 0.1
+lambd = 0.1
 batch_size = 20
 seed = 0
 gpu = False
@@ -75,13 +75,13 @@ ax[0].cla()
 
 xcp = TSNE(random_state=42, n_components=2, verbose=0, perplexity=40, n_iter=300, n_jobs=-1).fit_transform(X)
 D = from_numpy(rankdata(cdist(xcp, xcp), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(xcp, xcp), axis=1))
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smoothness_tau, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, lambd, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
     ax[0].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
 ax[0].title.set_text(f"{0}:  {ref_local:.4f}  {ref_global:.4f}")
-print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
+print(f"{0:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{lambd:.6f}")
 
 optimizer = optim.RMSprop(model.parameters())
 # optimizer = optim.ASGD(model.parameters())
@@ -104,7 +104,7 @@ def animate(i):
         encoded = model()
         expected_ranking_batch = Dtarget[idx]
         D_batch = pdist(encoded[idx].unsqueeze(1), encoded.unsqueeze(0)).view(len(idx), -1)
-        loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, smoothness_tau, ref=i % update == 0)
+        loss, loss_local, loss_global, ref_local, ref_global = loss_function(Dtarget, D, None, None, k, gk, w, alpha, beta, lambd, ref=i % update == 0)
         optimizer.zero_grad()
         (-loss).backward()
         optimizer.step()
@@ -117,7 +117,7 @@ def animate(i):
             for j in range(min(n, 50)):  # xcp.shape[0]):
                 ax[1].text(xcp[j, 0], xcp[j, 1], alphabet[j], size=char_size)
         plt.title(f"{i}:  {ref_local:.4f}  {ref_global:.4f}", fontsize=16)
-    print(f"{i:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{smoothness_tau:.6f}")
+    print(f"{i:09d}:\toptimized sur: {loss:.4f}  local/globa: {loss_local:.4f} {loss_global:.4f}  REF: {ref_local:.4f} {ref_global:.4f}\t\t{lambd:.6f}")
 
     return ax[1].step([], [])
 
