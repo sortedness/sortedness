@@ -32,8 +32,9 @@ def cau(r, gamma=4):
     """
     >>> import torch
     >>> from lange import ap
-    >>> cau(torch.tensor(ap[0,1,...,2]))
-    [1.0, 0.606530659713, 0.135335283237, 0.011108996538, 0.000335462628, 3.726653e-06, 1.523e-08, 2.3e-11, 0.0, 0.0]
+    >>> cau(torch.tensor(ap[0,1,...,10]))
+    tensor([1.0000, 0.9412, 0.8000, 0.6400, 0.5000, 0.3902, 0.3077, 0.2462, 0.2000,
+            0.1649, 0.1379])
     """
 
     return gamma ** 2 / (gamma ** 2 + r ** 2)
@@ -205,18 +206,18 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.00000000001) + beta * torch.log(g + 0.00000000001)) * 2 - 1
 
 
-def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha=0.5, beta=0.5, lambd=0.5, min_global_k=100, max_global_k=1000, ref=False):
+def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha=0.5, beta=0.5, lambd=0.5, min_K=100, max_K=1000, ref=False):
     n, v = miniD.shape  # REMINDER: n is the size of the minibatch
-    if global_k == "sqrt":
-        global_k = max(min_global_k, min(max_global_k, int(math.sqrt(v))))
-    if global_k > v:
-        global_k = v
+    if K == "sqrt":
+        K = max(min_K, min(max_K, int(math.sqrt(v))))
+    if K > v:
+        K = v
     if k + 1 > v:
         k = v - 1
     if k < 1:
         raise Exception(f"`k` must be greater than 1: {k} > 1")
-    if global_k < 1:
-        raise Exception(f"`global_k` must be greater than 1: {global_k} > 1")
+    if K < 1:
+        raise Exception(f"`K` must be greater than 1: {K} > 1")
     if not (0 <= alpha <= 1):
         raise Exception(f"`alpha` outside valid range: 0 <= {alpha} <= 1")
     if not (0 <= beta <= 1):
@@ -255,13 +256,13 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
 
         # global
         if beta > 0:
-            end = start + global_k
+            end = start + K
             if end > v:
                 start = 0
-                end = global_k
+                end = K
                 rnd_idxs = torch.randperm(v)
             gidxs = rnd_idxs[start:end]
-            start += global_k
+            start += K
             ga = d[gidxs]
             gb = d_[gidxs]
             g = (surrogate_tau(ga, gb, lambd)+1)/2

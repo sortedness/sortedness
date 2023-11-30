@@ -46,12 +46,12 @@ def tuple2hyperopt(key, v):
 
 
 # todo: replace max_smooth by max_lambda
-def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha=0.5, beta=0.5, epochs=10,
+def balanced_embedding__opt(X, d=2, gamma=4, k=17, K: int = "sqrt", alpha=0.5, beta=0.5, epochs=10,
                             max_neurons=100, max_smooth=2, max_batch=200,
                             embedding__param_space=None,
                             embedding_optimizer=RMSprop, embedding_optimizer__param_space=None,
                             hyperoptimizer_algorithm=None, max_evals=10, recyclable=True, progressbar=False,
-                            min_global_k=100, max_global_k=1000, seed=0, track_best_model=True, return_only_X_=True, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
+                            min_K=100, max_K=1000, seed=0, track_best_model=True, return_only_X_=True, gpu=False, show_parameters=True, **hyperoptimizer_kwargs):
     """
     Warning: parameter `alpha` for balancing sortedness has nothing to do with embedding optimizer's `alpha`.
 
@@ -61,7 +61,7 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     d
     gamma
     k
-    global_k
+    K
     alpha
     beta
     epochs
@@ -75,8 +75,8 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
     max_evals
     recyclable
     progressbar
-    min_global_k
-    max_global_k
+    min_K
+    max_K
     seed
     track_best_model
     return_only_X_
@@ -107,8 +107,8 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
         fixed_space = dict(d=(float(d), d + 0.000001), alpha_embedding=(float(alpha), alpha + 0.000001),
                            gamma=(float(gamma), gamma + 0.000001), k=(float(k), k + 0.000001), beta=(float(beta), beta + 0.000001),
                            epochs=(float(epochs), epochs + 0.000001))
-        if isinstance(global_k, int):
-            fixed_space["global_k"] = (float(global_k), global_k + 0.000001)
+        if isinstance(K, int):
+            fixed_space["K"] = (float(K), K + 0.000001)
     else:
         fixed_space = {}
     space = {k: tuple2hyperopt(k, v) for k, v in fixed_space.items()}
@@ -166,8 +166,8 @@ def balanced_embedding__opt(X, d=2, gamma=4, k=17, global_k: int = "sqrt", alpha
             print(embedding__kwargs, flush=True)
             print(embedding_optimizer__kwargs, flush=True)
             print("·", flush=True)
-        tup = balanced_embedding(X, d, gamma, k, global_k, alpha, beta, epochs=epochs, **embedding__kwargs, embedding_optimizer=embedding_optimizer,
-                                 min_global_k=min_global_k, max_global_k=max_global_k, seed=seed,
+        tup = balanced_embedding(X, d, gamma, k, K, alpha, beta, epochs=epochs, **embedding__kwargs, embedding_optimizer=embedding_optimizer,
+                                 min_K=min_K, max_K=max_K, seed=seed,
                                  track_best_model=track_best_model, return_only_X_=return_only_X_, gpu=gpu, **embedding_optimizer__kwargs)
 
         dct = {"status": STATUS_OK}

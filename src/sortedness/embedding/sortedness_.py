@@ -56,7 +56,7 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
                               neurons=30, epochs=100,
                               # batch_size=20,
                               # embedding_optimizer=RMSprop,
-                              # min_global_k=100, max_global_k=1000,
+                              # min_K=100, max_K=1000,
                               seed=0,
                               # track_best_model=True,
                               # return_only_X_=True,
@@ -114,9 +114,9 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
     """
     k
         Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
-    global_k
+    K
         int:    Number of "neighbors" to sample for global optimization.
-        "sqrt": Take the square root of the number of points limited by `max_global_k`.
+        "sqrt": Take the square root of the number of points limited by `max_K`.
     alpha
         Parameter to balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
         default=0.5
@@ -126,10 +126,10 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
     embedding_optimizer
         Callable to perform gradient descent. See learner_parameters below.
         Default = RMSProp
-    min_global_k
-        Lower bound for the number of "neighbors" to sample when `global_k` is dynamic.
-    max_global_k
-        Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    min_K
+        Lower bound for the number of "neighbors" to sample when `K` is dynamic.
+    max_K
+        Upper bound for the number of "neighbors" to sample when `K` is dynamic.
 
     track_best_model
         Whether to return the best result (default) or the last one.
@@ -141,11 +141,11 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
     # if verbose:
     #     print(f"Estimated k={k}")
     alpha = 1
-    global_k = "sqrt"
+    K = "sqrt"
     batch_size = 12
     embedding_optimizer = RMSprop
-    min_global_k = 100
-    max_global_k = 1000
+    min_K = 100
+    max_K = 1000
     track_best_model = True
     return_only_X_ = False
 
@@ -211,7 +211,7 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
                 l = len(idx)
                 miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, lambd, min_global_k, max_global_k)
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha, beta, lambd, min_K, max_K)
                 if track_best_model and quality > best_quality_surrogate:
                     best_quality_surrogate = quality
                     best_X_ = X_
@@ -237,10 +237,10 @@ def balanced_embedding_tacito(X, d=2, gamma=4,
     return X_, model, float(best_quality_surrogate)
 
 
-def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=0.5, lambd=0.5,
+def balanced_embedding(X, d=2, kappa=5, K: int = "sqrt", alpha=0.5, beta=0.5, lambd=0.5,
                        hidden_layers=[50], epochs=100, batch_size=20, activation_functions=["relu"], embedding_optimizer=RMSprop,
-                       min_global_k=100, max_global_k=1000, pct=90, epsilon=0.00001, seed=0, track_best_model=True, return_only_X_=True,
-                       hyperoptimizer=None, gpu=False, verbose=False, **embedding_optimizer__kwargs):
+                       min_K=100, max_K=1000, pct=90, epsilon=0.00001, seed=0, track_best_model=True, return_only_X_=True,
+                       hyperoptimizer=None, sgd_alpha=0.01, sgd_mu=0.0, gpu=False, verbose=False, **embedding_optimizer__kwargs):
     """
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
@@ -265,9 +265,9 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
         Cauchy distribution parameter. Higher values increase the number of neighbors with relevant weight values.
     k
         Number of nearest neighbors to consider for local optimization. This avoids useless sorting of neighbors with insignificant weights (as explained above for parameter `gamma`).
-    global_k
+    K
         int:    Number of "neighbors" to sample for global optimization.
-        "sqrt": Take the square root of the number of points limited by `max_global_k`.
+        "sqrt": Take the square root of the number of points limited by `max_K`.
     alpha
         Parameter to analogously balance between continuity and trustworthiness. 0 is only continuity. 1 is only trustworthiness.
         default=0.5
@@ -282,10 +282,10 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
     embedding_optimizer
         Callable to perform gradient descent. See learner_parameters below.
         Default = RMSProp
-    min_global_k
-        Lower bound for the number of "neighbors" to sample when `global_k` is dynamic.
-    max_global_k
-        Upper bound for the number of "neighbors" to sample when `global_k` is dynamic.
+    min_K
+        Lower bound for the number of "neighbors" to sample when `K` is dynamic.
+    max_K
+        Upper bound for the number of "neighbors" to sample when `K` is dynamic.
     seed
         int
     track_best_model
@@ -363,7 +363,7 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
         elif hyperoptimizer == 2:
             optim = gdtuo.Adam(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
         else:
-            raise Exception(f"Invalid optim: {optim}")
+            raise Exception(f"Invalid optim: {hyperoptimizer}")
         mw = gdtuo.ModuleWrapper(model, optimizer=optim)
         mw.initialize()
 
@@ -390,7 +390,7 @@ def balanced_embedding(X, d=2, kappa=5, global_k: int = "sqrt", alpha=0.5, beta=
                 l = len(idx)
                 miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, lambd, min_global_k, max_global_k)
+                quality, mu_local, mu_global, tau_local, tau_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha, beta, lambd, min_K, max_K)
                 if track_best_model and quality > best_quality_surrogate:
                     best_quality_surrogate = quality
                     best_X_ = X_

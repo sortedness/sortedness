@@ -47,8 +47,8 @@ def getbest(st):
             return None
 
 
-dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, global_k=100, kappa=5, alpha=0.5, beta=0.5, pct=0.9)
-print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [global_k=100] [kappa=5] [alpha=0.5] [beta=0.5] [pct=0.9]")
+dct = handle_command_line(argv, datasets=list, max_epochs=10000, max_neurons_first_layer=1000, max_hidden_layers=10, K=100, kappa=5, alpha=0.5, beta=0.5, pct=90)
+print("Usage: optunazation.py datasets=bank,cifar10,cnae9,coil20,epileptic,fashion_mnist,fmd,har,hatespeech,hiva,imdb,orl,secom,seismic,sentiment,sms,spambase,svhn [max_epochs=10000] [max_neurons_first_layer=1000] [max_hidden_layers=10] [K=100] [kappa=5] [alpha=0.5] [beta=0.5] [pct=90]")
 print("--------------------------------------------------------------------")
 for tup in dct.items():
     print(tup)
@@ -56,7 +56,7 @@ print("--------------------------------------------------------------------")
 print()
 datasets = dct["datasets"]
 max_epochs = dct["max_epochs"]
-global_k = dct["global_k"]
+K = dct["K"]
 max_neurons_first_layer = dct["max_neurons_first_layer"]
 max_hidden_layers = dct["max_hidden_layers"]
 kappa = dct["kappa"]
@@ -69,7 +69,7 @@ current_uri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, 
 with sopen(schedule_uri) as db:
     for epochsf in gp[3, 3.2, ..., max_epochs]:
         print(f"{int(epochsf)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
-        tasks = [(d, f"epochs={round(epochsf, 1)} {kappa=} {alpha=} {beta=} {global_k=} {pct=}") for d in datasets]
+        tasks = [(d, f"epochs={round(epochsf, 1)} {kappa=} {alpha=} {beta=} {K=} {pct=}") for d in datasets]
         for dataset, txt in Scheduler(db, timeout=30) << tasks:
             name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
             print(f"{name=} {epochsf=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
@@ -94,7 +94,7 @@ with sopen(schedule_uri) as db:
 
             def objective(trial: Trial):
                 trial.suggest_int("epochs", epochs, epochs)
-                trial.suggest_int("global_k", global_k, global_k)
+                trial.suggest_int("K", K, K)
 
                 # topology
                 n_layers = trial.suggest_int("hidden_layers", 1, max_hidden_layers)
@@ -111,11 +111,11 @@ with sopen(schedule_uri) as db:
                 hyperoptimizer = trial.suggest_int("hyperoptimizer", 0, 2)
                 if hyperoptimizer == 0:
                     res = balanced_embedding(
-                        X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
+                        X, kappa=kappa, K=K, alpha=alpha, beta=beta, epochs=epochs,
                         lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
-                        min_global_k=17, max_global_k=10000, pct=pct,
+                        min_K=17, max_K=10000, pct=pct,
                         lr=trial.suggest_float("lr", 0.000001, 1, log=True),
                         momentum=trial.suggest_float("momentum", 0.000001, 1, log=True),
                         weight_decay=trial.suggest_float("weight_decay", 0.0000001, 1, log=True),
@@ -124,11 +124,11 @@ with sopen(schedule_uri) as db:
                         return_only_X_=False, verbose=False)
                 else:
                     res = balanced_embedding(
-                        X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
+                        X, kappa=kappa, K=K, alpha=alpha, beta=beta, epochs=epochs,
                         lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
-                        min_global_k=17, max_global_k=10000, pct=pct,
+                        min_K=17, max_K=10000, pct=pct,
                         hyperoptimizer=hyperoptimizer,
                         sgd_alpha=trial.suggest_float("sgd_alpha", 0.000001, 1, log=True),
                         sgd_mu=trial.suggest_float("sgd_mu", 0.000001, 1, log=True),

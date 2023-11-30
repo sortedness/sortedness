@@ -51,7 +51,7 @@ sigma = 2
 ca = (tensor(gaussian_np(list(range(n)), sigma=sigma)))
 print(ca)
 k, gk = 20, 400
-global_k = k
+K = k
 lambd = 1
 neurons = 30
 batch_size = 20
@@ -130,7 +130,7 @@ D = from_numpy(D).cuda() if gpu else from_numpy(D)
 D_ = from_numpy(D_).cuda() if gpu else from_numpy(D_)
 
 Dsorted, idxs_by_D = (None, None) if alpha == 1 else topk(D, k, largest=False, dim=1)
-loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, Dsorted, idxs_by_D, k, global_k, w, alpha, beta, lambd, ref=True)
+loss, loss_local, loss_global, ref_local, ref_global = loss_function(D, D_, Dsorted, idxs_by_D, k, K, w, alpha, beta, lambd, ref=True)
 
 ax[0].scatter(xcp[:, 0], xcp[:, 1], s=radius, c=alphabet[idxs], alpha=0.5)
 for j in range(min(n, 50)):  # xcp.shape[0]):
@@ -170,7 +170,7 @@ def animate(i):
             l = len(idx)
             miniD_ = torch.cdist(miniX_, X_)[torch.arange(n) != idx[:, None]].reshape(l, -1)
 
-            loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alpha, beta, lambd, ref=ref)
+            loss, loss_local, loss_global, ref_local, ref_global = loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha, beta, lambd, ref=ref)
             mw[0].zero_grad()
             (-loss).backward(create_graph=True)
             mw[0].step()

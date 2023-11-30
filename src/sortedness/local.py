@@ -918,7 +918,7 @@ def balanced_kendalltau_cauchy(unordered_values, unordered_values_, beta=0.5, ga
     return geomean_np(tau_local, tau_global, beta)
 
 
-def balanced_kendalltau_gaussian(unordered_values, unordered_values_, alpha=0.5, beta=0.5, kappa=5, pct=0.9) -> float:
+def balanced_kendalltau_gaussian(unordered_values, unordered_values_, alpha=0.5, beta=0.5, kappa=5, pct=90) -> float:
     """
     >>> round(balanced_kendalltau(np.array([2,1,3,4,5]), np.array([2,1,3,4,5]), beta=1), 5)
     1.0
