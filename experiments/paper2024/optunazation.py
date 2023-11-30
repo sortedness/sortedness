@@ -33,8 +33,7 @@ from shelchemy import sopen
 from shelchemy.scheduler import Scheduler
 
 from sortedness.config import schedule_uri, optuna_uri
-from sortedness.embedding import balanced_embedding
-from sortedness.embedding.sortedness_ import optimized_balanced_embedding
+from sortedness.embedding.sortedness_ import balanced_embedding
 from sortedness.local import balanced_kendalltau_gaussian
 from sortedness.local import sortedness
 from sortedness.misc.dataset import load_dataset
@@ -109,8 +108,8 @@ with sopen(schedule_uri) as db:
                         neurons = trial.suggest_int(f"neurons{i}", 0, 0)
                     layers.append(neurons)
 
-                embedding_optimizer = trial.suggest_int("embedding_optimizer", 0, 2)
-                if embedding_optimizer == 0:
+                hyperoptimizer = trial.suggest_int("hyperoptimizer", 0, 2)
+                if hyperoptimizer == 0:
                     res = balanced_embedding(
                         X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
                         lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
@@ -124,13 +123,13 @@ with sopen(schedule_uri) as db:
                         centered=trial.suggest_categorical("centered", (False, True)),
                         return_only_X_=False, verbose=False)
                 else:
-                    res = optimized_balanced_embedding(
+                    res = balanced_embedding(
                         X, kappa=kappa, global_k=global_k, alpha=alpha, beta=beta, epochs=epochs,
                         lambd=trial.suggest_float("lambd", 0.00001, 100, log=True),
                         batch_size=trial.suggest_int("batch_size", 1, 100),
                         hidden_layers=layers, activation_functions=afs,
                         min_global_k=17, max_global_k=10000, pct=pct,
-                        optim=embedding_optimizer,
+                        hyperoptimizer=hyperoptimizer,
                         sgd_alpha=trial.suggest_float("sgd_alpha", 0.000001, 1, log=True),
                         sgd_mu=trial.suggest_float("sgd_mu", 0.000001, 1, log=True),
                         return_only_X_=False, verbose=False)
