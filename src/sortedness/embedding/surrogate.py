@@ -63,6 +63,9 @@ def pmuls(x):
     return dis[indices[0], indices[1]]
 
 
+# tanh = lambda x: torch.max(tensor([-1]), torch.min(tensor([1]), x))
+
+
 def surrogate_tau(a, b, smoothness):
     """
     >>> from torch import tensor
@@ -244,7 +247,7 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, global_k, w, alp
             else:
                 if alpha == 0:
                     a0, b0 = dsorted, d_[idxs_by_D]  # todo: não precisa reindexar toda hora, só reindexar X do lado de fora conforme D
-                    mu_local = surrogate_wtau(a0, b0, w[:k], smoothness_tau)
+                    mu_local = surrogate_wtau(a0, b0, w[:k], smoothness_tau)  # todo: não precisa recalcular step para a0 toda hora
                 else:
                     a1, idxs_by_D_ = topk(d_, k, largest=False)
                     b1 = d[idxs_by_D_]
