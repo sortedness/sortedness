@@ -8,6 +8,7 @@ from colorsys import hls_to_rgb
 
 import matplotlib.pyplot as plt
 import numpy as np
+from colorsys import hls_to_rgb
 from scipy.stats import norm
 from sklearn.manifold import TSNE
 
@@ -329,7 +330,8 @@ def link_data(n):
         points.append(Point(rotate(cos, sin, 0), '#f90'))
 
         # Ring 2
-        points.append(Point(rotate(1.1 + cos, sin, 0), '#039'))
+        # points.append(Point(rotate(1.1 + cos, sin, 0), '#039'))
+        points.append(Point(rotate(1 + cos, 0, sin), '#039'))
 
     return points
 
@@ -685,13 +687,15 @@ def case06a(p=50, n=5000, e=100):
 
 ## For topology, you may need more than one plot
 def case06b(p=50, n=5000, e=100):
-    points = unlink_data(75)
+    # points = unlink_data(75)
+    points = link_data(75)
 
     X = np.array(getCoords(points))
     y = getColors(points)
 
     r = getRadius(points)
     r = [i * 50 for i in r]
+
     # plot_proj_r(X, y, r)
 
     print("tsne...")
@@ -757,20 +761,16 @@ if __name__ == '__main__':
     tsne_n_iter = 2000
     sort_epochs = 2000
 
-    # tsne_n_iter = 250
-    # sort_epochs = 10
-
-    case06c(tsne_perplexity, tsne_n_iter, sort_epochs)
-    # exit()
-    case03b(tsne_perplexity, tsne_n_iter, sort_epochs)
     case02(tsne_perplexity, tsne_n_iter, sort_epochs)
-    case04(tsne_perplexity, tsne_n_iter, sort_epochs)
 
     case03a(tsne_perplexity, tsne_n_iter, sort_epochs)
+    case03b(tsne_perplexity, tsne_n_iter, sort_epochs)
 
+    case04(tsne_perplexity, tsne_n_iter, sort_epochs)
 
     case05a(tsne_perplexity, tsne_n_iter, sort_epochs)
 
     case06a(tsne_perplexity, tsne_n_iter, sort_epochs)
     case06b(tsne_perplexity, tsne_n_iter, sort_epochs)
+    case06c(tsne_perplexity, tsne_n_iter, sort_epochs)
 
