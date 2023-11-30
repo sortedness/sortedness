@@ -69,8 +69,8 @@ current_uri = optuna.storages.RDBStorage(url=optuna_uri, heartbeat_interval=60, 
 with sopen(schedule_uri) as db:
     for epochsf in gp[3, 3.2, ..., max_epochs]:
         print(f"{int(epochsf)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
-        tasks = [(d, f"epochs={round(epochsf, 1)} {kappa=} {alpha=} {beta=} {K=} {pct=}") for d in datasets]
-        for dataset, txt in Scheduler(db, timeout=30) << tasks:
+        tasks = [(d, round(epochsf, 1), K, f"{kappa=} {alpha=} {beta=} {pct=}") for d in datasets]
+        for dataset, __, __, txt in Scheduler(db, timeout=30) << tasks:
             name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
             print(f"{name=} {epochsf=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
             epochs = int(epochsf)
