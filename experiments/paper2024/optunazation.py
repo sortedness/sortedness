@@ -70,7 +70,7 @@ with sopen(schedule_uri) as db:
     for epochsf in gp[3, 3.2, ..., max_epochs]:
         print(f"{int(epochsf)=}\t|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
         tasks = [(d, round(epochsf, 1), K, f"{kappa=} {alpha=} {beta=} {pct=}") for d in datasets]
-        for dataset, __, __, txt in Scheduler(db, timeout=30) << tasks:
+        for dataset, __, ___, txt in Scheduler(db, timeout=30) << tasks:
             name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
             print(f"{name=} {epochsf=} <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
             epochs = int(epochsf)
@@ -134,7 +134,9 @@ with sopen(schedule_uri) as db:
                         sgd_mu=trial.suggest_float("sgd_mu", 0.000001, 1, log=True),
                         return_only_X_=False, verbose=False)
                 trial.suggest_int("epoch", res["epoch"], res["epoch"])
+                print("Target measure...", flush=True)
                 qualities = sortedness(X, res["X_"], symmetric=False, f=balanced_kendalltau_gaussian, alpha=alpha, beta=beta, kappa=kappa, pct=pct)
+                print("\t\t\t\t\tOK", flush=True)
                 quality = np.mean(qualities)
                 if (best := getbest(study)) is None or quality > best.value:
                     res["X_"].tofile(f"optuna-{dataset.ljust(20, '_')}-best_X__{name}.csv", sep=',')
