@@ -11,7 +11,7 @@ import numpy as np
 from scipy.stats import norm
 from sklearn.manifold import TSNE
 
-from sortedness.embedding import balanced_embedding
+from sortedness.embedding.sortedness_ import balanced_embedding
 
 np.random.seed(0)
 alpha = 0

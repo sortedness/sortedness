@@ -1,12 +1,11 @@
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 import optuna
 import seaborn as sns
 from pandas import DataFrame
 
 from sortedness import sortedness
 from sortedness.config import optuna_uri
-from sortedness.local import stress, balanced_kendalltau
+from sortedness.local import stress, balanced_kendalltau_gaussian
 from sortedness.misc.dataset import load_dataset
 from sortedness.misc.trustworthiness import trustworthiness
 
@@ -45,7 +44,11 @@ measures_dct = {
     f"$T_{k}$~~~~~~~~trustworthiness": tw,
     f"$T_{k}$~~~~~~~~continuity": lambda X, X_: tw(X_, X),
     # "$\\lambda_{\\lambda}$~~~~~~sortedness": lambda X, X_: sortedness(X_, X, symmetric=False),
-    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\gamma=1$": lambda X, X_: sortedness(X_, X, symmetric=False, f=balanced_kendalltau, gamma=1),
+    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\beta=0,\\alpha=0$": lambda X, X_: sortedness(X, X_, symmetric=False, f=balanced_kendalltau_gaussian, alpha=0, beta=0),
+    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\beta=0,\\alpha=1$": lambda X, X_: sortedness(X, X_, symmetric=False, f=balanced_kendalltau_gaussian, alpha=1, beta=0),
+    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\beta=0.5,\\alpha=0$": lambda X, X_: sortedness(X, X_, symmetric=False, f=balanced_kendalltau_gaussian, alpha=0, beta=0.5),
+    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\beta=0.5,\\alpha=1$": lambda X, X_: sortedness(X, X_, symmetric=False, f=balanced_kendalltau_gaussian, alpha=1, beta=0.5),
+    "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\beta=1$": lambda X, X_: sortedness(X, X_, symmetric=False, f=balanced_kendalltau_gaussian, beta=1),
     # "$\\Lambda_{\\lambda}$~~~~~~balanced sortedness $\\gamma=4$": lambda X, X_: sortedness(X_, X, symmetric=False, f=balanced_kendalltau, gamma=4),
     "$1-\\sigma_1$~~metric stress": lambda X, X_: 1 - stress(X, X_),
 }

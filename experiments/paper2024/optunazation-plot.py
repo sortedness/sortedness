@@ -64,17 +64,35 @@ dct = dict(
     svhn=0.783
 )
 storage = optuna.storages.RDBStorage(url=optuna_uri)
+kappa = 5
+alpha = 0.0
+pct = 90
 
 for dataset in datasets:
     study1 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma1_d2_epoch_layers_optim_k_kg")
     # study4 = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_gamma4_d2_epoch_layers_optim_k_kg")
-    studyg = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_kappa5_d2_epoch_layers_optim_k_kg")
+    a1balanced_old = optuna.load_study(storage=storage, study_name=f"{dataset}_alpha1_beta05_kappa5_d2_epoch_layers_optim_k_kg")
 
-    for study in [study1, studyg]:
+    beta = 0.0
+    txt = f"{kappa=} {alpha=} {beta=} {pct=}"
+    name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
+    a0local = optuna.load_study(storage=storage, study_name=name)
+
+    beta = 0.5
+    txt = f"{kappa=} {alpha=} {beta=} {pct=}"
+    name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
+    a0balanced = optuna.load_study(storage=storage, study_name=name)
+
+    beta = 1.0
+    txt = f"{kappa=} {alpha=} {beta=} {pct=}"
+    name = f"{dataset}_{txt.replace('=', '_').replace(' ', '__')}"
+    a0global = optuna.load_study(storage=storage, study_name=name)
+
+    for cfg, study in {"a1bal_old": a1balanced_old, "a0local": a0local, "a0bal": a0balanced, "a0glob": a0global}.items():
         best = study.best_trial
         # if best.value > dct[dataset]:
         #     break
-        print(f"{dataset:13} {str(load_dataset(dataset)[0].shape):13}", end="")
+        print(f"{cfg:10}\t{dataset:13} {str(load_dataset(dataset)[0].shape):13}", end="")
         df = study.trials_dataframe()
         mark = f"{100 * best.value / dct[dataset] - 100:03.3f}%" if best.value > dct[dataset] else "      "
         state = "COMPLETE"

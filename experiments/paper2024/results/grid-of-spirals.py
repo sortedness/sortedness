@@ -36,10 +36,10 @@ def create_colored_grid():
     # Define three alternating colors for the columns
     colors = np.array([[0.2, 0.2, 0.8], [0.8, 0.2, 0.2], [0.2, 0.8, 0.2]])
 
-    g=1.05
+    g = 1.05
     for i in range(5):
-        grid[:, i, :] = colors[i % 3]*g % 1
-        g*=g
+        grid[:, i, :] = colors[i % 3] * g % 1
+        g *= g
 
     return grid
 
@@ -53,9 +53,9 @@ ax.set_xticklabels([])
 ax.set_yticklabels([])
 
 # Populate the scatterplot with alternating colors in columns and gradient along rows
-g=1.01
+g = 1.01
 for i in range(0, grid_size, 5):
-    g*=g
+    g *= g
     for j in range(0, grid_size, 5):
         gradient = create_gradient(5)
         colored_grid = create_colored_grid()
@@ -64,7 +64,7 @@ for i in range(0, grid_size, 5):
             ax.scatter(
                 np.arange(j, j + 5),
                 np.ones(5) * (i + k),
-                c=(colored_grid[:, k, :]*g) % 1,
+                c=(colored_grid[:, k, :] * g) % 1,
                 cmap='viridis',
                 s=100,
             )

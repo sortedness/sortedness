@@ -942,12 +942,16 @@ def balanced_kendalltau_gaussian(unordered_values, unordered_values_, alpha=0.5,
     >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of continuity
     0.76555
     """
-    sigma = findsigma(pct, kappa)
-    w = [findweight(x, sigma) for x in range(len(unordered_values))]
-    idx0 = np.argsort(unordered_values, kind="stable") if alpha < 1 else None
-    idx1 = np.argsort(unordered_values_, kind="stable") if alpha > 0 else None
-    l0 = (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx0)[0] + 1) / 2 if alpha < 1 else 1
-    l1 = (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx1)[0] + 1) / 2 if alpha > 0 else 1
+    if beta == 1:
+        l0 = l1 = 1
+    else:
+        sigma = findsigma(pct, kappa)
+        w = [findweight(x, sigma) for x in range(len(unordered_values))]
+        idx0 = None if alpha == 1 else np.argsort(unordered_values, kind="stable")
+        idx1 = None if alpha == 0 else np.argsort(unordered_values_, kind="stable")
+        l0 = 1 if alpha == 1 else (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx0)[0] + 1) / 2
+        l1 = 1 if alpha == 0 else (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx1)[0] + 1) / 2
+
     g = (kendalltau(unordered_values, unordered_values_)[0] + 1) / 2 if beta > 0 else 1
     z = alpha * beta - alpha
     s = l0 ** (z - beta + 1) * l1 ** (-z) * g ** beta
