@@ -28,14 +28,15 @@ from pathlib import Path
 import numpy as np
 
 
-def load_dataset(dataset_name, result=False):
+def load_dataset(dataset_name, result=False, kappa=5, alpha=0.0, beta=0.0, pct=90):
     dir = f"{Path.home()}/csv_proj_sortedness_out"
     data_dir = os.path.join(dir, dataset_name)
     X = np.load(os.path.join(data_dir, 'X.npy'))
     y = np.load(os.path.join(data_dir, 'y.npy'))
 
     if result:
-        res = f"{Path.home()}/csvs/*X_*{dataset_name}*.csv"
+        res = f"{Path.home()}/git/sortedness/optuna-{dataset_name}*-best_X__{dataset_name}_kappa_{kappa}__alpha_{alpha}__beta_{beta}__pct_{pct}.csv"
+        print(res)
         list_of_files = glob.glob(res)
         latest_file = max(list_of_files, key=os.path.getctime)
         print(latest_file, "loaded!!!")

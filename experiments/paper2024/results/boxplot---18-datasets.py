@@ -4,8 +4,9 @@ import seaborn as sns
 from pandas import DataFrame
 
 from sortedness import sortedness
+from sortedness.balanced import balanced_kendalltau_gaussian
 from sortedness.config import optuna_uri
-from sortedness.local import stress, balanced_kendalltau_gaussian
+from sortedness.local import stress
 from sortedness.misc.dataset import load_dataset
 from sortedness.misc.trustworthiness import trustworthiness
 

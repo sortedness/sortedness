@@ -97,12 +97,13 @@ for dataset in datasets:
         mark = f"{100 * best.value / dct[dataset] - 100:03.3f}%" if best.value > dct[dataset] else "      "
         state = "COMPLETE"
         print(f"{best.value:03.10f} {mark} {df[df['state'] != state].shape[0]:3}/{df.shape[0]} not {state}  {best.params}")
+        # plot_optimization_history(study, target_name=f"{dataset} {cfg}").show()
+
     print()
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 
     # plot_contour(study, params=["epoch", "hidden_layers"], target_name=dataset).show()
     # plot_param_importances(study, target_name=dataset).show()
-    # plot_optimization_history(study, error_bar=True, target_name=dataset).show()
     # vis.plot_contour(study, params=["epoch", "lambd"], target_name=d).show()
     # exit()
     # vis.plot_contour(study, params=["lambd", "centered"]).show()

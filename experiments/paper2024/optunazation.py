@@ -32,9 +32,9 @@ from optuna._callbacks import RetryFailedTrialCallback
 from shelchemy import sopen
 from shelchemy.scheduler import Scheduler
 
+from sortedness.balanced import balanced_kendalltau_gaussian
 from sortedness.config import schedule_uri, optuna_uri
 from sortedness.embedding.sortedness_ import balanced_embedding
-from sortedness.local import balanced_kendalltau_gaussian
 from sortedness.local import sortedness
 from sortedness.misc.dataset import load_dataset
 

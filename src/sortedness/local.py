@@ -35,7 +35,6 @@ from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.stats import rankdata
 from scipy.stats import weightedtau, kendalltau
 
-from sortedness.embedding.sigmas import findsigma, findweight
 from sortedness.misc.parallel import rank_alongrow, rank_alongcol
 
 
@@ -885,74 +884,3 @@ def gaussian_np(x, ampl=1., sigma=1.):
     return ampl * np.exp(- np.divide(x, sigma) ** 2 / 2)
 
 
-def balanced_kendalltau_cauchy(unordered_values, unordered_values_, beta=0.5, gamma=4):
-    """
-    >>> round(balanced_kendalltau(np.array([2,1,3,4,5]), np.array([2,1,3,4,5]), beta=1), 5)
-    1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=1), 5)
-    -1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([1,2,3,4,5]), beta=0), 5)
-    1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=0), 5)
-    -1.0
-    >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0]), beta=0), 5) # strong break of trustworthiness
-    0.83258
-    >>> # order of importance is defined by internally sorting the first sequence.
-    >>> round(balanced_kendalltau(np.array([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), np.array([0,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), beta=0), 5) # strong break of trustworthiness
-    0.83258
-    >>> # weaker break of trustworthiness = an intermediate median distance value (one with intermediate weight) becomes the nearest neighbor.
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of trustworthiness
-    0.88332
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # strong break of continuity
-    0.53172
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of continuity
-    0.76555
-    """
-    if beta == 1:
-        tau_local = 1
-    else:
-        idx = np.argsort(unordered_values, kind="stable")
-        tau_local = weightedtau(unordered_values, unordered_values_, weigher=lambda r: 1 / pi * gamma / (gamma ** 2 + r ** 2), rank=idx)[0]
-    tau_global = 1 if beta == 0 else kendalltau(unordered_values, unordered_values_)[0]
-    return geomean_np(tau_local, tau_global, beta)
-
-
-def balanced_kendalltau_gaussian(unordered_values, unordered_values_, alpha=0.5, beta=0.5, kappa=5, pct=90) -> float:
-    """
-    >>> round(balanced_kendalltau(np.array([2,1,3,4,5]), np.array([2,1,3,4,5]), beta=1), 5)
-    1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=1), 5)
-    -1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([1,2,3,4,5]), beta=0), 5)
-    1.0
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5]), np.array([5,4,3,2,1]), beta=0), 5)
-    -1.0
-    >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0]), beta=0), 5) # strong break of trustworthiness
-    0.83258
-    >>> # order of importance is defined by internally sorting the first sequence.
-    >>> round(balanced_kendalltau(np.array([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), np.array([0,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), beta=0), 5) # strong break of trustworthiness
-    0.83258
-    >>> # weaker break of trustworthiness = an intermediate median distance value (one with intermediate weight) becomes the nearest neighbor.
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of trustworthiness
-    0.88332
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # strong break of continuity
-    0.53172
-    >>> round(balanced_kendalltau(np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), np.array([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), beta=0), 5) # weaker break of continuity
-    0.76555
-    """
-    if beta == 1:
-        l0 = l1 = 1
-    else:
-        sigma = findsigma(pct, kappa)
-        w = [findweight(x, sigma) for x in range(len(unordered_values))]
-        idx0 = None if alpha == 1 else np.argsort(unordered_values, kind="stable")
-        idx1 = None if alpha == 0 else np.argsort(unordered_values_, kind="stable")
-        l0 = 1 if alpha == 1 else (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx0)[0] + 1) / 2
-        l1 = 1 if alpha == 0 else (weightedtau(unordered_values, unordered_values_, weigher=lambda x: w[x], rank=idx1)[0] + 1) / 2
-
-    g = (kendalltau(unordered_values, unordered_values_)[0] + 1) / 2 if beta > 0 else 1
-    z = alpha * beta - alpha
-    s = l0 ** (z - beta + 1) * l1 ** (-z) * g ** beta
-    return 2 * s - 1
