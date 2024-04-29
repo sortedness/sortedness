@@ -21,14 +21,24 @@
 #  time spent here.
 #
 import bisect
+from math import pi, tan
 
 from indexed import IndexedOrderedDict
-from scipy.stats import halfnorm
+from scipy.stats import halfnorm, halfcauchy
 
 
-def findweight(zero_based_index, sigma):
+def findweight_cauchy(zero_based_index, beta):
+    return halfcauchy.cdf(zero_based_index + 1, scale=beta) - halfcauchy.cdf(zero_based_index, scale=beta)
+
+
+def findweight_normal(zero_based_index, sigma):
     """index 0 means first neighbor"""
     return halfnorm.cdf(zero_based_index + 1, scale=sigma) - halfnorm.cdf(zero_based_index, scale=sigma)
+
+
+def findbeta_cauchy(pct, kappa):
+    angle = pct * pi / 200
+    return kappa / tan(angle)
 
 
 sigmas = {0.01: {1: 8000,
@@ -3768,19 +3778,19 @@ for pct, dct in sigmas.items():
     ord_dcts[pct] = IndexedOrderedDict(dct)
 
 
-def findsigma(pct, kappa):
+def findsigma_normal(pct, kappa):
     """
     Given the `pct` of the weight intended for `kappa` neighbors, return the respective sigma for the Gaussian distribution.
 
-    >>> findsigma(1, 1)
+    >>> findsigma_normal(1, 1)
     80
-    >>> findsigma(1, 100)
+    >>> findsigma_normal(1, 100)
     8000
-    >>> findsigma(2, 31)
+    >>> findsigma_normal(2, 31)
     1250.0
-    >>> findsigma(95, 5)
+    >>> findsigma_normal(95, 5)
     2.575
-    >>> findsigma(95, 5.199)
+    >>> findsigma_normal(95, 5.199)
     2.6745
     """
     if kappa < 1:
@@ -3790,6 +3800,7 @@ def findsigma(pct, kappa):
     kappas_sigmas = ord_dcts[pct]
     if kappa > kappas_sigmas.keys()[-1]:
         raise Exception(f"kappa too high: {kappa} ; limit: {kappas_sigmas.keys()[-1]}")
+    # noinspection PyTypeChecker
     ind = bisect.bisect_left(kappas_sigmas.keys(), kappa)
     kappa_ = kappas_sigmas.keys()[ind]
     if kappa_ == kappa:

@@ -22,188 +22,185 @@
 #
 
 import copy
+from functools import partial
 
 import numpy as np
 import torch
-from torch import from_numpy
+from matplotlib import animation, pyplot as plt
+from torch import tensor
+from torch.nn import Module
 from torch.optim import RMSprop
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
+
+from sortedness.new.dt import Dt
+from sortedness.new.m import M
 
 activation_function_dct = {"tanh": torch.nn.Tanh, "sigm": torch.nn.Sigmoid, "relu": torch.nn.ReLU, "relu6": torch.nn.ReLU6}
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True, eps=0.000000001)
 
 
-class Dt(Dataset):
-    def __init__(self, X):
-        self.size = X.shape[0]
+def step(ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, char_size, i):
+    X_: tensor = None
+    quality: tensor = None
+    for idx in loader:
+        if hyperoptimizer is not None:
+            mw.begin()
+        X_ = ann(X)
+        quality = f(X_, idx, **f__kwargs)
+        if quality > state["best_quality_surrogate"]:
+            state["best_quality_surrogate"] = quality
+            state["best_X_"] = X_
+            state["best_epoch"] = i
+            state["best_dct"] = copy.deepcopy(ann.state_dict())
 
-    def __len__(self):
-        return self.size
+        if hyperoptimizer is None:
+            learning_optimizer.zero_grad()
+            (-quality).backward()
+            learning_optimizer.step()
+        else:
+            mw.zero_grad()
+            loss = -quality
+            loss.backward(create_graph=True)
+            mw.step()
+    # todo: quality is being calculated on minibatch data → model is not necessarily the best
+    if i % 1 == 0:
+        if verbose:
+            print(i, float(quality), float(state["best_quality_surrogate"]))
+        X_ = X_.detach().cpu().numpy()
+        ax.cla()
+        ax.scatter(X_[:, 0], X_[:, 1], s=marker_size, c=plot_colors, alpha=0.5)
+        for j, l in enumerate(plot_labels):
+            ax.text(X_[j, 0], X_[j, 1], l, size=char_size)
+        # plt.title(f"{i}:  {ref_local:.4f}  {ref_global:.4f}", fontsize=16)
 
-    def __getitem__(self, idx):
-        return idx
 
+def transform(X, f: callable,
+              ann: Module | int = None, epochs=100, batch_size=20, ann_optimizer=RMSprop, ann_optimizer__kwargs=None,
+              hyperoptimizer=None,
+              seed=0, return_only_X_=True, gpu=False, plot=False, plot_labels=None, plot_colors=None, label_size=12, marker_size=50, verbose=False, **f__kwargs):
+    """ Transformation from one space to another, e.g., dimensionality reduction optimizing the given function.
 
-def transform(X, f: callable, pre_f: callable = None, d=2,
-              hidden_layers=[40, 20], epochs=100, batch_size=20, activation_functions=["sigm", "relu"],
-              embedding_optimizer=RMSprop,
-              seed=0, track_best_model=True, return_only_X_=True,
-              hyperoptimizer=None, sgd_alpha=0.01, sgd_mu=0.0, gpu=False, verbose=False,
-              **embedding_optimizer__kwargs):
-    """
-    Parameters
-    ----------
-    X
-        Matrix with an instance per row (often high-dimensional data).
-        asdasd
-    f
-        Target/surrogate function to maximize.
+    :param X:
+        Matrix with an instance per row (often a high-dimensional data matrix).
+    :param f:
+        Target/surrogate quality function to maximize. Usually a callable class instantiated with `X`.
         Expected signature:
-            *   `quality = f(X, X_, idx, **kwargs_f)`
-            *   X: original data
+            *   `quality = f(X_: tensor, idxs, **f__kwargs)`
             *   X_: current transformed data
-            *   idx: indexes of current mini-batch
-            *   kwargs_f: optional; it is the return value of `pre_f` when needed - see `pre_f` below.
-            *   return → float value to maximize indicating the quality of the transformation
-    pre_f
-        Preliminar function to be called before first epoch.
-        Intended for heavy calculations, e.g., distance matrix, that happen only once.
-        Expected signature:
-            *   `kwargs_f = f(X)`
-            *   X: original data
-            *   return → kwargs for `f`
-    d
-        Target dimensionality.
-    hidden_layers
-        Artificial neural network topology.
-    epochs
+            *   idxs: indexes of current mini-batch
+            *   return → float value indicating the quality of the transformation
+    :param ann:
+        A subclass of `torch.nn.Module`; a `dict` of kwargs for module `M`; or, an `int` value representing the number of dimensions of the output space.
+        The module is an Artificial Neural Network which defines topology, activation functions, etc.
+        The default (`ann=None`) means `ann=M(X, d=2, hidden_layers=[40, 20], activation_functions=["sigm", "relu"])`.
+        An `int` as in `ann=3` means `ann=M(X, d=3, hidden_layers=[40, 20], activation_functions=["sigm", "relu"])`.
+        A `dict` as in `ann=dct` where `dct={"d": 2, "hidden_layers": [6, 4, 3], "activation_functions": ["sigm", "sigm", "relu"]` means `ann=M(X, **dct)`.
+    :param epochs:
         Number of full learning iterations. See `batch_size`.
-    batch_size
+    :param batch_size:
         Number of instances in each mini-batch.
         Each epoch iterates over all mini-batches.
-
-    embedding_optimizer
-        Callable to perform gradient descent. See learner_parameters below.
-        Default = RMSProp
-    min_K
-        Lower bound for the number of "neighbors" to sample when `K` is dynamic.
-    max_K
-        Upper bound for the number of "neighbors" to sample when `K` is dynamic.
-    seed
-        int
-    track_best_model
-        Whether to return the best result (default) or the last one.
-    return_only_X_
-        Return `X_` or `(X_, model, quality_surrogate)`?
-    gpu
-        Whether to use GPU.
-    verbose
-        Print information about best epoch?
-            best_epoch, best_quality_surrogate, best_dct
-    embedding_optimizer__kwargs
-        Arguments for `learner`. Intended to expose for tunning the hyperparameters that affect speed or quality of learning.
+    :param ann_optimizer:
+        Callable to perform gradient descent. See `ann_optimizer__kwargs` below.
+        Default = RMSProp.
+    :param ann_optimizer__kwargs:
+        Arguments for `ann_optimizer`. Intended to expose (for tunning) the hyperparameters that affect speed or quality of learning.
         Default arguments for RMSprop:
             lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False, foreach=None, maximize=False, differentiable=False
-
-    Returns
-    -------
-    Transformed `d`-dimensional data as a numpy float array.
+    :param hyperoptimizer:
+        If different from None, it will be used to perform gradient descent also on the hyperparameters.
+        For instance, two possible hyperoptimizers are `gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))` and
+        `gdtuo.Adam(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))`.
+    :param return_only_X_:
+        Return only `X_` or the tuple `(X_, best_epoch, best_torch_model, best_quality_surrogate)`?
+    :param seed:
+        int
+    :param gpu:
+        Whether to use GPU.
+    :param plot:
+        Show progress visually.
+    :param plot_labels:
+        List of `str` to label each point.
+    :param plot_colors:
+        List of `str` to color each point.
+    :param label_size:
+        Font size of plot labels.
+    :param marker_size:
+        Size of plot markers.
+    :param verbose:
+        Print information about best epoch?
+            best_epoch, best_quality_surrogate, best_dct
+    :param f__kwargs:
+        Any extra keyworded argument is passed to `f` along with `X_`,`idxs` at each epoch.
+    :return:
+        Transformed `d`-dimensional data as a numpy float array, if `return_only_X_=True`.
+        `(X_, best_epoch, best_torch_model, best_quality_surrogate)`, otherwise.
 
     >>> from sklearn import datasets
     >>> from sklearn.preprocessing import StandardScaler
     >>> from numpy import random, round
+    >>> import torch
+    >>> pdist = torch.nn.PairwiseDistance(p=2, keepdim=True)
     >>> digits = datasets.load_digits()
     >>> X = digits.images.reshape((len(digits.images), -1))[:20]
     >>> rnd = random.default_rng(0)
     >>> rnd.shuffle(X)
     >>> X = StandardScaler().fit_transform(X)
-    >>> X_ = balanced_embedding(X, alpha=0, epochs=2)
-    >>> X_.shape
-    (20, 2)
-
+    >>> X = torch.from_numpy(X.astype(np.float32))
+    >>> from sortedness.new.quality import Calmness
+    >>> X_, best_epoch, best_torch_model, best_quality_surrogate = transform(X, f=Calmness(X), return_only_X_=False).values()
+    >>> X.shape, X_.shape
+    (torch.Size([20, 64]), torch.Size([20, 2]))
+    >>> best_epoch, best_quality_surrogate  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    (87, 0.60...)
     """
 
-    class M(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            layers = [torch.nn.Linear(X.shape[1], hidden_layers[0]), activation_function_dct[activation_functions[0]]()]
-            previous = hidden_layers[0]
-            for neurons, af in zip(hidden_layers[1:], activation_functions[1:]):
-                layers.extend([torch.nn.Linear(previous, neurons), activation_function_dct[af]()])
-                previous = neurons
-            layers.append(torch.nn.Linear(previous, d))
-            self.encoder = torch.nn.Sequential(*layers)
-            # self.decoder = torch.nn.Sequential(
-            #     torch.nn.Linear(d, neurons), torch.nn.ReLU(),
-            #     torch.nn.Linear(neurons, X.shape[1])
-            # )
-
-        def forward(self, x):
-            return self.encoder(x)
-
+    if ann_optimizer__kwargs is None:
+        ann_optimizer__kwargs = {}
     if epochs < 1:
         raise Exception(f"`epochs` < 1")
     if batch_size < 1:
         raise Exception(f"`batch_size` < 1")
 
     torch.manual_seed(seed)
-    model = M()
+    if ann is None:
+        ann = M(X, d=2, hidden_layers=[40, 20], activation_functions=["sigm", "relu"])
+    elif isinstance(ann, int):
+        ann = M(X, d=ann, hidden_layers=[40, 20], activation_functions=["sigm", "relu"])
+    elif isinstance(ann, dict):
+        ann = M(X, **ann)
     if gpu:
-        model.cuda()
-    X = X.astype(np.float32)
-    X = from_numpy(X).cuda() if gpu else from_numpy(X)
-    if pre_f is not None:
-        kwargs_f = pre_f(X)
+        ann.cuda()
 
     if hyperoptimizer is None:
-        learning_optimizer = embedding_optimizer(model.parameters(), **embedding_optimizer__kwargs)
+        learning_optimizer = ann_optimizer(ann.parameters(), **ann_optimizer__kwargs)
+        mw = None
     else:
         from gradient_descent_the_ultimate_optimizer import gdtuo
-        if hyperoptimizer == 1:
-            optim = gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
-        elif hyperoptimizer == 2:
-            optim = gdtuo.Adam(optimizer=gdtuo.SGD(alpha=sgd_alpha, mu=sgd_mu))
-        else:
-            raise Exception(f"Invalid optim: {hyperoptimizer}")
-        mw = gdtuo.ModuleWrapper(model, optimizer=optim)
+        mw = gdtuo.ModuleWrapper(ann, optimizer=ann_optimizer)
         mw.initialize()
+        learning_optimizer = None
 
-    model.train()
+    ann.train()
     loader = DataLoader(Dt(X), shuffle=True, batch_size=batch_size, pin_memory=gpu)
-    best_quality_surrogate = best_epoch = -2
-    with ((torch.enable_grad())):
-        for i in range(epochs):
-            for idx in loader:
-                if hyperoptimizer is not None:
-                    mw.begin()
-                X_ = model(X)
-                quality = f(X, X_, idx, **kwargs_f)
-                if track_best_model and quality > best_quality_surrogate:
-                    best_quality_surrogate = quality
-                    best_X_ = X_
-                    best_epoch = i
-                    best_dct = copy.deepcopy(model.state_dict())
-
-                if hyperoptimizer is None:
-                    learning_optimizer.zero_grad()
-                    (-quality).backward()
-                    learning_optimizer.step()
-                else:
-                    mw.zero_grad()
-                    loss = -quality
-                    loss.backward(create_graph=True)
-                    mw.step()
-
-    if track_best_model:
-        model = M()
-        model.load_state_dict(best_dct)
-        X_ = best_X_
-        if verbose:
-            print(f"{best_epoch=} {float(best_quality_surrogate)=}", flush=True)
-
-    X_ = X_.detach().cpu().numpy().astype(float)
+    state = dict(best_quality_surrogate=-9999, best_X_=None, best_epoch=-9999, best_dct=None)
+    with torch.enable_grad():
+        if plot:
+            fig, ax = plt.subplots(1, 1)
+            ax.cla()
+            mng = plt.get_current_fig_manager()
+            # mng.resize(*mng.window.maxsize())
+            anim = animation.FuncAnimation(fig, partial(step, ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size))
+            plt.show()
+        else:
+            for i in range(epochs):
+                step(None, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size, i)
+    best_torch_model = ann.clone()
+    best_torch_model.load_state_dict(state["best_dct"])
+    X_: tensor = state["best_X_"]
+    if verbose:
+        print(f"{state['best_epoch']=} {float(state['best_quality_surrogate'])=}", flush=True)
 
     if return_only_X_:
         return X_
-
-    return {"X_": X_, "model": model, "epoch": best_epoch, "surrogate_quality": float(best_quality_surrogate)}
+    return {"X_": X_, "best_epoch": state["best_epoch"], "best_torch_model": best_torch_model, "best_quality_surrogate": float(state["best_quality_surrogate"])}

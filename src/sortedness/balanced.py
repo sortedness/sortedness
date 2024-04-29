@@ -27,7 +27,7 @@ from math import pi
 import numpy as np
 from scipy.stats import weightedtau, kendalltau
 
-from sortedness.embedding.sigmas import findsigma, findweight
+from sortedness.embedding.sigmas_ import findsigma, findweight
 from sortedness.local import geomean_np
 
 
