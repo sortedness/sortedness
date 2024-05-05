@@ -23,8 +23,11 @@
 import torch
 
 from sortedness.new.quality._calmness import Calmness
+from sortedness.new.quality._relativecalmness import RelativeCalmness
 from sortedness.new.quality._sortedness import Sortedness
 
 _ = Calmness
+_ = RelativeCalmness
 _ = Sortedness
+
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True, eps=0.00000001)

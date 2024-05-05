@@ -28,35 +28,43 @@ from gradient_descent_the_ultimate_optimizer import gdtuo
 from matplotlib import animation
 from numpy import random
 from scipy.spatial.distance import cdist
+from scipy.stats import halfnorm
 from sklearn import datasets
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 from torch import from_numpy, set_num_threads, tensor, topk
 from torch.utils.data import DataLoader
 
+from sortedness.embedding.sigmas_ import findweight, findsigma
 from sortedness.embedding.sortedness_ import Dt
 from sortedness.embedding.surrogate import loss_function
-from sortedness.local import remove_diagonal, gaussian_np
+from sortedness.local import remove_diagonal
 
 # X     000000018:	optimized sur: 0.1706  local/globa: 0.1550 0.1879  REF: 0.6209 0.5486		1.000000
 # both  000000018:	optimized sur: 0.1663  local/globa: 0.1611 0.1735  REF: 0.6426 0.4954		1.000000
 # X_    000000018:	optimized sur: 0.1641  local/globa: 0.1556 0.1751  REF: 0.5480 0.4830		1.000000
-n = 500  # 1797
+n = 400  # 1797
 ref = True
-alpha = 0.5
-beta = 0.5
+alpha = 1
+beta = 0
 gamma = 4
-sigma = 2
-# ca = cau(tensor(range(n)), gamma=gamma) / 0.54
-ca = (tensor(gaussian_np(list(range(n)), sigma=sigma)))
-print(ca)
-k, gk = 20, 400
-K = k
-lambd = 1
-neurons = 30
+sigma = 20
+pct, kappa = 90, 5
+K, gk = 20, 400
+lambd = .05
+neurons = 20
 batch_size = 20
 seed = 0
 gpu = False
+
+# wf = cau(tensor(range(n)), gamma=gamma) / 0.54
+# wf = tensor(gaussian_np(list(range(n)), sigma=sigma))
+# wharmonic = har(tensor(range(n)))
+sigma_ = findsigma(pct, kappa)
+k = int(halfnorm.ppf(.9999, 0, sigma_))
+wf = tensor([findweight(x, sigma_) for x in range(k)])
+print(k, float(sum(wf)))
+
 
 threads = 1
 # cuda.is_available = lambda: False
@@ -87,7 +95,7 @@ class M(torch.nn.Module):
         super().__init__()
         self.encoder = torch.nn.Sequential(
             torch.nn.Linear(X.shape[1], neurons), torch.nn.Tanh(),
-            # torch.nn.Linear(neurons, neurons), torch.nn.Tanh(),
+            # torch.nn.Linear(neurons, neurons), torch.nn.ReLU(),
             torch.nn.Linear(neurons, 2)
         )
         # self.decoder = torch.nn.Sequential(
@@ -102,16 +110,16 @@ class M(torch.nn.Module):
 model = M()
 if gpu:
     model.cuda()
-optim = gdtuo.Adam(optimizer=gdtuo.SGD())
+optim = gdtuo.RMSProp(optimizer=gdtuo.Adam(optimizer=gdtuo.SGD()))
+optim = gdtuo.RMSProp()  # optimizer=gdtuo.Adam(optimizer=gdtuo.SGD()))
 mw = [gdtuo.ModuleWrapper(model, optimizer=optim)]
 mw[0].initialize()
 
 print(X.shape)
 # R = from_numpy(rankdata(cdist(X, X), axis=1)).cuda() if gpu else from_numpy(rankdata(cdist(X, X), axis=1))
 T = from_numpy(X).cuda() if gpu else from_numpy(X)
-print(sum(ca))
-w = ca.cuda() if gpu else ca
-# wharmonic = har(tensor(range(n)))
+
+w = wf.cuda() if gpu else wf
 
 fig, axs = plt.subplots(1, 2, figsize=(12, 9))
 ax[0], ax[1] = axs
@@ -193,4 +201,3 @@ mng = plt.get_current_fig_manager()
 with torch.enable_grad():
     anim = animation.FuncAnimation(fig, animate)
 plt.show()
-

@@ -772,4 +772,3 @@ if __name__ == '__main__':
     case06a(tsne_perplexity, tsne_n_iter, sort_epochs)
     case06b(tsne_perplexity, tsne_n_iter, sort_epochs)
     case06c(tsne_perplexity, tsne_n_iter, sort_epochs)
-

@@ -22,20 +22,34 @@
 #
 
 from sortedness.new.dataset import mnist
-from sortedness.new.quality import Calmness
+from sortedness.new.quality import *
 from sortedness.new.sktransformer import SKTransformer
-from sortedness.new.weighting import cauchy
+from sortedness.new.weighting import gaussian
 
 n = 500
 X, colors = mnist(n)
 labels = colors[:50]
-# w = gaussian(n)
-w = cauchy(n//2, kappa=10)
+w = gaussian(17)
+# w = cauchy(20, kappa=5)
 # todo: fazer cada função de ponderação retornar apenas os k vizinhos mais relevantes conforme abaixo...
 #  epsilon=0.00001
 #  k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
 
 
+# c = SKTransformer(RelativeCalmness(X, w), verbose=True)
+# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+# exit()
+#
 c = SKTransformer(Calmness(X, w), verbose=True)
-
 c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+exit()
+
+# ann = M(X, d=2, hidden_layers=[20, 10], activation_functions=["tanh", "relu"])
+# hyperoptimizer = gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))
+# hyperoptimizer = gdtuo.Adam(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))
+ann = hyperoptimizer = None
+c = SKTransformer(Sortedness(X,w), ann=ann, hyperoptimizer=hyperoptimizer, verbose=True)
+c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+
+
+# TODO: quando coloca pesos fica muito ruim (somente quando pondera dados originais) → checar implementação

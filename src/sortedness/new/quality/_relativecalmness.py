@@ -25,18 +25,20 @@ import torch
 from numpy import ndarray
 from torch import tensor, from_numpy
 
+from sortedness.new.math_functions import relative_stress
 
-class Calmness:
+
+class RelativeCalmness:
     def __init__(self, X: tensor, w: tensor = None, sortbyX_=True):
-        """Calmness: The opposite of stress; neighbors can be weighted by a given vector (tensor)
+        """RelativeCalmness: The opposite of relative stress; neighbors can be weighted by a given vector (tensor)
 
         >>> from torch import tensor
         >>> X = tensor([[1.,2], [3,4], [5,6]])
         >>> w = tensor([0.5, 0.3, 0.25])
-        >>> Calmness(X, w)(X)
+        >>> RelativeCalmness(X, w)(X)
         tensor(1.)
         >>> X_ = tensor([[3.,4], [1,2], [5,6]])
-        >>> Calmness(X, w)(X_)
+        >>> RelativeCalmness(X, w)(X_)
         tensor(0.5873)
 
         :param X: Original data.
@@ -80,21 +82,22 @@ class Calmness:
         minin = len(idxs)
         a = self.seq != idxs[:, None]
         miniD_ = torch.cdist(miniX_, X_)[a].reshape(minin, -1)
-
         if self.w is None:
-            # stress = torch.sum((miniD - miniD_) ** 2) / torch.sum(miniD ** 2) # normalized by all
-            stress = torch.mean(torch.sum((miniD - miniD_) ** 2, dim=1) / torch.sum(miniD ** 2, dim=1))  # normalized by row
+            miniDsorted = miniD
+            miniDsorted_ = miniD_
         else:
             if self.sortbyX_:
                 miniDsorted_, idxs_for_miniDsorted_ = torch.topk(miniD_, self.k, largest=False, dim=1)
                 miniDsorted = miniD[torch.arange(miniD.size(0)).unsqueeze(1), idxs_for_miniDsorted_]
             else:
                 miniDsorted = miniD
-                # miniDsorted_ =  torch.cdist(miniX_, X_[self.idxs_f,bb,b,b,mb,mor_Dsorted])[a].reshape(minin, -1)
                 # index each row
-                miniDsorted_ = miniD_[torch.arange(miniD_.size(0)).unsqueeze(1), self.idxs_for_Dsorted]
-            # stress = torch.sqrt(torch.sum((miniD - miniDsorted_) ** 2)) # raw
-            # stress = torch.sum((miniD - miniDsorted_) ** 2 * self.w) / torch.sum(miniD ** 2 * self.w) # normalized by all
-            stress = torch.mean(torch.sum((miniDsorted - miniDsorted_) ** 2 * self.w, dim=1) / torch.sum(miniDsorted ** 2 * self.w, dim=1))  # normalized by row
-
-        return 1 - stress
+                miniD_ = torch.cdist(miniX_, X_)[a].reshape(minin, -1)
+                b = torch.arange(miniD_.size(0)).unsqueeze(1)
+                miniDsorted_ = miniD_[b, self.idxs_for_Dsorted[idxs]]
+        c = s = 0
+        for minidsorted, minidsorted_ in zip(miniDsorted, miniDsorted_):
+            s += relative_stress(minidsorted, minidsorted_, self.w)
+            c += 1
+        return 1 - s / c
+        # TODO: fazer relativecalminess and calmness reusarem código

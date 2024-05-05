@@ -177,7 +177,7 @@ def transform(X, f: callable,
         mw = None
     else:
         from gradient_descent_the_ultimate_optimizer import gdtuo
-        mw = gdtuo.ModuleWrapper(ann, optimizer=ann_optimizer)
+        mw = gdtuo.ModuleWrapper(ann, optimizer=hyperoptimizer)
         mw.initialize()
         learning_optimizer = None
 

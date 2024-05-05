@@ -97,6 +97,7 @@ for dataset in datasets:
         mark = f"{100 * best.value / dct[dataset] - 100:03.3f}%" if best.value > dct[dataset] else "      "
         state = "COMPLETE"
         print(f"{best.value:03.10f} {mark} {df[df['state'] != state].shape[0]:3}/{df.shape[0]} not {state}  {best.params}")
+        # plot_contour(study, params=["lr", "momentum"], target_name=dataset).show()
         # plot_optimization_history(study, target_name=f"{dataset} {cfg}").show()
 
     print()
