@@ -92,7 +92,7 @@ class Calmness:
                 miniDsorted = miniD
                 # miniDsorted_ =  torch.cdist(miniX_, X_[self.idxs_f,bb,b,b,mb,mor_Dsorted])[a].reshape(minin, -1)
                 # index each row
-                miniDsorted_ = miniD_[torch.arange(miniD_.size(0)).unsqueeze(1), self.idxs_for_Dsorted]
+                miniDsorted_ = miniD_[torch.arange(miniD_.size(0)).unsqueeze(1), self.idxs_for_Dsorted[idxs]]
             # stress = torch.sqrt(torch.sum((miniD - miniDsorted_) ** 2)) # raw
             # stress = torch.sum((miniD - miniDsorted_) ** 2 * self.w) / torch.sum(miniD ** 2 * self.w) # normalized by all
             stress = torch.mean(torch.sum((miniDsorted - miniDsorted_) ** 2 * self.w, dim=1) / torch.sum(miniDsorted ** 2 * self.w, dim=1))  # normalized by row

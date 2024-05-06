@@ -20,7 +20,6 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
-import math
 from itertools import repeat
 
 import torch
@@ -125,74 +124,54 @@ def surrogate_wtau(a, b, w, smoothness):
     return num / den
 
 
-"""
-000000001:	optimized sur: 0.2526  local/globa: 0.2526 0.0000  REF: 0.3930 0.2909		0.300000
-000000002:	optimized sur: 0.3596  local/globa: 0.3596 0.0000  REF: 0.5666 0.2984		0.300000
-000000003:	optimized sur: 0.3662  local/globa: 0.3662 0.0000  REF: 0.5824 0.2662		0.300000
-000000004:	optimized sur: 0.3639  local/globa: 0.3639 0.0000  REF: 0.5574 0.2855		0.300000
-000000005:	optimized sur: 0.3627  local/globa: 0.3627 0.0000  REF: 0.5660 0.2971		0.300000
+def surrogate_tau_rel(a, b, smoothness):
+    """
+    >>> from torch import tensor
+    >>> from scipy.stats import kendalltau
+    >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .00001)
+    tensor(1.0000)
+    >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .00001)
+    tensor(-1.0000)
+    >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([5,4,3,2,1]), .00001)), 4)
+    -0.9487
+    >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .00001)), 4)
+    0.9487
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 4)
+    0.9487
+    >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), 0.9)
+    tensor(0.4734)
+    >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), 0.9)
+    tensor(-0.4357)
+    """
+    # reminder: relative is more optimistic here due to integer ties
+    da, db, sa, sb = pdiffs(a), pdiffs(b), psums(a), psums(b)
+    ra = torch.sign(da) * (abs(da) / (sa + 0.000000001)) ** smoothness
+    rb = torch.sign(db) * (abs(db) / (sb + 0.000000001)) ** smoothness
+    return sum(ra * rb) / sqrt(sum(torch.abs(ra)) * sum(torch.abs(rb)) + 0.000000001)
 
-000000001:	optimized sur: 0.2526  local/globa: 0.2526 0.0000  REF: 0.3930 0.2909		0.300000
-000000002:	optimized sur: 0.3596  local/globa: 0.3596 0.0000  REF: 0.5666 0.2984		0.300000
-000000003:	optimized sur: 0.3662  local/globa: 0.3662 0.0000  REF: 0.5824 0.2662		0.300000
-000000004:	optimized sur: 0.3639  local/globa: 0.3639 0.0000  REF: 0.5574 0.2855		0.300000
-000000005:	optimized sur: 0.3627  local/globa: 0.3627 0.0000  REF: 0.5660 0.2971		0.300000
 
-"""
-
-
-# def surrogate_tau_rel(a, b, smoothness):
-#     """
-#     >>> from torch import tensor
-#     >>> from scipy.stats import kendalltau
-#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), .00001)
-#     tensor(1.0000)
-#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), .00001)
-#     tensor(-1.0000)
-#     >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([5,4,3,2,1]), .00001)), 4)
-#     -0.9487
-#     >>> round(float(surrogate_tau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]), .00001)), 4)
-#     0.9487
-#     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 4)
-#     0.9487
-#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]), 0.9)
-#     tensor(0.4734)
-#     >>> surrogate_tau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]), 0.9)
-#     tensor(-0.4357)
-#     """
-#     # reminder: relative is more optimistic here due to integer ties
-#     da, db, sa, sb = pdiffs(a), pdiffs(b), psums(a), psums(b)
-#     ta = torch.sign(da) * (abs(da + 0.0000000001) / (sa + 0.0000000001)) ** smoothness
-#     tb = torch.sign(db) * (abs(db + 0.0000000001) / (sb + 0.0000000001)) ** smoothness
-#     num = sum(ta * tb)
-#     den = sqrt(sum(abs(ta)) * sum(abs(tb)) + 0.000000000001)
-#     return num / den
-#
-#
-# def surrogate_wtau_rel(a, b, w, smoothness):
-#     """
-#     >>> from torch import tensor
-#     >>> from scipy.stats import kendalltau
-#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .00001)
-#     tensor(1.0000)
-#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .00001)
-#     tensor(-1.0000)
-#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 4)
-#     tensor(0.1387)
-#     >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 4)
-#     tensor(-0.1071)
-#     >>> round(float(surrogate_wtau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
-#     0.948682
-#     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
-#     0.948683
-#     """
-#     da, db, sa, sb, sw = pdiffs(a), pdiffs(b), psums(a), psums(b), psums(w)
-#     ta = torch.sign(da) * (abs(da + 0.0000000001) / (sa + 0.0000000001)) ** smoothness
-#     tb = torch.sign(db) * (abs(db + 0.0000000001) / (sb + 0.0000000001)) ** smoothness
-#     num = sum(ta * tb * sw)
-#     v = sum(abs(ta * sw)) * sum(abs(tb * sw))
-#     den = sqrt(v + 0.000000000001)
-#     return num / den
+def surrogate_wtau_rel(a, b, w, smoothness):
+    """
+    >>> from torch import tensor
+    >>> from scipy.stats import kendalltau
+    >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .00001)
+    tensor(1.0000)
+    >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .00001)
+    tensor(-1.0000)
+    >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 4)
+    tensor(0.1387)
+    >>> surrogate_wtau_rel(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 4)
+    tensor(-0.1071)
+    >>> round(float(surrogate_wtau_rel(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+    0.948682
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    """
+    smoothness = 1
+    da, db, sa, sb, sw = pdiffs(a), pdiffs(b), psums(a), psums(b), psums(w)
+    ra = torch.sign(da) * (abs(da) / (sa + 0.000000001)) ** smoothness
+    rb = torch.sign(db) * (abs(db) / (sb + 0.000000001)) ** smoothness
+    return sum(ra * rb * sw) / sqrt(sum(torch.abs(ra) * sw) * sum(torch.abs(rb) * sw) + 0.000000001)
 
 
 def geomean(lo, gl, beta=0.5):
@@ -206,25 +185,12 @@ def geomean(lo, gl, beta=0.5):
     return torch.exp((1 - beta) * torch.log(l + 0.00000000001) + beta * torch.log(g + 0.00000000001)) * 2 - 1
 
 
-def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha=0.5, beta=0.5, lambd=0.5, min_K=100, max_K=1000, ref=False):
+def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha=0.5, beta=0.5, lambd=0.5, ref=False):
     n, v = miniD.shape  # REMINDER: n is the size of the minibatch
-    if K == "sqrt":
-        K = max(min_K, min(max_K, int(math.sqrt(v))))
-    if K > v:
-        K = v
     if k + 1 > v:
         k = v - 1
     if k < 1:
         raise Exception(f"`k` must be greater than 1: {k} > 1")
-    if K < 1:
-        raise Exception(f"`K` must be greater than 1: {K} > 1")
-    if not (0 <= alpha <= 1):
-        raise Exception(f"`alpha` outside valid range: 0 <= {alpha} <= 1")
-    if not (0 <= beta <= 1):
-        raise Exception(f"`beta` outside valid range: 0 <= {beta} <= 1")
-    if not (0.00001 <= lambd <= 100):
-        raise Exception(f"`lambd` outside valid range: 0.0001 <= {lambd} <= 100")
-
     mu = mu_local_acc = mu_global_acc = tau_local_acc = tau_global_acc = 0
     rnd_idxs = torch.randperm(v)
     start = 0
@@ -236,21 +202,21 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha=0.5,
         if beta < 1:
             if 0 < alpha < 1:
                 a0, b0 = dsorted, d_[idxs_by_D]
-                l0 = (surrogate_wtau(a0, b0, w[:k], lambd)+1)/2
+                l0 = (surrogate_wtau(a0, b0, w[:k], lambd) + 1) / 2
 
                 a1, idxs_by_D_ = topk(d_, k, largest=False)
                 b1 = d[idxs_by_D_]
-                l1 = (surrogate_wtau(a1, b1, w[:k], lambd)+1)/2
+                l1 = (surrogate_wtau(a1, b1, w[:k], lambd) + 1) / 2
             else:
                 if alpha == 0:
                     a0, b0 = dsorted, d_[idxs_by_D]
-                    l0 = (surrogate_wtau(a0, b0, w[:k], lambd)+1)/2  # todo: não precisa recalcular step para a0 toda hora, mas ocuparia espaço nk²
+                    l0 = (surrogate_wtau(a0, b0, w[:k], lambd) + 1) / 2  # todo: não precisa recalcular step para a0 toda hora, mas ocuparia espaço nk²
                     l1 = 1
                 else:
                     a1, idxs_by_D_ = topk(d_, k, largest=False)
                     b1 = d[idxs_by_D_]
                     l0 = 1
-                    l1 = (surrogate_wtau(a1, b1, w[:k], lambd)+1)/2
+                    l1 = (surrogate_wtau(a1, b1, w[:k], lambd) + 1) / 2
         else:
             l0 = l1 = 1
 
@@ -265,7 +231,7 @@ def loss_function(miniD, miniD_, miniDsorted, miniidxs_by_D, k, K, w, alpha=0.5,
             start += K
             ga = d[gidxs]
             gb = d_[gidxs]
-            g = (surrogate_tau(ga, gb, lambd)+1)/2
+            g = (surrogate_tau(ga, gb, lambd) + 1) / 2
         else:
             g = 1
 
