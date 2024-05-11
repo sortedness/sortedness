@@ -26,6 +26,8 @@ import torch
 def calmness(D, D_, w):
     # stress = torch.sqrt(torch.sum((miniD - miniDsorted_) ** 2)) # raw
     # stress = torch.sum((miniD - miniDsorted_) ** 2 * self.w) / torch.sum(miniD ** 2 * self.w) # normalized by all
+    if w is None:
+        return 1 - torch.mean(torch.sum((D - D_) ** 2, dim=1) / torch.sum(D ** 2, dim=1))  # normalized by row
     return 1 - torch.mean(torch.sum((D - D_) ** 2 * w, dim=1) / torch.sum(D ** 2 * w, dim=1))  # normalized by row
 
 

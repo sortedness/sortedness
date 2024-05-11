@@ -26,11 +26,12 @@ from sortedness.new.quality import *
 from sortedness.new.sktransformer import SKTransformer
 from sortedness.new.weighting import gaussian, cauchy
 
-n = 1000
+n=600
 X, colors = mnist(n)
+n = len(X)
 labels = colors[:50]
 w = gaussian(17)
-w = cauchy(999, kappa=10, pct=70)
+w = cauchy(n-1, kappa=10, pct=50)
 # todo: fazer cada função de ponderação retornar apenas os k vizinhos mais relevantes conforme abaixo...
 #  epsilon=0.00001
 #  k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
