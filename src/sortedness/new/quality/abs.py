@@ -56,3 +56,73 @@ class Quality:
 
     def __call__(self, X_: tensor, idxs=None, **f__kwargs):
         raise NotImplementedError
+
+    def check(self, other):
+        from sortedness.new.quality._pairwise import Pairwise
+        from sortedness.new.quality._elementwise import Elementwise
+        if isinstance(self, Pairwise) and isinstance(other, Elementwise) or isinstance(self, Elementwise) and isinstance(other, Pairwise):
+            raise Exception(f"Cannot mix Pairwise {type(self)} and Elementwise {type(other)} quality surrogate functions.")
+
+    def __add__(self, other: 'Quality'):
+        if isinstance(other, Quality):
+            f = lambda *args, **kwargs: self(*args, **kwargs) + other(*args, **kwargs)
+        else:
+            f = lambda *args, **kwargs: self(*args, **kwargs) + other
+        return Expr(f)
+
+    def __sub__(self, other: 'Quality'):
+        if isinstance(other, Quality):
+            f = lambda *args, **kwargs: self(*args, **kwargs) - other(*args, **kwargs)
+        else:
+            f = lambda *args, **kwargs: self(*args, **kwargs) - other
+        return Expr(f)
+
+    def __mul__(self, other: 'Quality'):
+        if isinstance(other, Quality):
+            f = lambda *args, **kwargs: self(*args, **kwargs) * other(*args, **kwargs)
+        else:
+            f = lambda *args, **kwargs: self(*args, **kwargs) * other
+        return Expr(f)
+
+    def __truediv__(self, other: 'Quality'):
+        if isinstance(other, Quality):
+            f = lambda *args, **kwargs: self(*args, **kwargs) / other(*args, **kwargs)
+        else:
+            f = lambda *args, **kwargs: self(*args, **kwargs) / other
+        return Expr(f)
+
+    def __pow__(self, other: 'Quality'):
+        if isinstance(other, Quality):
+            f = lambda *args, **kwargs: self(*args, **kwargs) ** other(*args, **kwargs)
+        else:
+            f = lambda *args, **kwargs: self(*args, **kwargs) ** other
+        return Expr(f)
+
+    def __rmul__(self, other: 'Quality'):
+        f = lambda *args, **kwargs: other * self(*args, **kwargs)
+        return Expr(f)
+
+    def __rtruediv__(self, other: 'Quality'):
+        f = lambda *args, **kwargs: other / self(*args, **kwargs)
+        return Expr(f)
+
+    def __radd__(self, other: 'Quality'):
+        f = lambda *args, **kwargs: other + self(*args, **kwargs)
+        return Expr(f)
+
+    def __rsub__(self, other: 'Quality'):
+        f = lambda *args, **kwargs: other - self(*args, **kwargs)
+        return Expr(f)
+
+    def __rpow__(self, other: 'Quality'):
+        f = lambda *args, **kwargs: other ** self(*args, **kwargs)
+        return Expr(f)
+
+
+class Expr(Quality):
+    # noinspection PyMissingConstructor
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, *args, **kwargs):
+        return self.f(*args, **kwargs)

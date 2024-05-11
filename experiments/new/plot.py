@@ -26,15 +26,20 @@ from sortedness.new.quality import *
 from sortedness.new.sktransformer import SKTransformer
 from sortedness.new.weighting import gaussian, cauchy
 
-n=600
+n = 12000
 X, colors = mnist(n)
 n = len(X)
-labels = colors[:50]
-w = gaussian(17)
-w = cauchy(n-1, kappa=10, pct=50)
+labels = colors[:100]
+gauw = gaussian(17, kappa=5, pct=90)
+cauw = cauchy(100, kappa=10, pct=50)
 # todo: fazer cada função de ponderação retornar apenas os k vizinhos mais relevantes conforme abaixo...
 #  epsilon=0.00001
 #  k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
+
+# noinspection PyTypeChecker
+c = SKTransformer(3 / (1 / Calmness(X, ) + 1 / Transitiveness(X, cauw) + 1 / Sortedness(X, gauw)), verbose=True)
+c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+exit()
 
 c = SKTransformer(Transitiveness(X, w), verbose=True)
 c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)

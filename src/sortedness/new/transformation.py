@@ -39,39 +39,41 @@ activation_function_dct = {"tanh": torch.nn.Tanh, "sigm": torch.nn.Sigmoid, "rel
 pdist = torch.nn.PairwiseDistance(p=2, keepdim=True, eps=0.000000001)
 
 
-def step(ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, char_size, i):
+def step(ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, char_size, mod, i):
     X_: tensor = None
-    quality: tensor = None
+    quality = t = 0
     for idx in loader:
+        t += 1
         if hyperoptimizer is not None:
             mw.begin()
         X_ = ann(X)
-        quality = f(X_, idx, **f__kwargs)
-        if quality > state["best_quality_surrogate"]:
-            state["best_quality_surrogate"] = quality
-            state["best_X_"] = X_
-            state["best_epoch"] = i
-            state["best_dct"] = copy.deepcopy(ann.state_dict())
+        miniloss = -f(X_, idx, **f__kwargs)
 
         if hyperoptimizer is None:
             learning_optimizer.zero_grad()
-            (-quality).backward()
+            miniloss.backward()
             learning_optimizer.step()
         else:
             mw.zero_grad()
-            loss = -quality
-            loss.backward(create_graph=True)
+            miniloss.backward(create_graph=True)
             mw.step()
-    # todo: quality is being calculated on minibatch data → model is not necessarily the best
-    if i % 1 == 0:
+        quality -= float(miniloss)
+    quality /= t
+    if quality > state["best_quality_surrogate"]:
+        state["best_quality_surrogate"] = quality
+        state["best_X_"] = X_
+        state["best_epoch"] = i
+        state["best_dct"] = copy.deepcopy(ann.state_dict())
+    if i % mod == 0:
         if verbose:
-            print(i, float(quality), float(state["best_quality_surrogate"]))
+            print(i, quality, state["best_quality_surrogate"])
         X_ = X_.detach().cpu().numpy()
         ax.cla()
         ax.scatter(X_[:, 0], X_[:, 1], s=marker_size, c=plot_colors, alpha=0.5)
         for j, l in enumerate(plot_labels):
             ax.text(X_[j, 0], X_[j, 1], l, size=char_size)
-        # plt.title(f"{i}:  {ref_local:.4f}  {ref_global:.4f}", fontsize=16)
+        plt.title(f"{i}:  {quality:.4f}  ", fontsize=16)
+    return X_, quality
 
 
 def transform(X, f: callable,
@@ -190,11 +192,11 @@ def transform(X, f: callable,
             ax.cla()
             mng = plt.get_current_fig_manager()
             # mng.resize(*mng.window.maxsize())
-            anim = animation.FuncAnimation(fig, partial(step, ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size))
+            anim = animation.FuncAnimation(fig, partial(step, ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size, 1))
             plt.show()
         else:
             for i in range(epochs):
-                step(None, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size, i)
+                step(None, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimizer, mw, ann, X, f, f__kwargs, learning_optimizer, state, label_size, 1, i)
     best_torch_model = ann.clone()
     best_torch_model.load_state_dict(state["best_dct"])
     X_: tensor = state["best_X_"]
