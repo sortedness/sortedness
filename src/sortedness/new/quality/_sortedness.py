@@ -35,11 +35,11 @@ class Sortedness(Pairwise):
         >>> from torch import tensor
         >>> X = tensor([[1.,2], [3,4], [5,6], [7,8]])
         >>> w = tensor([0.5, 0.3, 0.25])
-        >>> Sortedness(X, w)(X)
+        >>> Sortedness(X, w, lambd=0.2)(X)
         tensor(1.)
         >>> X_ = tensor([[3.,4], [1,2], [5,6], [7,8]])
         >>> Sortedness(X, w)(X_)
-        tensor(0.5873)
+        tensor(0.3798)
 
         :param X: Original data.
         :param w: Weights vector. |w| < |X|. Only the first |w| neighbors are used - for efficiency.

@@ -28,19 +28,28 @@ from sortedness.new.math_functions import pdiffs, psums
 def softtau(a, b, w=None, lambd=1.0):
     """
     >>> from torch import tensor
+    >>> import torch
     >>> from scipy.stats import kendalltau
-    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
+    >>> from scipy.stats import weightedtau
+    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]))
     tensor(1.)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]))
     tensor(-1.)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 2)
-    tensor(0.7473)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 2)
-    tensor(-0.7473)
-    >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]))
+    tensor(1.)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]))
+    tensor(-1.)
+    >>> round(float(softtau(tensor([1,2,3,4,5]), tensor([1,3,2,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    0.8
+    >>> round(float(softtau(tensor([1,2,3,4,5]), tensor([1,2,2,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    0.948683
+    >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
     0.948683
     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
     0.948683
+    >>> round(kendalltau([1,2,3,4,5], [1,2,2,4,5])[0], 6)
+    0.948683
+
 
     >>> cau = torch.tensor([0.07961783439490445, 0.07493443237167478, 0.06369426751592357, 0.05095541401273885, 0.03980891719745223, 0.031070374398011493, 0.02449779519843214, 0.019598236158745713, 0.01592356687898089, 0.013132838663077023, 0.010981770261366132, 0.00929843321400344, 0.007961783439490446, 0.006885866758478223, 0.006008893161879581])
     >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
@@ -56,18 +65,37 @@ def softtau(a, b, w=None, lambd=1.0):
     0.53172
     >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # weaker break of continuity
     0.76555
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,2,4,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # weaker break of continuity
+    0.98904
+
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.83258
+    >>> round(weightedtau([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1], [0,14,13,12,11,10,9,8,7,6,5,4,3,2,1], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.53172
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.88332
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.53172
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3,17,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.76555
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,2,4,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.98904
     """
     da, db = pdiffs(a), pdiffs(b)
     ta, tb = tanh(da / lambd), tanh(db / lambd)
     if w is None:
         num = sum(ta * tb)
-        v = sum(abs(ta)) * sum(abs(tb))
+        den = sum(ta ** 2) * sum(tb ** 2)
     else:
         sw = psums(w)
         num = sum(ta * tb * sw)
-        v = sum(abs(ta * sw)) * sum(abs(tb * sw))
-    den = sqrt(v + 0.00000000001)
-    return num / den
+        den = sum(ta ** 2 * sw) * sum(tb ** 2 * sw)
+    return num / sqrt(den + .00000001)
+
+
+# TODO: kendall tau seems wrong, at least in scipy implementation or even the original formulation itself.
+#   A tie on x without a tie on y should add zero do agreement keeping a weight in the denominator, i.e., subtract half a combination from 1.
+#   For instance, for 10 combinations (n=5), it would cost 0.1, instead of 0.051317.
 
 
 def relative_calmness(a, b, w=None):
