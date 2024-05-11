@@ -23,7 +23,6 @@
 
 
 import torch
-from torch import tanh, sum, sqrt, abs, tensor
 
 
 def dist2prob(D):
@@ -56,56 +55,25 @@ def pmuls(x):
     return dis[indices[0], indices[1]]
 
 
-def softtau(a, b, w=None, smoothness=1):
+def balanced_ab(l0, l1, g, beta, z):
+    """geomean
+    z = alpha * beta - alpha"""
+    l0 = (l0 + 1) / 2
+    l1 = (l1 + 1) / 2
+    g = (g + 1) / 2
+    return 2 * l0 ** (z - beta + 1) * l1 ** (-z) * g ** beta - 1
+
+
+def balanced_abt(l0, l1, g, beta, theta, z):
+    """generalized geomean
+
+    :param theta:  balances between permissiveness or strictness
+                    intended to attenuate the effect of a very good component compensating a bad one
+    :param z: `alpha * beta - alpha`
+    :return:
     """
-    >>> from torch import tensor
-    >>> from scipy.stats import kendalltau
-    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), .01)
-    tensor(1.)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), .01)
-    tensor(-1.)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]), 2)
-    tensor(0.7473)
-    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]), 2)
-    tensor(-0.7473)
-    >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .000001)), 6)
-    0.948683
-    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
-    0.948683
-
-    >>> cau = torch.tensor([0.07961783439490445, 0.07493443237167478, 0.06369426751592357, 0.05095541401273885, 0.03980891719745223, 0.031070374398011493, 0.02449779519843214, 0.019598236158745713, 0.01592356687898089, 0.013132838663077023, 0.010981770261366132, 0.00929843321400344, 0.007961783439490446, 0.006885866758478223, 0.006008893161879581])
-    >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
-    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0]), cau, 0.00001)), 5)
-    0.83258
-    >>> # order of importance is defined by weights, not by values of argument `a`.
-    >>> round(float(softtau(torch.tensor([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), torch.tensor([0,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), cau, 0.00001)), 5) # strong break of trustworthiness
-    0.53172
-    >>> # weak break of trustworthiness = an intermediate distance value (one with intermediate weight) becomes the nearest neighbor.
-    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # a weaker break of trustworthiness
-    0.88332
-    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # strong break of continuity
-    0.53172
-    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # weaker break of continuity
-    0.76555
-    """
-    da, db = pdiffs(a), pdiffs(b)
-    ta, tb = tanh(da / smoothness), tanh(db / smoothness)
-    if w is None:
-        num = sum(ta * tb)
-        v = sum(abs(ta)) * sum(abs(tb))
-    else:
-        sw = psums(w)
-        num = sum(ta * tb * sw)
-        v = sum(abs(ta * sw)) * sum(abs(tb * sw))
-    den = sqrt(v + 0.00000000001)
-    return num / den
-
-
-def relative_stress(a, b, w=None):
-    """"""
-    da, db = pdiffs(a), pdiffs(b)
-    if w is None:
-        return torch.sum((da - db) ** 2) / torch.sum(da ** 2)
-    else:
-        sw = psums(w)
-        return torch.sum((da - db) ** 2 * sw) / torch.sum(da ** 2 * sw)
+    l0 = (l0 + 1) / 2
+    l1 = (l1 + 1) / 2
+    g = (g + 1) / 2
+    r = (z - beta + 1) * l0 ** (theta + 1) - z * l1 ** (theta + 1) + beta * g(theta + 1)
+    return 2 * r ** (1 / theta + 1) - 1

@@ -20,28 +20,44 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+import torch
 from torch import tensor
 
-from sortedness.new.quality._pairwise import Pairwise
-from sortedness.new.quality.measure.pairwise import relative_calmness
+from sortedness.new.quality.abs import Quality
 
 
-class RelativeCalmness(Pairwise):
-    def __init__(self, X: tensor, w: tensor = None, sortbyX_=True):
-        """RelativeCalmness according to transformed data when `sortbyX_=True`
+class Elementwise(Quality):
+    def __init__(self, measure: callable, X: tensor, w: tensor = None, sortbyX_=True):
+        """Quality surrogate function for elementwise measures
 
-        >>> from torch import tensor
-        >>> X = tensor([[1.,2], [3,4], [5,6], [7,8], [9,10], [11,12]])
-        >>> w = tensor([0.5, 0.25, 0.15, 0.06, 0.04])
-        >>> RelativeCalmness(X, w)(X)
-        tensor(1.)
-        >>> X_ = tensor([[3.,4], [1,2], [5,6], [7,8], [9,10], [11,12]])
-        >>> RelativeCalmness(X, w)(X_)
-        tensor(0.6340)
-
+        :param measure:
         :param X: Original data.
         :param w: Weights vector. |w| < |X|. Only the first |w| neighbors are used - for efficiency.
         :param sortbyX_: If `True`, sort according to transformed data (X_, instead of X).
         :return:
         """
-        super().__init__(relative_calmness, X, w, sortbyX_)
+        super().__init__(X, w, sortbyX_, measure)
+
+    def __call__(self, X_: tensor, idxs=None, **f__kwargs):
+        if idxs is None:
+            miniD = self.D
+            miniX_ = X_
+            idxs = self.seq
+        else:
+            miniD = self.D[idxs]
+            miniX_ = X_[idxs]
+        minin = len(idxs)
+        a = self.seq != idxs[:, None]
+        miniD_ = torch.cdist(miniX_, X_)[a].reshape(minin, -1)
+
+        if self.w is None:
+            miniDsorted, miniDsorted_ = miniD, miniD_
+        else:
+            if self.sortbyX_:
+                miniDsorted_, idxs_for_miniDsorted_ = torch.topk(miniD_, self.k, largest=False, dim=1)
+                miniDsorted = miniD[torch.arange(miniD.size(0)).unsqueeze(1), idxs_for_miniDsorted_]
+            else:
+                miniDsorted = miniD
+                # index each row
+                miniDsorted_ = miniD_[torch.arange(miniD_.size(0)).unsqueeze(1), self.idxs_for_Dsorted[idxs]]
+        return self.measure(miniDsorted, miniDsorted_, self.w)

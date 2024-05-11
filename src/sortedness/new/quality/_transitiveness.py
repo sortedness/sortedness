@@ -20,28 +20,33 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from functools import partial
+
 from torch import tensor
 
-from sortedness.new.quality._pairwise import Pairwise
-from sortedness.new.quality.measure.pairwise import relative_calmness
+from sortedness.new.quality._elementwise import Elementwise
+from sortedness.new.quality.measure.elementwise import transitiveness
 
 
-class RelativeCalmness(Pairwise):
-    def __init__(self, X: tensor, w: tensor = None, sortbyX_=True):
-        """RelativeCalmness according to transformed data when `sortbyX_=True`
+class Transitiveness(Elementwise):
+    def __init__(self, X: tensor, w: tensor = None, sortbyX_=True, lambd=1.0):
+        """Transitiveness according to transformed data when `sortbyX_=True`
 
         >>> from torch import tensor
-        >>> X = tensor([[1.,2], [3,4], [5,6], [7,8], [9,10], [11,12]])
-        >>> w = tensor([0.5, 0.25, 0.15, 0.06, 0.04])
-        >>> RelativeCalmness(X, w)(X)
+        >>> from functools import partial
+        >>> from sortedness.new.quality.measure.elementwise import transitiveness
+        >>> X = tensor([[1.0],[2],[3],[4],[5],[6]])
+        >>> w = tensor([0.5, 0.3, 0.25])
+        >>> Transitiveness(X, w, lambd=0.2)(X)
         tensor(1.)
-        >>> X_ = tensor([[3.,4], [1,2], [5,6], [7,8], [9,10], [11,12]])
-        >>> RelativeCalmness(X, w)(X_)
-        tensor(0.6340)
+        >>> X_ = tensor([[1.0],[2],[3],[4],[6],[5]])
+        >>> Transitiveness(X, w)(X_)
+        tensor(0.6667)
 
         :param X: Original data.
         :param w: Weights vector. |w| < |X|. Only the first |w| neighbors are used - for efficiency.
         :param sortbyX_: If `True`, sort according to transformed data (X_, instead of X).
+        :param lambd: Regularizer (closer to zero is harder)
         :return:
         """
-        super().__init__(relative_calmness, X, w, sortbyX_)
+        super().__init__(partial(transitiveness,lambd=lambd), X, w, sortbyX_)
