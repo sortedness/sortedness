@@ -72,7 +72,7 @@ def step(ax, plot_labels, plot_colors, marker_size, verbose, loader, hyperoptimi
         ax.scatter(X_[:, 0], X_[:, 1], s=marker_size, c=plot_colors, alpha=0.5)
         for j, l in enumerate(plot_labels):
             ax.text(X_[j, 0], X_[j, 1], l, size=char_size)
-        plt.title(f"{i}:  {quality:.4f}  ", fontsize=16)
+        plt.title(f"{i}:  {quality:.4f}    {state['best_quality_surrogate']:.4f}  ", fontsize=16)
     return X_, quality
 
 

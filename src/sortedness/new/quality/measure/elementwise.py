@@ -23,12 +23,12 @@
 import torch
 
 
-def calmness(D, D_, w):
+def calmness(D, D_, w=None):
     # stress = torch.sqrt(torch.sum((miniD - miniDsorted_) ** 2)) # raw
     # stress = torch.sum((miniD - miniDsorted_) ** 2 * self.w) / torch.sum(miniD ** 2 * self.w) # normalized by all
     if w is None:
-        return 1 - torch.mean(torch.sum((D - D_) ** 2, dim=1) / torch.sum(D ** 2, dim=1))  # normalized by row
-    return 1 - torch.mean(torch.sum((D - D_) ** 2 * w, dim=1) / torch.sum(D ** 2 * w, dim=1))  # normalized by row
+        return 1 - 2 * torch.mean(torch.sum((D - D_) ** 2, dim=1) / torch.sum(D ** 2, dim=1))  # normalized by row
+    return 1 - 2 * torch.mean(torch.sum((D - D_) ** 2 * w, dim=1) / torch.sum(D ** 2 * w, dim=1))  # normalized by row
 
 
 def transitiveness(a, b=None, w=None, lambd=1.0):
@@ -38,6 +38,16 @@ def transitiveness(a, b=None, w=None, lambd=1.0):
     tensor(1.)
     >>> transitiveness(torch.tensor([[1,2,3],[3,4,5],[5,6,7],[7,8,9]]), torch.tensor([[1,2,3],[3,4,5],[5,6,7],[8,7,9]]), lambd=0.01)
     tensor(0.7500)
+    >>> transitiveness(torch.tensor([[1,2,3,4,5,6,7]]), torch.tensor([[1,2,3,4,5,7,6]]), lambd=0.01)
+    tensor(0.6667)
+    >>> from sortedness.new.weighting import gaussian, cauchy
+    >>> cauw = cauchy(7, kappa=5, pct=90)
+    >>> round(float(transitiveness(torch.tensor([[1,2,3,4,5,6,7]]), torch.tensor([[7,1,2,3,4,5,6]]), w=cauw)), 8)
+    -0.3713732
+    >>> round(float(transitiveness(torch.tensor([[1,2,3,4,5,6,7]]), torch.tensor([[2,3,4,5,6,7,1]]), w=cauw)), 8)
+    0.95229307
+    >>> round(float(transitiveness(torch.tensor([[1,2,3,4,5,6,7]]), torch.tensor([[7,6,5,4,3,2,1]]), w=cauw)), 6)
+    -1.0
 
     :param a:
     :param b:
@@ -47,11 +57,12 @@ def transitiveness(a, b=None, w=None, lambd=1.0):
     """
     ta = torch.tanh((a[:, 1:] - a[:, :-1]) / lambd)
     tb = torch.tanh((b[:, 1:] - b[:, :-1]) / lambd)
-    agreem = ta if b is None else ta * tb
+    num = ta if b is None else ta * tb
     if w is None:
         w = 1
     else:
         w = w[:-1]
-        agreem *= w
-    res = agreem.sum(dim=1) / (ta ** 2 * w).sum(dim=1)
+        num *= w
+    den = (ta ** 2 * w).sum(dim=1) if b is None else (ta ** 2 * w).sum(dim=1) * (tb ** 2 * w).sum(dim=1)
+    res = num.sum(dim=1) / torch.sqrt(den + .00000001)
     return torch.mean(res)

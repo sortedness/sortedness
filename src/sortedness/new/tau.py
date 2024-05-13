@@ -20,6 +20,8 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from copy import copy
+from math import tanh
 
 
 def argmergesort(r, idxs=None):
@@ -63,42 +65,225 @@ def argmergesort(r, idxs=None):
     return idxs
 
 
-def tau(r, idxs=None):
+def tau(r):
     """
-    >>> argmergesort([1,2,3])
-    [0, 1, 2]
-    >>> argmergesort([4,3,2,1,0])
-    [4, 3, 2, 1, 0]
-    >>> argmergesort([2,4,3,1,0,9])
-    [4, 3, 0, 2, 1, 5]
+    >>> tau([1,2,3])
+    1.0
+    >>> tau([4,3,2,1,0])
+    -1.0
+    >>> tau([2,4,3,1,9,0])
+    -0.2
+    >>> tau([1,2,3,5,4])
+    0.8
+    >>> tau([1,2,3,3,4]), tau([1,2,3,4,4])
+    (0.9, 0.9)
+    >>> tau([5,4,4,3,2]), tau([5,5,4,3,2])
+    (-0.9, -0.9)
 
-    :param idxs:
     :param r:
     :return:
     """
-    if idxs is None:
-        idxs = list(range(len(r)))
-    n = len(idxs)
-    if n == 1:
-        return idxs[:1]
-    mid = n // 2
-    left = argmergesort(r, idxs[:mid])
-    right = argmergesort(r, idxs[mid:])
-    i = j = k = 0
-    while i < len(left) and j < len(right):
-        if r[left[i]] <= r[right[j]]:
-            idxs[k] = left[i]
+
+    def tau(r, idxs, start, end):
+        if end - start == 1:
+            return 0
+        mid = (start + end) // 2
+        a, b = tau(r, idxs, start, mid), tau(r, idxs, mid, end)
+        agreements = a + b
+        if r[idxs[mid - 1]] < r[idxs[mid]]:
+            return agreements + (mid - start) * (end - mid)
+        i = k = start
+        j = mid
+        while i < mid and j < end:
+            diff = r[idxs[j]] - r[idxs[i]]
+            if diff >= 0:
+                agreements += end - j
+                tmp[k] = idxs[i]
+                i += 1
+            elif diff < 0:
+                agreements -= mid - i
+                tmp[k] = idxs[j]
+                j += 1
+            # else:
+            #     # TODO: fix ties
+            #     # tmp[k] = idxs[i]
+            #     # i += 1
+            #     # k += 1
+            #     tmp[k] = idxs[j]
+            #     j += 1
+            k += 1
+        while i < mid:
+            tmp[k] = idxs[i]
             i += 1
-        else:
-            idxs[k] = right[j]
+            k += 1
+        while j < end:
+            tmp[k] = idxs[j]
             j += 1
-        k += 1
-    while i < len(left):
-        idxs[k] = left[i]
-        i += 1
-        k += 1
-    while j < len(right):
-        idxs[k] = right[j]
-        j += 1
-        k += 1
-    return idxs
+            k += 1
+        k = start
+        while k < end:
+            idxs[k] = tmp[k]
+            k += 1
+        return agreements
+
+    idxs = list(range(len(r)))
+    tmp = copy(idxs)
+    end = len(r)
+    return tau(r, idxs, 0, end) / end / (end - 1) * 2
+
+
+def wtau(r, w):
+    """
+    >>> wtau([1,2,3])
+    1.0
+    >>> wtau([4,3,2,1,0])
+    -1.0
+    >>> wtau([2,4,3,1,9,0])
+    -0.2
+
+    :param r:
+    :return:
+    """
+    raise Exception(f"ongoing")
+
+    def tau(r, w, idxs, start, end):
+        if end - start == 1:
+            return 0
+        mid = (start + end) // 2
+        a, b = tau(r, w, idxs, start, mid), tau(r, w, idxs, mid, end)
+        agreements = a + b
+        if r[idxs[mid - 1]] < r[idxs[mid]]:
+            return agreements + (mid - start) * (end - mid)
+        i = k = start
+        j = mid
+        while i < mid and j < end:
+            if r[idxs[i]] <= r[idxs[j]]:
+                agreements += end - j
+                tmp[k] = idxs[i]
+                i += 1
+            else:
+                agreements -= mid - i
+                tmp[k] = idxs[j]
+                j += 1
+            k += 1
+        while i < mid:
+            tmp[k] = idxs[i]
+            i += 1
+            k += 1
+        while j < end:
+            tmp[k] = idxs[j]
+            j += 1
+            k += 1
+        k = start
+        while k < end:
+            idxs[k] = tmp[k]
+            k += 1
+        return agreements
+
+    idxs = list(range(len(r)))
+    tmp = copy(idxs)
+    end = len(r)
+    return tau(r, w, idxs, 0, end) / end / (end - 1) * 2
+
+
+def softtau(x, y, lambd):
+    """
+    y should be sorted
+
+    >>> from torch import tensor
+    >>> import torch
+    >>> from scipy.stats import kendalltau
+    >>> from scipy.stats import weightedtau
+    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]))
+    tensor(1.)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]))
+    tensor(-1.)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([1,2,3,4,5]),  tensor([1,2,3,4,5]))
+    tensor(1.)
+    >>> softtau(tensor([1,2,3,4,5]), tensor([5,4,3,2,1]),  tensor([1,2,3,4,5]))
+    tensor(-1.)
+    >>> round(float(softtau(tensor([1,2,3,4,5]), tensor([1,3,2,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    0.8
+    >>> round(float(softtau(tensor([1,2,3,4,5]), tensor([1,2,2,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    0.948683
+    >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    0.948683
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    >>> round(kendalltau([1,2,3,4,5], [1,2,2,4,5])[0], 6)
+    0.948683
+
+
+    >>> cau = torch.tensor([0.07961783439490445, 0.07493443237167478, 0.06369426751592357, 0.05095541401273885, 0.03980891719745223, 0.031070374398011493, 0.02449779519843214, 0.019598236158745713, 0.01592356687898089, 0.013132838663077023, 0.010981770261366132, 0.00929843321400344, 0.007961783439490446, 0.006885866758478223, 0.006008893161879581])
+    >>> # strong break of trustworthiness = the last distance value (the one with lower weight) becomes the nearest neighbor.
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0]), cau, 0.00001)), 5)
+    0.83258
+    >>> # order of importance is defined by weights, not by values of argument `a`.
+    >>> round(float(softtau(torch.tensor([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), torch.tensor([0,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), cau, 0.00001)), 5) # strong break of trustworthiness
+    0.53172
+    >>> # weak break of trustworthiness = an intermediate distance value (one with intermediate weight) becomes the nearest neighbor.
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # a weaker break of trustworthiness
+    0.88332
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # strong break of continuity
+    0.53172
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,3,17,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # weaker break of continuity
+    0.76555
+    >>> round(float(softtau(torch.tensor([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), torch.tensor([1,2,2,4,5,6,7,8,9,10,11,12,13,14,15]), cau, 0.00001)), 5) # weaker break of continuity
+    0.98904
+
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3,4,5,6,7,8,9,10,11,12,13,14, 0], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.83258
+    >>> round(weightedtau([15,14,13,12,11,10,9,8,7,6,5,4,3,2,1], [0,14,13,12,11,10,9,8,7,6,5,4,3,2,1], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.53172
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3, 0,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.88332
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [17, 2,3,4,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.53172
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,3,17,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.76555
+    >>> round(weightedtau([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], [1,2,2,4,5,6,7,8,9,10,11,12,13,14,15], rank=False, weigher=lambda r:cau[r])[0], 5)
+    0.98904
+    """
+
+    def tau(x, y, idxs, start, end):
+        if end - start == 1:
+            return 0
+        mid = (start + end) // 2
+        a, b = tau(x, y, idxs, start, mid), tau(x, y, idxs, mid, end)
+        agreements = a + b
+        d = x[idxs[mid]] - x[idxs[mid - 1]]
+        if d >= 0:
+            squashed = tanh(d) * tanh(y[idxs[mid]] - y[idxs[mid - 1]])
+            return agreements + (mid - start) * (end - mid) * squashed
+        i = k = start
+        j = mid
+        while i < mid and j < end:
+            d = x[idxs[j]] - x[idxs[i]]
+            squashed = tanh(d) * tanh(y[idxs[j]] - y[idxs[i]])
+            if d >= 0:
+                agreements += (end - j) * squashed
+                tmp[k] = idxs[i]
+                i += 1
+            else:
+                agreements += (mid - i) * squashed
+                tmp[k] = idxs[j]
+                j += 1
+            k += 1
+        while i < mid:
+            tmp[k] = idxs[i]
+            i += 1
+            k += 1
+        while j < end:
+            tmp[k] = idxs[j]
+            j += 1
+            k += 1
+        k = start
+        while k < end:
+            idxs[k] = tmp[k]
+            k += 1
+        return agreements
+
+    idxs = list(range(len(x)))
+    tmp = copy(idxs)
+    end = len(x)
+    return tau(x, y, idxs, 0, end) / end / (end - 1) * 2

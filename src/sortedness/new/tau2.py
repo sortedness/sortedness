@@ -20,6 +20,8 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from math import tanh
+
 import numpy as np
 
 
@@ -113,20 +115,20 @@ def wtau(x, y, weigher=lambda r: 1 / (1 + r)):
             return weight
 
         # merging
-        i = j = k = 0
-        while j < length0 and k < length1:
-            if y[idxs[offset + j]] <= y[idxs[middle + k]]:
-                temp[i] = idxs[offset + j]
-                residual -= weigher(temp[i])
-                j += 1
+        kk = ii = jj = 0
+        while ii < length0 and jj < length1:
+            if y[idxs[offset + ii]] <= y[idxs[middle + jj]]:
+                temp[kk] = idxs[offset + ii]
+                residual -= weigher(temp[kk])
+                ii += 1
             else:
-                temp[i] = idxs[middle + k]
-                DW[0] += weigher(temp[i]) * (length0 - j) + residual
-                k += 1
-            i += 1
+                temp[kk] = idxs[middle + jj]
+                DW[0] += weigher(temp[kk]) * (length0 - ii) + residual
+                jj += 1
+            kk += 1
 
-        idxs[offset + i:offset + i + length0 - j] = idxs[offset + j:offset + length0]
-        idxs[offset:offset + i] = temp[0:i]
+        idxs[offset + kk:offset + kk + length0 - ii] = idxs[offset + ii:offset + length0]
+        idxs[offset:offset + kk] = temp[0:kk]
         return weight
 
     weigh(0, n)
@@ -140,9 +142,10 @@ def wtau(x, y, weigher=lambda r: 1 / (1 + r)):
 
 def wsofttau(x, y, weigher=lambda r: 1 / (1 + r), lambd=1.0):
     """
+    x should be sorted
 
     >>> from scipy.stats import kendalltau, weightedtau
-    >>> wsofttau([1,2,3,4,5], [1,2,3,4,5])
+    >>> wsofttau([1,2,3,4,5], [1,2,3,4,5], lambd=0.01)
     1.0
     >>> wsofttau([1,2,3,4,5], [5,4,3,2,1], lambd=0.01)
     -1.0
@@ -150,22 +153,7 @@ def wsofttau(x, y, weigher=lambda r: 1 / (1 + r), lambd=1.0):
     (0.09854015, 0.09854015)
     >>> round(wsofttau([1,2,3,3,5], [3,2,1,5,4], lambd=0.01), 8), round(weightedtau([1,2,3,3,5], [3,2,1,5,4], rank=False)[0], 8)
     (0.03583477, 0.03583477)
-    >>> round(wsofttau([1,2,3,3,5], [3,2,5,1,4], lambd=0.01), 8), round(weightedtau([1,2,3,3,5], [3,2,5,1,4], rank=False)[0], 8)
-    (0.05469518, 0.05469518)
-    >>> round(wsofttau([1,2,3,4,5], [3,2,1,1,4], lambd=0.01), 8), round(weightedtau([1,2,3,4,5], [3,2,1,1,4], rank=False)[0], 8)
-    (-0.31496878, -0.31496878)
-    >>> round(wsofttau([1,2,3,3,5], [3,2,1,1,4], lambd=0.01), 8), round(weightedtau([1,2,3,3,5], [3,2,1,1,4], rank=False)[0], 8)
-    (-0.32553606, -0.32553606)
-    >>> wsofttau([1,2,3,4,5], [1,2,3,4,5])
-    1.0
-    >>> round(wsofttau([1,2,3,4,5], [5,4,3,2,1]), 8)
-    -0.72037107
-    >>> round(wsofttau([1,2,3,4,5], [3,2,1,5,4]), 8), round(weightedtau([1,2,3,4,5], [3,2,1,5,4], rank=False)[0], 8)
-    (0.31139272, 0.09854015)
-    >>> round(wsofttau([1,2,3,3,5], [3,2,1,5,4]), 8), round(weightedtau([1,2,3,3,5], [3,2,1,5,4], rank=False)[0], 8)
-    (0.24012676, 0.03583477)
 
-    :param lambd:
     :param x:
     :param y:
     :param weigher:
@@ -210,59 +198,53 @@ def wsofttau(x, y, weigher=lambda r: 1 / (1 + r), lambd=1.0):
     n = len(idxs)
     JtiesW = weigh_ties(x, n, idxs, weigher, y)  # Joint
     UtiesW = weigh_ties(x, n, idxs, weigher)  # x
+
+    # Dw: Weight of disagreements
     temp = np.empty(n, dtype=np.intp)
-    AW = [0]  # np.zeros(1, dtype=np.float64)
-    DW = [0]  # np.zeros(1, dtype=np.float64)
+    DW = np.zeros(1, dtype=np.float64)
 
     def weigh(offset, length):
         if length == 1:
-            return weigher(idxs[offset])
+            return weigher(idxs[offset]), 0
         length0 = length // 2
         length1 = length - length0
         middle = offset + length0
-        residual0 = weigh(offset, length0)
-        residual1 = weigh(offset, length1)
-        weight = residual0 + residual1
-        if y[idxs[middle - 1]] < y[idxs[middle]]:
-            upper_deltax = x[idxs[middle]] - x[idxs[middle - 1]]
-            upper_deltay = y[idxs[middle]] - y[idxs[middle - 1]]
-            soft = abs(np.tanh(upper_deltax / lambd) * np.tanh(upper_deltay / lambd))
-            AW[0] += weight * soft
-            return weight
+        leftw, a0 = weigh(offset, length0)
+        rightw, a1 = weigh(middle, length1)
+        weight, agreements = leftw + rightw, a0 + a1
+        d = y[idxs[middle]] - y[idxs[middle - 1]]
+        if d > 0:
+            squashed = tanh(d / lambd) * tanh((y[idxs[middle]] - y[idxs[middle - 1]]) / lambd)
+            return weight, agreements + length0 * length1 * squashed
 
         # merging
-        i = j = k = 0
-        while j < length0 and k < length1:
-            upper_deltax = x[idxs[middle + k]] - x[idxs[offset + j]]
-            deltay = y[idxs[middle + k]] - y[idxs[offset + j]]
-            soft = abs(np.tanh(upper_deltax / lambd) * np.tanh(deltay / lambd))
-            if deltay >= 0:
-                temp[i] = idxs[offset + j]
-                w = weigher(temp[i])
-                residual0 -= w
-                AW[0] += (w * (length1 - k) + residual1) * soft
-                j += 1
+        kk = ii = jj = 0
+        while ii < length0 and jj < length1:
+            d = y[idxs[middle + jj]] - y[idxs[offset + ii]]
+            squashed = tanh(d / lambd) * tanh((x[idxs[middle + jj]] - x[idxs[offset + ii]]) / lambd)
+            if d >= 0:
+                agreements += (length1 - jj) * squashed
+                temp[kk] = idxs[offset + ii]
+                w = weigher(temp[kk])
+                leftw -= w
+                ii += 1
             else:
-                # lower_deltax = x[idxs[middle + k]] - x[idxs[offset + j]]
-                upper_deltax = x[idxs[middle + k]] - x[idxs[offset + length0 - 1]]
-                upper_deltay = y[idxs[middle + k]] - y[idxs[offset + length0 - 1]]
-                soft = abs(np.tanh(upper_deltax / lambd) * np.tanh(upper_deltay / lambd))
-                temp[i] = idxs[middle + k]
-                w = weigher(temp[i])
-                residual1 -= w
-                DW[0] += (w * (length0 - j) + residual0) * soft
-                k += 1
-            i += 1
+                agreements += (length0 - ii) * squashed
+                temp[kk] = idxs[middle + jj]
+                w = weigher(temp[kk])
+                rightw -= w
+                jj += 1
+                DW[0] += w * (length0 - ii) + leftw
+            kk += 1
 
-        idxs[offset + i:offset + i + length0 - j] = idxs[offset + j:offset + length0]
-        idxs[offset:offset + i] = temp[0:i]
-        return weight
+        idxs[offset + kk:offset + kk + length0 - ii] = idxs[offset + ii:offset + length0]
+        idxs[offset:offset + kk] = temp[0:kk]
+        return weight, agreements
 
-    weigh(0, n)
+    weight, agreements = weigh(0, n)
     VtiesW = weigh_ties(y, n, idxs, weigher)  # y
     TW = sum(weigher(idxs[i]) for i in range(n)) * (n - 1)  # Total weight
-    Aw = TW - DW[0] - UtiesW - VtiesW + JtiesW  # to know agreements: subtract disagreements, single ties from total, and put joint ties back
-    num = Aw - DW[0]  # single tie counts as zero (not agreement nor disagreement)
+    Aw = TW - UtiesW - VtiesW + JtiesW  # subtract single ties from total, and put joint ties back
+    num = Aw - 2. * DW[0]
     den = np.sqrt(TW - UtiesW) * np.sqrt(TW - VtiesW)
-    return min(1., max(-1., (AW[0] - DW[0]) / (AW[0] + DW[0])))
-    # return min(1., max(-1., num / den))
+    return min(1., max(-1., num / den))

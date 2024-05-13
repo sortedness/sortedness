@@ -102,7 +102,7 @@ def relative_calmness(a, b, w=None):
     """"""
     da, db = pdiffs(a), pdiffs(b)
     if w is None:
-        return 1 - sum((da - db) ** 2) / sum(da ** 2)
+        return 1 - 2 * sum((da - db) ** 2) / sum(da ** 2)
     else:
         sw = psums(w)
-        return 1 - sum((da - db) ** 2 * sw) / sum(da ** 2 * sw)
+        return 1 - 2 * sum((da - db) ** 2 * sw) / sum(da ** 2 * sw)
