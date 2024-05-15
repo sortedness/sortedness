@@ -31,7 +31,7 @@ X, colors = mnist(n)
 n = len(X)
 labels = colors[:100]
 gauw = gaussian(17, kappa=5)
-cauw = cauchy(50, kappa=5)
+cauw = cauchy(20, kappa=5)
 # todo: fazer cada função de ponderação retornar apenas os k vizinhos mais relevantes conforme abaixo...
 #  epsilon=0.00001
 #  k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
@@ -50,9 +50,9 @@ wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness
 # exit()
 
 # noinspection PyTypeChecker
-c = SKTransformer((wstress+s)**2, verbose=True)
-c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
-exit()
+# c = SKTransformer((wstress)**2, verbose=True)
+# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+# exit()
 
 # c = SKTransformer((Transitiveness(X, cauw, lambd=1)+Transitiveness(X, cauw, lambd=1, sortbyX_=False))/2, verbose=True)
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
@@ -82,9 +82,9 @@ exit()
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 # exit()
 
-c = SKTransformer(Transitiveness(X, cauw), verbose=True)
-c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
-exit()
+# c = SKTransformer(Transitiveness(X, cauw), verbose=True)
+# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+# exit()
 
 c = SKTransformer(Calmness(X, cauw), verbose=True)
 c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)

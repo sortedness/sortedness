@@ -230,3 +230,33 @@ def sort(x, y, estimate="average", tau=True, lambd=1.0):
     x1, y1, t1, Sx1, Sy1 = sort(x[mid:], y[mid:], estimate, tau, lambd)
     rx, ry, t = softmerge(x0, x1, y0, y1, Sx0, Sx1, Sy0, Sy1, estimate, tau, lambd)
     return rx, ry, t + t0 + t1, Sx0 + Sx1, Sy0 + Sy1
+
+
+def softtau(x, y, estimate="average", tau=True, lambd=1.0):
+    """
+    >>> a = list(range(1, 100))
+    >>> b = list(reversed(a))
+    >>> from random import shuffle
+    >>> import random
+    >>> random.seed(0)
+    >>> softtau(a, a, estimate="highest", lambd=0.0001)
+    1.0
+    >>> softtau(a, b, estimate="highest", lambd=0.0001)
+    -1.0
+    >>> s = 0
+    >>> for i in range(1000):
+    ...     shuffle(b)
+    ...     s += softtau(a, b, estimate="highest", lambd=0.0001)
+    >>> s / 1000  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    -0.00411...
+
+    :param x:
+    :param y:
+    :param estimate:
+    :param tau:
+    :param lambd:
+    :return:
+    """
+    s = sort(x, y, estimate, tau, lambd)[2]
+    n = len(x)
+    return s / n / (n - 1) * 2
