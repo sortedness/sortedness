@@ -78,7 +78,7 @@ class KLConcordanceGaussianCauchy(Quality):
         if self.earlyexag and self.i == 100:
             self.P = self.P / 4.
         self.i += 1
-        return torch.sum(P * torch.log(P / Q))
+        return -torch.sum(P * torch.log(P / Q))
 
 
 # torch.autograd.set_detect_anomaly(True)

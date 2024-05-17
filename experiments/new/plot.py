@@ -26,7 +26,7 @@ from sortedness.new.quality import *
 from sortedness.new.sktransformer import SKTransformer
 from sortedness.new.weighting import gaussian, cauchy
 
-n = 1000
+n = 300
 X, colors = mnist(n)
 n = len(X)
 labels = colors[:100]
@@ -78,9 +78,9 @@ wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 # exit()
 #
-# c = SKTransformer(KLConcordanceGaussianCauchy(X), verbose=True)
-# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
-# exit()
+c = SKTransformer(KLConcordanceGaussianCauchy(X), verbose=True)
+c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+exit()
 
 # c = SKTransformer(Transitiveness(X, cauw), verbose=True)
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)

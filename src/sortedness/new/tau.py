@@ -64,6 +64,11 @@ def sort(x, y):
     >>> sort([1,2,3,4,5], [1,1,3,4,5])
     ([1, 2, 3, 4, 5], [1, 1, 3, 4, 5], 10)
 
+    >>> a = list(range(6))
+    >>> b = a.copy()
+    >>> b[0], b[1] = a[1], a[0]
+    >>> sort(b[:4], a[:4])  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    ([0, 1, 2, 3], [1, 0, 2, 3], 4)
     """
     xl, yl = len(x), len(y)
     if xl == 1:
