@@ -270,7 +270,9 @@ def wsoft_tau(x, y, w, estimate="average", tau=True, lambd=1.0, normalized=True)
                                 Consider absent weights like ties.
     :return:
     """
-    total_weight = sum(w) if normalized else 1
-    s = wsoft_sort(x, y, w, estimate=estimate, tau=tau, lambd=lambd)[1]
     n = len(x)
+    if n == 0:
+        return 1
+    total_weight = sum(w) if normalized else 1
+    idx, s, _, _ , _ = wsoft_sort(x, y, w, estimate=estimate, tau=tau, lambd=lambd)
     return min(1., max(-1., s / (n - 1) * 2 / total_weight))

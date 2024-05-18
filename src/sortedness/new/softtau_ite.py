@@ -20,6 +20,20 @@ def merge(x, tmp, start, mid, end):
 
 
 def mergesort(x: array):
+    """
+    # >>> mergesort([3,2,1])
+    >>> import numpy as np
+    >>> a = array([3,2,1])
+    >>> b = np.pad(a[1::2], (0, 1))
+    >>> b
+    >>> a[::2] += b
+    >>> a
+
+
+
+    :param x:
+    :return:
+    """
     n = len(x)
     if n < 2:
         return x
