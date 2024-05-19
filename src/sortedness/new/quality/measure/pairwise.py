@@ -25,7 +25,7 @@ from torch import tanh, sqrt, sum
 from sortedness.new.math_functions import pdiffs, psums
 
 
-def softtau(a, b, w=None, lambd=1.0):
+def softtau(a, b, w=None, lambd=1.0, tau=True):
     """
     >>> from torch import tensor
     >>> import torch
@@ -45,10 +45,21 @@ def softtau(a, b, w=None, lambd=1.0):
     0.948683
     >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,3,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
     0.948683
+    >>> round(float(softtau(tensor([1,2,2,4,5]), tensor([1,2,2,4,5]),  tensor([1,1,1,1,1]), .1)), 6)
+    1.0
+
     >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
     0.948683
     >>> round(kendalltau([1,2,3,4,5], [1,2,2,4,5])[0], 6)
     0.948683
+    >>> round(kendalltau([1,2,2,4,5], [1,2,2,4,5])[0], 6)
+    1.0
+    >>> round(kendalltau([1,2,2,4,5], [1,2,3,4,5])[0], 6)
+    0.948683
+    >>> round(kendalltau([1,2,3,4,5], [1,2,2,4,5])[0], 6)
+    0.948683
+    >>> round(kendalltau([1,2,2,4,5], [1,2,2,4,5])[0], 6)
+    1.0
 
 
     >>> cau = torch.tensor([0.07961783439490445, 0.07493443237167478, 0.06369426751592357, 0.05095541401273885, 0.03980891719745223, 0.031070374398011493, 0.02449779519843214, 0.019598236158745713, 0.01592356687898089, 0.013132838663077023, 0.010981770261366132, 0.00929843321400344, 0.007961783439490446, 0.006885866758478223, 0.006008893161879581])
@@ -82,19 +93,23 @@ def softtau(a, b, w=None, lambd=1.0):
     0.98904
     """
     da, db = pdiffs(a), pdiffs(b)
-    ta, tb = tanh(da / lambd), tanh(db / lambd)
+    tana, tanb = tanh(da / lambd), tanh(db / lambd)
+    # todo: when tau=False, make denominator here be the same as for the nlogn version
+    #   so that this function can be used there when estimate=None, i.e., O(n2).
+    # todo: criar opção de quasitau que lida com ties da forma que acho mais correta?
+
     if w is None:
-        num = sum(ta * tb)
-        den = sum(ta ** 2) * sum(tb ** 2)
+        num = (tana * tanb) if tau else -((tana - tanb) ** 2)
+        den = sum(tana ** 2) * sum(tanb ** 2)
     else:
         sw = psums(w)
-        num = sum(ta * tb * sw)
-        den = sum(ta ** 2 * sw) * sum(tb ** 2 * sw)
-    return num / sqrt(den + .00000001)
+        num = ((tana * tanb) if tau else -((tana - tanb) ** 2)) * sw
+        den = sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)
+    return sum(num) / sqrt(den + .00000001)
 
 
 # TODO: kendall tau seems wrong, at least in scipy implementation or even the original formulation itself.
-#   A tie on x without a tie on y should add zero do agreement keeping a weight in the denominator, i.e., subtract half a combination from 1.
+#   A tie on x without a tie on y should add zero to agreement keeping a weight in the denominator, i.e., subtract half a combination from 1.
 #   For instance, for 10 combinations (n=5), it would cost 0.1, instead of 0.051317.
 
 

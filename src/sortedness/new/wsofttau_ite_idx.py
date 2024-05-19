@@ -29,20 +29,41 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
     """
     sorts on x
     """
+    # todo: criar opção de quasitau que lida com ties da forma que acho mais correta?
 
-    k = i = start
-    j = mid
-    # if x[idx[mid - 1]] <= x[idx[mid]]:  todo
-    #     return
     left_sx, right_sx = sx[start], sx[mid]
     left_sy, right_sy = sy[start], sy[mid]
     left_sw, right_sw = sw[start], sw[mid]
+    if x[idx[mid - 1]] <= x[idx[mid]]:
+        ll = mid - start
+        lr = end - mid
+        if estimate == "average":
+            lx, rx = left_sx / ll, right_sx / lr
+            ly, ry = left_sy / ll, right_sy / lr
+        elif estimate == "lowest":
+            lx, rx = x[idx[mid - 1]], x[idx[mid]]
+            ly, ry = y[idx[mid - 1]], y[idx[mid]]
+        elif estimate == "highest":
+            lx, rx = x[idx[end - 1]], x[idx[start]]
+            ly, ry = y[idx[end - 1]], y[idx[start]]
+        else:
+            raise Exception(f"Unknown: {estimate=}")
+        tanx = tanh((rx - lx) / lambd)
+        tany = tanh((ry - ly) / lambd)
+        dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+        weight = (lr * left_sw + ll * right_sw) / 2
+        return weight * dt
+
+    k = i = start
+    j = mid
     t = 0
     while i < mid and j < end:
         if x[idx[i]] <= x[idx[j]]:
             l = end - j
             if estimate == "average":
                 mx, my = right_sx / l, right_sy / l
+                left_sx -= x[idx[i]]
+                left_sy -= y[idx[i]]
             elif estimate == "lowest":
                 mx, my = x[idx[j]], y[idx[j]]
             elif estimate == "highest":
@@ -53,8 +74,6 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
             tany = tanh((my - y[idx[i]]) / lambd)
             dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
             weight = (w[idx[i]] * l + right_sw) / 2
-            left_sx -= x[idx[i]]
-            left_sy -= y[idx[i]]
             left_sw -= w[idx[i]]
             tmp[k] = idx[i]
             i += 1
@@ -62,6 +81,8 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
             l = mid - i
             if estimate == "average":
                 mx, my = left_sx / l, left_sy / l
+                right_sx -= x[idx[j]]
+                right_sy -= y[idx[j]]
             elif estimate == "lowest":
                 mx, my = x[idx[mid - 1]], y[idx[mid - 1]]
             elif estimate == "highest":
@@ -71,9 +92,10 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
             tanx = tanh((x[idx[j]] - mx) / lambd)
             tany = tanh((y[idx[j]] - my) / lambd)
             dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+            # todo: tau=True should use the correct denominator, provavlmente tem que criar outro acumulador
+            #   den = sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)
+
             weight = (w[idx[j]] * l + left_sw) / 2
-            right_sx -= x[idx[j]]
-            right_sy -= y[idx[j]]
             right_sw -= w[idx[j]]
             tmp[k] = idx[j]
             j += 1
@@ -103,15 +125,15 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     1.65...
 
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    1.72298...
+    1.77947...
     >>> wsoft_sort(array([2,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    1.31322...
+    1.34044...
     >>> wsoft_sort(array([1,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    1.53407...
+    1.57646...
     >>> wsoft_sort(array([1,1,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    1.54860...
+    1.57646...
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    1.53407...
+    1.57646...
 
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="average", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     2.0
@@ -173,6 +195,9 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     n = len(idx)
     if n < 2:
         return 0
+    # todo: estimate=None
+    # if estimate is None:
+    #     return (x, y, w, lambd)
     tmp = idx.copy()
     sx, sy, sw = x.copy(), y.copy(), w.copy()
     t, wid = 0, 1

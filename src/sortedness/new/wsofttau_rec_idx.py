@@ -54,7 +54,7 @@ def wsoft_merge(x, y, w, leftidx, rightidx, Sx, Sy, W, estimate="average", tau=T
     ll, lr = len(leftidx), len(rightidx)
     if ll == 0:
         return rightidx, 0
-    if lr==0:
+    if lr == 0:
         return leftidx, 0
     # todo: test for all sorted
     lheadx, rheadx = x[leftidx[0]], x[rightidx[0]]
