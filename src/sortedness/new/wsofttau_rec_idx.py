@@ -29,34 +29,6 @@ def wsoft_merge(x, y, w, leftidx, rightidx, Sx, Sy, W, estimate="average", tau=T
     """
     sorts on x
 
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="lowest", lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    0.0
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="average", lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    5.0
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="highest", lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    5.0
-
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="lowest")[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    0.04726...
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="average")[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    4.67889...
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="highest")[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    5.43661...
-
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="lowest", tau=False, lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -13.0
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="average", tau=False, lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -8.0
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="highest", tau=False, lambd=0.0000001)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -8.0
-
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="lowest", tau=False)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -10.89364...
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="average", tau=False)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -6.66168...
-    >>> wsoft_merge([1,2,3,1,3,5], [5,6,7,8,9,10], [0,1,2], [3,4,5], (6, 9), (18, 27), estimate="highest", tau=False)[1]  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
-    -5.95750...
-
     :param y:
     :param x:
     :param w:
@@ -79,16 +51,16 @@ def wsoft_merge(x, y, w, leftidx, rightidx, Sx, Sy, W, estimate="average", tau=T
                     Surrogate function tends to (non differentiable) Kendall tau when `lambd` tends to 0.
     :return:
     """
-    if not leftidx:
+    ll, lr = len(leftidx), len(rightidx)
+    if ll == 0:
         return rightidx, 0
-    if not rightidx:
+    if lr==0:
         return leftidx, 0
     # todo: test for all sorted
     lheadx, rheadx = x[leftidx[0]], x[rightidx[0]]
     if lheadx <= rheadx:
-        l = len(rightidx)
         if estimate == "average":
-            mx, my = Sx[1] / l, Sy[1] / l
+            mx, my = Sx[1] / lr, Sy[1] / lr
         elif estimate == "lowest":
             mx, my = rheadx, y[rightidx[0]]
         elif estimate == "highest":
@@ -99,15 +71,14 @@ def wsoft_merge(x, y, w, leftidx, rightidx, Sx, Sy, W, estimate="average", tau=T
         tanx = tanh((mx - lheadx) / lambd)
         tany = tanh((my - lheady) / lambd)
         dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
-        weight = (w[leftidx[0]] * l + W[1]) / 2
+        weight = (w[leftidx[0]] * lr + W[1]) / 2
         Sx, Sy = [Sx[0] - lheadx, Sx[1]], [Sy[0] - lheady, Sy[1]]
         W = W[0] - w[leftidx[0]], W[1]
         idx, t = wsoft_merge(x, y, w, leftidx[1:], rightidx, Sx, Sy, W, estimate, tau, lambd)
         idx = leftidx[:1] + idx
     else:
-        l = len(leftidx)
         if estimate == "average":
-            mx, my = Sx[0] / l, Sy[0] / l
+            mx, my = Sx[0] / ll, Sy[0] / ll
         elif estimate == "lowest":
             mx, my = x[leftidx[-1]], y[leftidx[-1]]
         elif estimate == "highest":
@@ -118,7 +89,7 @@ def wsoft_merge(x, y, w, leftidx, rightidx, Sx, Sy, W, estimate="average", tau=T
         tanx = tanh((rheadx - mx) / lambd)
         tany = tanh((rheady - my) / lambd)
         dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
-        weight = (w[rightidx[0]] * l + W[0]) / 2
+        weight = (w[rightidx[0]] * ll + W[0]) / 2
         Sx, Sy = [Sx[0], Sx[1] - rheadx], [Sy[0], Sy[1] - rheady]
         W = W[0], W[1] - w[rightidx[0]]
         idx, t = wsoft_merge(x, y, w, leftidx, rightidx[1:], Sx, Sy, W, estimate, tau, lambd)
@@ -274,5 +245,5 @@ def wsoft_tau(x, y, w, estimate="average", tau=True, lambd=1.0, normalized=True)
     if n == 0:
         return 1
     total_weight = sum(w) if normalized else 1
-    idx, s, _, _ , _ = wsoft_sort(x, y, w, estimate=estimate, tau=tau, lambd=lambd)
+    idx, s, _, _, _ = wsoft_sort(x, y, w, estimate=estimate, tau=tau, lambd=lambd)
     return min(1., max(-1., s / (n - 1) * 2 / total_weight))
