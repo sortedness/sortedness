@@ -31,10 +31,12 @@ from scipy.stats import rankdata
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sortedness.attempts import cau, wlossf11
 from torch import from_numpy, set_num_threads, tensor
 from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
+
+from experiments.embedding.draft.surrogate import wlossf11
+from sortedness.embedding.surrogate import cau
 
 f = wlossf11
 # cuda.is_available = lambda: False

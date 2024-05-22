@@ -66,9 +66,9 @@ wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 # exit()
 #
-# c = SKTransformer(Sortedness(X, w), verbose=True)
-# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
-# exit()
+c = SKTransformer(Sortedness(X, gauw), verbose=True)
+c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+exit()
 
 # c = SKTransformer(RelativeCalmness(X, cauw), verbose=True)
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
@@ -78,9 +78,9 @@ wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 # exit()
 #
-c = SKTransformer(KLConcordanceGaussianCauchy(X), verbose=True)
-c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
-exit()
+# c = SKTransformer(KLConcordanceGaussianCauchy(X), verbose=True)
+# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+# exit()
 
 # c = SKTransformer(Transitiveness(X, cauw), verbose=True)
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)

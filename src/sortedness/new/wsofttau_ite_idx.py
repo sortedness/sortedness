@@ -30,6 +30,19 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
     sorts on x
     """
     # todo: criar opção de quasitau que lida com ties da forma que acho mais correta?
+    # todo: add parameter to indicate the degree of approximation; from total heuristic (1) to no heuristic (0)
+    #   1/8 would mean the current setting:
+    #       lowest → test at the start (0)
+    #       average → test at the average (0→7)
+    #       highest → test at end (7)
+    #   2/8 would mean:
+    #       lowest → test at the start (0) and second (1)
+    #       average → test at the first half average (0→3) and second half average (4→7)
+    #       highest → test at the before end (6) and end (7)
+    #   4/8 would mean:
+    #       lowest → test at 0,1,2,3
+    #       average → test at averages 0→1,2→3,4→5,6→7
+    #       highest → test at 4,5,6,7
 
     left_sx, right_sx = sx[start], sx[mid]
     left_sy, right_sy = sy[start], sy[mid]

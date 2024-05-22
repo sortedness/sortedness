@@ -28,12 +28,23 @@ def calmness(D, D_, w=None):
     # stress = torch.sum((miniD - miniDsorted_) ** 2 * self.w) / torch.sum(miniD ** 2 * self.w) # normalized by all
     if w is None:
         return 1 - 2 * torch.mean(torch.sum((D - D_) ** 2, dim=1) / torch.sum(D ** 2, dim=1))  # normalized by row
-    return 1 - 2 * torch.mean(torch.sum((D - D_) ** 2 * w, dim=1) / torch.sum(D ** 2 * w, dim=1))  # normalized by row
+    return 1 - 2 * torch.mean(torch.sum((D - D_) ** 2 * w, dim=1) / torch.sum(D ** 2 * w, dim=1))
 
 
 def transitiveness(a, b=None, w=None, lambd=1.0):
     """
+    Measure order assuming rows are almost ordered
+
+    A major limitation, and distinction from a rank correlation index, can be seen in the first two examples below.
+    Only adjacent items are compared.
+
+    todo: can be used at later stages of DR
+
     >>> import torch
+    >>> transitiveness(torch.tensor([[1,2,3,4,5,6]]), torch.tensor([[1,2,4,3,5,6]]), lambd=0.001)
+    tensor(0.6000)
+    >>> transitiveness(torch.tensor([[1,2,3,4,5,6]]), torch.tensor([[4,5,6,1,2,3]]), lambd=0.001)
+    tensor(0.6000)
     >>> transitiveness(torch.tensor([[1,2,3],[3,4,5],[5,6,7],[7,8,9]]), torch.tensor([[1,2,3],[3,4,5],[5,6,7],[7,8,9]]), lambd=1)
     tensor(1.)
     >>> transitiveness(torch.tensor([[1,2,3],[3,4,5],[5,6,7],[7,8,9]]), torch.tensor([[1,2,3],[3,4,5],[5,6,7],[8,7,9]]), lambd=0.01)
