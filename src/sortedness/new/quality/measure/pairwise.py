@@ -95,8 +95,9 @@ def softtau(a, b, w=None, lambd=1.0, tau=True):
     da, db = pdiffs(a), pdiffs(b)
     tana, tanb = tanh(da / lambd), tanh(db / lambd)
     # todo: when tau=False, make denominator here be the same as for the nlogn version
-    #   so that this function can be used there when estimate=None, i.e., O(n2).
-    # todo: criar opção de quasitau que lida com ties da forma que acho mais correta?
+    #   so that this function can be used there when estimate=None, i.e., O(n2)
+    #   (um problema é que memory fica pior aqui: pdiffs; melhor fazer lá mesmo e poder comparar resultados daqui).
+    # todo: tornar explicita a opção de quasitau pra forma que lida com ties da forma que acho mais correta?
 
     if w is None:
         num = (tana * tanb) if tau else -((tana - tanb) ** 2)

@@ -31,7 +31,7 @@ numpy = "^1.24.2"  #=1.24.2
 matplotlib = "^3.7.2"
 pandas = "^2.0.3"
 shelchemy = "^2.231111.1"
-hdict = "^2.230721.3"
+hdict = "^2.240217.0"
 safeserializer = "^0.230202.1"
 lz4 = "^4.3.2"
 pip = "^23.2.1"
@@ -50,6 +50,7 @@ optuna = "^3.4.0"
 plotly = "^5.18.0"
 gradient-descent-the-ultimate-optimizer = "^1.0"
 som-pbc = "^1.0.2"
+liac-arff = "^2.5.0"
 
 [[tool.poetry.source]]
 name = "torchcpu1130"

@@ -22,6 +22,7 @@
 #
 from math import tanh
 
+import numpy as np
 from numpy import array
 
 
@@ -47,7 +48,7 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
     left_sx, right_sx = sx[start], sx[mid]
     left_sy, right_sy = sy[start], sy[mid]
     left_sw, right_sw = sw[start], sw[mid]
-    if x[idx[mid - 1]] <= x[idx[mid]]:
+    if x[idx[mid - 1]] <= x[idx[mid]] and estimate is not None:
         ll = mid - start
         lr = end - mid
         if estimate == "average":
@@ -72,53 +73,68 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
     t = 0
     while i < mid and j < end:
         if x[idx[i]] <= x[idx[j]]:
-            l = end - j
-            if estimate == "average":
-                mx, my = right_sx / l, right_sy / l
-                left_sx -= x[idx[i]]
-                left_sy -= y[idx[i]]
-            elif estimate == "lowest":
-                mx, my = x[idx[j]], y[idx[j]]
-            elif estimate == "highest":
-                mx, my = x[idx[end - 1]], y[idx[end - 1]]
+            if estimate is None:
+                tanx = np.tanh((x[idx[j:end]] - x[idx[i]]) / lambd)
+                tany = np.tanh((y[idx[j:end]] - y[idx[i]]) / lambd)
+                dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+                weight = (w[idx[i]] + w[idx[j:end]]) / 2
+                t += np.sum(weight * dt)
             else:
-                raise Exception(f"Unknown: {estimate=}")
-            tanx = tanh((mx - x[idx[i]]) / lambd)
-            tany = tanh((my - y[idx[i]]) / lambd)
-            dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
-            weight = (w[idx[i]] * l + right_sw) / 2
-            left_sw -= w[idx[i]]
+                l = end - j
+                if estimate == "average":
+                    mx, my = right_sx / l, right_sy / l
+                    left_sx -= x[idx[i]]
+                    left_sy -= y[idx[i]]
+                elif estimate == "lowest":
+                    mx, my = x[idx[j]], y[idx[j]]
+                elif estimate == "highest":
+                    mx, my = x[idx[end - 1]], y[idx[end - 1]]
+                else:
+                    raise Exception(f"Unknown: {estimate=}")
+                tanx = tanh((mx - x[idx[i]]) / lambd)
+                tany = tanh((my - y[idx[i]]) / lambd)
+                dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+                weight = (w[idx[i]] * l + right_sw) / 2
+                t += weight * dt
+                left_sw -= w[idx[i]]
             tmp[k] = idx[i]
             i += 1
         else:
-            l = mid - i
-            if estimate == "average":
-                mx, my = left_sx / l, left_sy / l
-                right_sx -= x[idx[j]]
-                right_sy -= y[idx[j]]
-            elif estimate == "lowest":
-                mx, my = x[idx[mid - 1]], y[idx[mid - 1]]
-            elif estimate == "highest":
-                mx, my = x[idx[i]], y[idx[i]]
+            if estimate is None:
+                tanx = np.tanh((x[idx[j]] - x[idx[i:mid]]) / lambd)
+                tany = np.tanh((y[idx[j]] - y[idx[i:mid]]) / lambd)
+                dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+                weight = (w[idx[j]] + w[idx[i:mid]]) / 2
+                t += np.sum(weight * dt)
             else:
-                raise Exception(f"Unknown: {estimate=}")
-            tanx = tanh((x[idx[j]] - mx) / lambd)
-            tany = tanh((y[idx[j]] - my) / lambd)
-            dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
-            # todo: tau=True should use the correct denominator, provavlmente tem que criar outro acumulador
-            #   den = sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)
-
-            weight = (w[idx[j]] * l + left_sw) / 2
-            right_sw -= w[idx[j]]
+                l = mid - i
+                if estimate == "average":
+                    mx, my = left_sx / l, left_sy / l
+                    right_sx -= x[idx[j]]
+                    right_sy -= y[idx[j]]
+                elif estimate == "lowest":
+                    mx, my = x[idx[mid - 1]], y[idx[mid - 1]]
+                elif estimate == "highest":
+                    mx, my = x[idx[i]], y[idx[i]]
+                else:
+                    raise Exception(f"Unknown: {estimate=}")
+                tanx = tanh((x[idx[j]] - mx) / lambd)
+                tany = tanh((y[idx[j]] - my) / lambd)
+                dt = (tanx * tany) if tau else -((tanx - tany) ** 2)
+                weight = (w[idx[j]] * l + left_sw) / 2
+                t += weight * dt
+                right_sw -= w[idx[j]]
             tmp[k] = idx[j]
             j += 1
-        t += weight * dt
         k += 1
     if i < mid:
         idx[k:end] = idx[i:mid]
     idx[start:k] = tmp[start:k]
     return t
 
+
+# todo: tau=True could use the correct denominator, provavlmente tem que criar outro acumulador
+#   den = sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)
 
 def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     """y should be sorted
@@ -208,9 +224,6 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     n = len(idx)
     if n < 2:
         return 0
-    # todo: estimate=None
-    # if estimate is None:
-    #     return (x, y, w, lambd)
     tmp = idx.copy()
     sx, sy, sw = x.copy(), y.copy(), w.copy()
     t, wid = 0, 1
@@ -231,6 +244,11 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
 
 def wsoft_tau(x, y, w, idx, estimate="average", tau=True, lambd=1.0, normalized=True):
     """
+    >>> from numpy import array
+    >>> a = list(reversed(range(0, 5)))
+    >>> w = array(a) / sum(a)
+    >>> wsoft_tau(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.00000...
     >>> a = list(range(100))
     >>> b = list(reversed(a))
     >>> from random import shuffle
@@ -243,6 +261,14 @@ def wsoft_tau(x, y, w, idx, estimate="average", tau=True, lambd=1.0, normalized=
     1.0
     >>> wsoft_tau(b[:10], a[:10], w[:10], idx.copy()[:10], estimate="highest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     -0.99999...
+    >>> wsoft_tau(b[:10], a[:10], w[:10], idx.copy()[:10], estimate="average", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    -0.99999...
+    >>> wsoft_tau(b[:10], a[:10], w[:10], idx.copy()[:10], estimate="lowest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    -0.99999...
+    >>> wsoft_tau(array(a[:10]), array(a[:10]), w[:10], idx.copy()[:10], estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    0.99999...
+    >>> wsoft_tau(array(b[:10]), array(a[:10]), w[:10], idx.copy()[:10], estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    -0.99999...
     >>> wsoft_tau(b[:10], a[:10], w[:10], idx.copy()[:10], estimate="highest", lambd=0.0001, normalized=False)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     -0.19090...
     >>> wsoft_tau(b, a, w, idx.copy(), estimate="highest", lambd=0.0001)
@@ -253,6 +279,22 @@ def wsoft_tau(x, y, w, idx, estimate="average", tau=True, lambd=1.0, normalized=
     ...     s += wsoft_tau(b, a, w, idx.copy(), estimate="highest", lambd=0.0001)
     >>> s / 100  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     -0.00075...
+    >>> random.seed(1000)
+    >>> s = 0
+    >>> c = 0
+    >>> from sortedness.new.quality.measure.pairwise import softtau
+    >>> from torch import from_numpy
+    >>> for i in range(100):
+    ...     shuffle(b)
+    ...     r1 = wsoft_tau(array(b), array(a), w, idx.copy(), estimate=None)
+    ...     r2 = softtau(from_numpy(array(b)), from_numpy(array(a)), from_numpy(w))
+    ...     if abs(r1 - r2) < 0.01:
+    ...         c += 1
+    ...     s += r1
+    >>> c / 100
+    1.0
+    >>> s / 100  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    -0.0005...
     >>> a = list(range(6))
     >>> b = list(reversed(a))
     >>> w = array(b) / sum(b)
@@ -279,4 +321,5 @@ def wsoft_tau(x, y, w, idx, estimate="average", tau=True, lambd=1.0, normalized=
     total_weight = sum(w) if normalized else 1
     s = wsoft_sort(x, y, w, idx, estimate=estimate, tau=tau, lambd=lambd)
     n = len(x)
-    return min(1., max(-1., s / (n - 1) * 2 / total_weight))
+    # return min(1., max(-1., s / (n - 1) * 2 / total_weight))
+    return s / (n - 1) * 2 / total_weight
