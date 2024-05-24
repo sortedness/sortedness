@@ -153,6 +153,17 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), estimate="highest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     1.65...
 
+    >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    2.0
+    >>> wsoft_sort(array([2,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.3
+    >>> wsoft_sort(array([1,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65...
+    >>> wsoft_sort(array([1,1,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65...
+    >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), estimate=None, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65...
+
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     1.77947...
     >>> wsoft_sort(array([2,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest")  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
@@ -203,6 +214,19 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
     -0.35
     >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w*0+1, array([0,1,2,3,4]),  tau=False, lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     -1.0
+
+    >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    2.0
+    >>> wsoft_sort(array([2,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.3
+    >>> wsoft_sort(array([1,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65
+    >>> wsoft_sort(array([1,1,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65
+    >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    1.65
+    >>> wsoft_sort(array([1,2,3,4,5]), array([1,1,3,4,5]), w*0+1, array([0,1,2,3,4]), lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    9.0
 
     :param w:
     :param idx:
