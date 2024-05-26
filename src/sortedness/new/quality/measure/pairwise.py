@@ -100,18 +100,22 @@ def softtau(a, b, w=None, lambd=1.0, tau=True):
     # todo: tornar explicita a opção de quasitau pra forma que lida com ties da forma que acho mais correta?
 
     if w is None:
-        num = (tana * tanb) if tau else -((tana - tanb) ** 2)
-        den = sum(tana ** 2) * sum(tanb ** 2)
+        num = sum(tana * tanb) if tau else -sum((tana - tanb) ** 2)
+        # den = sum((tana * tanb).abs())  # ← ties disappear from den
+        # den = sqrt(sum(tana.abs()) * sum(tanb.abs())) # ← single ties still increase one of the summations, but bad for high lambdas and uses abs()
+        den = sqrt(sum(tana ** 2) * sum(tanb ** 2)) if tau else 1.0
+        # print("dv", num, den)
     else:
         sw = psums(w)
-        num = ((tana * tanb) if tau else -((tana - tanb) ** 2)) * sw
-        den = sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)
-    return sum(num) / sqrt(den + .00000001)
+        num = sum(tana * tanb * sw) if tau else -sum((tana - tanb) ** 2 * sw)
+        den = sqrt(sum(tana ** 2 * sw) * sum(tanb ** 2 * sw)) if tau else 1.0
+    if den == 0:
+        den += 0.00000001
+    return num / den
 
-
-# TODO: kendall tau seems wrong, at least in scipy implementation or even the original formulation itself.
-#   A tie on x without a tie on y should add zero to agreement keeping a weight in the denominator, i.e., subtract half a combination from 1.
-#   For instance, for 10 combinations (n=5), it would cost 0.1, instead of 0.051317.
+    # TODO: kendall tau seems wrong, at least in scipy implementation or even the original formulation itself.
+    #   A tie on x without a tie on y should add zero to agreement keeping a weight in the denominator, i.e., subtract half a combination from 1.
+    #   For instance, for 10 combinations (n=5), it would cost 0.1, instead of 0.051317.
 
 
 def relative_calmness(a, b, w=None):
