@@ -42,6 +42,7 @@ class Pairwise(Quality):
         """
         super().__init__(X, w, sortbyX_, measure)
 
+    # todo: passar i aqui, para medidas que evoluem como começar com n vizinhos e cair até 2 (1 a 1 ou em potencia de 2 pra fins de speed e ter complexidade decente); ou o contrário; esse exemplo evita ter de setar o parametro kappa
     def __call__(self, X_: tensor, idxs=None, **f__kwargs):  # TODO: reuse code between pairwise.call and elementwise.call
         if idxs is None:
             miniD = self.D

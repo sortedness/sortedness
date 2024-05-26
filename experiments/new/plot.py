@@ -20,13 +20,16 @@
 #  part of this work is illegal and it is unethical regarding the effort and
 #  time spent here.
 #
+from functools import partial
 
 from sortedness.new.dataset import mnist
 from sortedness.new.quality import *
+from sortedness.new.quality._pairwise import Pairwise
+from sortedness.new.quality.measure.pairwise import softtau
 from sortedness.new.sktransformer import SKTransformer
 from sortedness.new.weighting import gaussian, cauchy
 
-n = 300
+n = 500
 X, colors = mnist(n)
 n = len(X)
 labels = colors[:100]
@@ -36,8 +39,13 @@ cauw = cauchy(20, kappa=5)
 #  epsilon=0.00001
 #  k = int(halfnorm.ppf(1 - epsilon, 0, sigma))
 
-stress, transi, sort = Calmness(X), Transitiveness(X), Sortedness(X)
-wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness(X, gauw)
+s, t, o, o2 = Calmness(X), Transitiveness(X), Sortedness(X), Pairwise(partial(softtau,step=5), X)
+ws, wt, wo = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness(X, gauw)
+
+# noinspection PyTypeChecker
+# c = SKTransformer(2 / (1 / wo + 1 / o2), verbose=True)
+# c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
+# exit()
 
 # # noinspection PyTypeChecker
 # c = SKTransformer(3 / (1 / Calmness(X, ) + 1 / Transitiveness(X, ) + 1 / Sortedness(X, gauw)), verbose=True)
@@ -66,7 +74,7 @@ wstress, wtransi, wsort = Calmness(X, cauw), Transitiveness(X, cauw), Sortedness
 # c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 # exit()
 #
-c = SKTransformer(Sortedness(X, gauw), verbose=True)
+c = SKTransformer(Sortedness(X, cauw), verbose=True)
 c.fit(X, plot=True, plot_labels=labels, plot_colors=colors)
 exit()
 
@@ -94,5 +102,5 @@ exit()
 # hyperoptimizer = gdtuo.RMSProp(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))
 # hyperoptimizer = gdtuo.Adam(optimizer=gdtuo.SGD(alpha=0.01, mu=0.0))
 
-# TODO: quando coloca pesos em X fica muito ruim → checar implementação; será que perde gradiente por reindexar D_ ordenado por D? sempre trabalha nos mesmos vizinhos
+# TODO: quando coloca pesos em X fica muito ruim → checar implementação; será que perde gradiente por reindexar D_ ordenado por D? seria a resposta: sempre trabalha nos mesmos vizinhos
 # TODO: transitiveness ponderado+soft está com valores muito baixos, mesmo com bom plot visual

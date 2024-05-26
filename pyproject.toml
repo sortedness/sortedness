@@ -51,6 +51,7 @@ plotly = "^5.18.0"
 gradient-descent-the-ultimate-optimizer = "^1.0"
 som-pbc = "^1.0.2"
 liac-arff = "^2.5.0"
+jax = {extras = ["cpu"], version = "^0.4.28"}
 
 [[tool.poetry.source]]
 name = "torchcpu1130"

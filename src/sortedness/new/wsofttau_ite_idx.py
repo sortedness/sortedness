@@ -31,7 +31,8 @@ def merge(x, y, w, idx, sx, sy, sw, estimate, tau, lambd, tmp, start, mid, end):
     sorts on x
     """
     # todo: criar opção de quasitau que lida com ties da forma que acho mais correta?
-    # todo: add parameter to indicate the degree of approximation; from total heuristic (1) to no heuristic (0)
+    # todo: add parameter to indicate the degree of approximation; from total ad hoc (1) to no approximation (0)
+    # Example for a ranking with 8 numbers
     #   1/8 would mean the current setting:
     #       lowest → test at the start (0)
     #       average → test at the average (0→7)
@@ -141,8 +142,8 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
 
     >>> from numpy import array
     >>> a = list(reversed(range(0, 5)))
-    >>> w = array(a) / sum(a)
-    >>> wsoft_sort(array([1,2,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> w = array(a, dtype=float) / sum(a)
+    >>> wsoft_sort(array([1.0,2,3,4,5]), array([1.0,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     2.0
     >>> wsoft_sort(array([2,1,3,4,5]), array([1,2,3,4,5]), w, array([0,1,2,3,4]), estimate="highest", lambd=0.0001)  # doctest:+ELLIPSIS +NORMALIZE_WHITESPACE
     1.3
