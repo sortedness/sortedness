@@ -27,13 +27,13 @@ from scipy.stats import kendalltau, weightedtau
 
 from sortedness.new.weighting import cauchy
 
-n = 50
-kappas = n // 3
+n = 30
+kappas = n
 step = 2
-s = 1000
+s = 10000
 rng = np.random.default_rng(seed=0)
 x = rng.uniform(0, 1, n)
-for kappa in gp[2, 4, ..., kappas]:
+for kappa in gp[5, 10, ..., kappas]:
     print(kappa / kappas)
     cau = list(cauchy(n, kappa=kappa))
     l = []
@@ -45,12 +45,12 @@ for kappa in gp[2, 4, ..., kappas]:
     a = np.array(l)
     plt.hist(a, bins=ap[-1, -0.95, ..., 1], alpha=0.2, label=f"wtau 95% do peso nas primeiras {kappa} de {n} posições", edgecolor="k")
 
-n = 16
-s = 1000
+n = 30
+s = 10000
 rng = np.random.default_rng(seed=0)
 l = []
+x = rng.uniform(0, 1, n)
 for i in range(s):
-    x = rng.uniform(0, 1, n)
     y = rng.uniform(0, 1, n)
     tau = kendalltau(x, y)[0]
     l.append(tau)

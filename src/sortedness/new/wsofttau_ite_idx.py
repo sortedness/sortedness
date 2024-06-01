@@ -246,6 +246,11 @@ def wsoft_sort(x, y, w, idx, estimate="average", tau=True, lambd=1.0):
                     Surrogate function tends to (non differentiable) Kendall tau when `lambd` tends to 0.
     :return:
     """
+    # r = randperm(x.shape[0])
+    # x = x[r]
+    # y = y[r]
+    # w = w[r]
+    # idx = idx[r]
     n = len(idx)
     if n < 2:
         return 0
@@ -350,7 +355,6 @@ def wsoft_tau(x, y, w, idx, estimate="average", tau=True, lambd=1.0, normalized=
     return s / (n - 1) * 2 / total_weight
 
 
-
 """
 In [10]: from sortedness.new.wsofttau_ite_idx import wsoft_tau
     ...: from sortedness.new.quality.measure.pairwise import softtau
@@ -374,7 +378,6 @@ In [10]: from sortedness.new.wsofttau_ite_idx import wsoft_tau
 1.51 s ± 15.3 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
 27.8 ms ± 326 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 """
-
 
 """
 In [5]: import torch

@@ -27,8 +27,9 @@ from torch import tensor, from_numpy
 
 
 class Quality:
-    def __init__(self, X: tensor, w: tensor, sortbyX_, measure: callable):
-        if w is not None and w.shape[0] >= X.shape[0]:
+    def __init__(self, X: tensor, w: tensor, sortbyX_, measure: callable, skip_dist_calculation=False):
+        from sortedness.new.quality._nodist import NoDist
+        if w is not None and w.shape[0] >= X.shape[0] and not isinstance(self, NoDist):
             Xsize = X.shape[0]
             wsize = float(w.shape[0])
             raise Exception(f"Number of neighbors should be at most |X| - 1, i.e., {(Xsize - 1)=}; not {wsize=}")
@@ -36,7 +37,17 @@ class Quality:
 
         if isinstance(X, ndarray):
             X = from_numpy(X.astype(np.float32))
-        self.n = X.shape[0]
+        self.n, self.m = X.shape
+
+        self.w = w  # None if w is None else w.reshape(-1, w.shape[0])
+        # noinspection PyTypeChecker
+        self.wtot = None if w is None else torch.sum(w)
+        # noinspection PyUnresolvedReferences
+        self.k = self.n if w is None else w.shape[0]
+        self.seq = torch.arange(self.n)
+
+        if skip_dist_calculation:
+            return X
 
         # Distance matrix without diagonal.
         # 64GiB souhld suffice for 80k points.
@@ -44,15 +55,9 @@ class Quality:
         self.seq = torch.arange(self.n)
         self.D = torch.cdist(X, X)[self.seq != self.seq[:, None]].reshape(self.n, -1)
 
-        if w is not None:
-            self.k = w.shape[0]
         if not sortbyX_:
             self.D, self.idxs_for_Dsorted = torch.topk(self.D, self.k, largest=False, dim=1)
         self.sortbyX_ = sortbyX_
-        self.w = w  # None if w is None else w.reshape(-1, w.shape[0])
-        # noinspection PyTypeChecker
-        self.wtot = None if w is None else torch.sum(w)
-        self.seq = torch.arange(self.n)
 
     def __call__(self, X_: tensor, idxs=None, **f__kwargs):
         raise NotImplementedError
@@ -60,8 +65,9 @@ class Quality:
     def check(self, other):
         from sortedness.new.quality._pairwise import Pairwise
         from sortedness.new.quality._elementwise import Elementwise
-        if isinstance(self, Pairwise) and isinstance(other, Elementwise) or isinstance(self, Elementwise) and isinstance(other, Pairwise):
-            raise Exception(f"Cannot mix Pairwise {type(self)} and Elementwise {type(other)} quality surrogate functions.")
+        from sortedness.new.quality._nodist import NoDist
+        if isinstance(self, (Pairwise, NoDist)) and isinstance(other, Elementwise) or isinstance(self, Elementwise) and isinstance(other, (Pairwise, NoDist)):
+            raise Exception(f"Cannot mix Pairwise/NoDist {type(self)} and Elementwise {type(other)} quality surrogate functions.")
 
     def __add__(self, other: 'Quality'):
         if isinstance(other, Quality):
