@@ -16,6 +16,7 @@ scipy = "^1.11.2"
 lange = "^1.230203.1"
 pathos = "^0.3.0"
 pyqt6 = "^6.6.0"
+tsne-torch = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 #  todo: all dev deps should he hidden from the normal library usage. e.g.: torch, Cython should only be imported by functions that use them
@@ -31,7 +32,7 @@ numpy = "^1.24.2"  #=1.24.2
 matplotlib = "^3.7.2"
 pandas = "^2.0.3"
 shelchemy = "^2.231111.1"
-hdict = "^2.240217.0"
+hdict = { git = "https://github.com/davips/hdict.git", tag = "v2.250313.0" }
 safeserializer = "^0.230202.1"
 lz4 = "^4.3.2"
 pip = "^23.2.1"
@@ -39,7 +40,6 @@ duckdb-engine = "^0.9.2"
 seaborn = "^0.12.2"
 llvmlite = "^0.41.0"
 umap-learn = {extras = ["plot"], version = "^0.5.4"}
-tsne-torch = "^1.0.1"
 torch = {version = "^2.1.0+cpu", source = "torchcpu1130"}
 sympy = "^1.12"
 hyperopt = "^0.2.7"
